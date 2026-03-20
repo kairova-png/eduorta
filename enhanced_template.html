@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание АПЭК Петротехник - Live Data</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+    :root {
+        --sidebar-width: 0px;
+    }
+    
+    /* Основные стили для iframe в Google Sites */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+        width: 100% !important;
+        overflow-x: auto;
+    }
+    
+    .container-fluid {
+        padding: 0.75rem !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    /* Стили расписания */
+    .schedule-cell {
+        min-height: 80px;
+        font-size: 0.85rem;
+        vertical-align: top;
+        padding: 0.5rem !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    .schedule-cell .discipline {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+    }
+    .schedule-cell .teacher {
+        color: #666;
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+    .schedule-cell .room {
+        color: #999;
+        font-size: 0.75rem;
+        line-height: 1.1;
+    }
+    
+    /* Статусы занятий */
+    .status-planned { background-color: #fff !important; border: 2px solid #6c757d !important; }
+    .status-done { background-color: #d4edda !important; border: 2px solid #28a745 !important; }
+    .status-substitution { background-color: #fff3cd !important; border: 2px solid #ffc107 !important; }
+    .status-cancelled { background-color: #f8d7da !important; border: 2px solid #dc3545 !important; text-decoration: line-through !important; opacity: 0.7 !important; }
+    .status-completed { background-color: #e2d5f1 !important; border: 2px solid #6f42c1 !important; }
+    .status-rescheduled { background-color: #d1ecf1 !important; border: 2px solid #17a2b8 !important; }
+    .status-empty { background-color: #f8f9fa !important; }
+    
+    /* Таблица расписания */
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        margin-bottom: 0 !important;
+        min-width: 800px;
+    }
+    
+    /* Улучшенная мобильная адаптация */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0.5rem !important;
+        }
+        
+        h2 {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column !important;
+            gap: 0.5rem;
+        }
+        
+        .btn-group {
+            align-self: flex-start;
+        }
+        
+        .schedule-cell {
+            min-height: 50px !important;
+            font-size: 0.7rem !important;
+            padding: 0.25rem !important;
+        }
+        
+        .schedule-cell .discipline {
+            font-size: 0.7rem !important;
+            margin-bottom: 0.1rem !important;
+        }
+        
+        .schedule-cell .teacher,
+        .schedule-cell .room {
+            font-size: 0.6rem !important;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.25rem !important;
+            font-size: 0.75rem;
+        }
+        
+        .table th:first-child,
+        .table td:first-child {
+            width: 30px !important;
+            font-size: 0.7rem;
+        }
+        
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            width: 60px !important;
+            font-size: 0.6rem;
+        }
+        
+        /* Скрываем фильтры на мобильных для экономии места */
+        .card.mb-4 {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .card-body {
+            padding: 0.75rem !important;
+        }
+        
+        .row.g-3 {
+            gap: 0.5rem !important;
+        }
+        
+        .form-select,
+        .btn {
+            font-size: 0.8rem !important;
+        }
+        
+        #navigationCard {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        #navigationCard h5 {
+            font-size: 0.9rem !important;
+        }
+        
+        #navigationCard .btn {
+            font-size: 0.7rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+    }
+    
+    /* Дополнительная оптимизация для очень маленьких экранов */
+    @media (max-width: 480px) {
+        .table {
+            min-width: 700px;
+        }
+        
+        .schedule-cell {
+            min-height: 45px !important;
+            font-size: 0.65rem !important;
+        }
+        
+        .schedule-cell .discipline {
+            font-size: 0.65rem !important;
+        }
+        
+        .schedule-cell .teacher,
+        .schedule-cell .room {
+            font-size: 0.55rem !important;
+        }
+        
+        h2 {
+            font-size: 1.1rem !important;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.2rem !important;
+            font-size: 0.7rem !important;
+        }
+    }
+    
+    /* Стили для загрузки и ошибок */
+    .loading-indicator {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .error-message {
+        display: none;
+    }
+    
+    /* Исправления для Google Sites iframe */
+    @media (max-width: 768px) {
+        body {
+            min-width: 320px !important;
+        }
+        
+        .table-responsive {
+            margin-left: -0.5rem !important;
+            margin-right: -0.5rem !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="bi bi-calendar3"></i> Расписание АПЭК Петротехник</h2>
+                <p class="text-muted mb-0">Данные загружаются с GitHub <span id="lastUpdate"></span></p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise"></i> Обновить
+                </button>
+            </div>
+        </div>
+
+        <!-- Индикатор загрузки -->
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загружаем актуальные данные расписания...</p>
+        </div>
+
+        <!-- Сообщение об ошибке -->
+        <div id="errorMessage" class="alert alert-warning error-message">
+            <h5><i class="bi bi-exclamation-triangle"></i> Ошибка загрузки данных</h5>
+            <p>Не удалось загрузить актуальные данные с GitHub. Проверьте подключение к интернету.</p>
+            <button class="btn btn-outline-warning" onclick="refreshData()">Попробовать еще раз</button>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="card mb-4" id="filtersCard" style="display: none;">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Группа</label>
+                        <select id="groupSelect" class="form-select" onchange="updateSchedule()">
+                            <option value="">-- Выберите группу --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Преподаватель</label>
+                        <select id="teacherSelect" class="form-select" onchange="updateSchedule()">
+                            <option value="">-- Или преподавателя --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Период</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="view" id="view_day" value="day" onchange="updateSchedule()">
+                            <label class="btn btn-outline-primary" for="view_day">День</label>
+                            
+                            <input type="radio" class="btn-check" name="view" id="view_week" value="week" checked onchange="updateSchedule()">
+                            <label class="btn btn-outline-primary" for="view_week">Неделя</label>
+                            
+                            <input type="radio" class="btn-check" name="view" id="view_month" value="month" onchange="updateSchedule()">
+                            <label class="btn btn-outline-primary" for="view_month">Месяц</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Навигация -->
+        <div id="navigationCard" class="d-flex justify-content-between align-items-center mb-3" style="display: none;">
+            <button class="btn btn-outline-primary" onclick="navigatePeriod(-1)">
+                <i class="bi bi-chevron-left"></i> <span id="prevButton">Предыдущий</span>
+            </button>
+            <h5 class="mb-0 text-center" id="currentPeriod"></h5>
+            <button class="btn btn-outline-primary" onclick="navigatePeriod(1)">
+                <span id="nextButton">Следующий</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Контент расписания -->
+        <div id="scheduleContent"></div>
+    </div>
+
+<script>
+// Конфигурация URL для JSON файлов GitHub
+const DRIVE_CONFIG = {
+    groups_url: 'https://azamat313.github.io/apec_schedule/api/groups.json',
+    teachers_url: 'https://azamat313.github.io/apec_schedule/api/teachers.json',
+    schedule_url: 'https://azamat313.github.io/apec_schedule/api/schedule.json'
+};
+
+// Глобальные переменные
+let STATIC_GROUPS = null;
+let STATIC_TEACHERS = null;
+let STATIC_SCHEDULE = null;
+
+// Настройки отображения
+let currentGroupId = null;
+let currentTeacherId = null;
+let currentView = 'week';
+let currentWeekOffset = 0;
+let currentDayOffset = 0;
+let currentMonthOffset = 0;
+
+// Время последнего обновления
+let lastUpdateTime = null;
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    loadDataFromDrive();
+});
+
+// Загрузка данных с GitHub
+async function loadDataFromDrive() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorMessage = document.getElementById('errorMessage');
+    const filtersCard = document.getElementById('filtersCard');
+    const navigationCard = document.getElementById('navigationCard');
+    
+    loadingIndicator.style.display = 'block';
+    errorMessage.style.display = 'none';
+    filtersCard.style.display = 'none';
+    navigationCard.style.display = 'none';
+    
+    try {
+        console.log('Загружаем данные с GitHub...');
+        
+        // Загружаем все JSON файлы параллельно
+        const [groupsResponse, teachersResponse, scheduleResponse] = await Promise.all([
+            fetch(DRIVE_CONFIG.groups_url).catch(e => { throw new Error('Группы: ' + e.message) }),
+            fetch(DRIVE_CONFIG.teachers_url).catch(e => { throw new Error('Преподаватели: ' + e.message) }),
+            fetch(DRIVE_CONFIG.schedule_url).catch(e => { throw new Error('Расписание: ' + e.message) })
+        ]);
+        
+        if (!groupsResponse.ok) throw new Error('Ошибка загрузки групп');
+        if (!teachersResponse.ok) throw new Error('Ошибка загрузки преподавателей');
+        if (!scheduleResponse.ok) throw new Error('Ошибка загрузки расписания');
+        
+        STATIC_GROUPS = await groupsResponse.json();
+        STATIC_TEACHERS = await teachersResponse.json();
+        STATIC_SCHEDULE = await scheduleResponse.json();
+        
+        console.log('Данные загружены:', {
+            groups: STATIC_GROUPS.groups.length,
+            teachers: STATIC_TEACHERS.teachers.length,
+            schedules: STATIC_SCHEDULE.schedules.length
+        });
+        
+        lastUpdateTime = new Date();
+        updateLastUpdateDisplay();
+        
+        // Инициализируем интерфейс
+        initializeInterface();
+        
+        loadingIndicator.style.display = 'none';
+        filtersCard.style.display = 'block';
+        navigationCard.style.display = 'flex';
+        
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        loadingIndicator.style.display = 'none';
+        errorMessage.style.display = 'block';
+    }
+}
+
+// Обновление времени последнего обновления
+function updateLastUpdateDisplay() {
+    const lastUpdateElement = document.getElementById('lastUpdate');
+    if (lastUpdateTime) {
+        lastUpdateElement.textContent = '(обновлено ' + lastUpdateTime.toLocaleTimeString() + ')';
+    }
+}
+
+// Обновление данных
+function refreshData() {
+    loadDataFromDrive();
+}
+
+// Инициализация интерфейса
+function initializeInterface() {
+    populateDropdowns();
+    updateSchedule();
+}
+
+// Заполнение выпадающих списков
+function populateDropdowns() {
+    const groupSelect = document.getElementById('groupSelect');
+    const teacherSelect = document.getElementById('teacherSelect');
+    
+    // Очищаем списки
+    groupSelect.innerHTML = '<option value="">-- Выберите группу --</option>';
+    teacherSelect.innerHTML = '<option value="">-- Или преподавателя --</option>';
+    
+    // Заполняем группы
+    if (STATIC_GROUPS && STATIC_GROUPS.groups) {
+        STATIC_GROUPS.groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.name;
+            groupSelect.appendChild(option);
+        });
+    }
+    
+    // Заполняем преподавателей
+    if (STATIC_TEACHERS && STATIC_TEACHERS.teachers) {
+        STATIC_TEACHERS.teachers.forEach(teacher => {
+            const option = document.createElement('option');
+            option.value = teacher.id;
+            option.textContent = teacher.name;
+            teacherSelect.appendChild(option);
+        });
+    }
+}
+
+// Обновление расписания
+function updateSchedule() {
+    const groupSelect = document.getElementById('groupSelect');
+    const teacherSelect = document.getElementById('teacherSelect');
+    const viewRadios = document.querySelectorAll('input[name="view"]');
+    
+    // Получаем текущие значения
+    currentGroupId = groupSelect.value ? parseInt(groupSelect.value) : null;
+    currentTeacherId = teacherSelect.value ? parseInt(teacherSelect.value) : null;
+    
+    viewRadios.forEach(radio => {
+        if (radio.checked) currentView = radio.value;
+    });
+    
+    // Сбрасываем противоположный фильтр
+    if (currentGroupId) {
+        teacherSelect.value = '';
+        currentTeacherId = null;
+    } else if (currentTeacherId) {
+        groupSelect.value = '';
+        currentGroupId = null;
+    }
+    
+    updateNavigationLabels();
+    loadSchedule();
+}
+
+// Навигация по периодам
+function navigatePeriod(direction) {
+    if (currentView === 'day') {
+        currentDayOffset += direction;
+    } else if (currentView === 'week') {
+        currentWeekOffset += direction;
+    } else if (currentView === 'month') {
+        currentMonthOffset += direction;
+    }
+    updateNavigationLabels();
+    loadSchedule();
+}
+
+// Обновление лейблов навигации
+function updateNavigationLabels() {
+    const currentPeriodElement = document.getElementById('currentPeriod');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+    const today = new Date();
+    
+    if (currentView === 'day') {
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + currentDayOffset);
+        
+        currentPeriodElement.innerHTML = `
+            ${targetDate.toLocaleDateString('ru-RU', {weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'})}
+        `;
+        prevButton.textContent = 'Пред. день';
+        nextButton.textContent = 'След. день';
+        
+    } else if (currentView === 'week') {
+        const currentMonday = new Date(today);
+        currentMonday.setDate(today.getDate() - today.getDay() + 1);
+        
+        const targetMonday = new Date(currentMonday);
+        targetMonday.setDate(currentMonday.getDate() + (currentWeekOffset * 7));
+        
+        const targetSunday = new Date(targetMonday);
+        targetSunday.setDate(targetMonday.getDate() + 6);
+        
+        currentPeriodElement.innerHTML = `
+            Неделя ${targetMonday.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} - 
+            ${targetSunday.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'})}
+        `;
+        prevButton.textContent = 'Пред. неделя';
+        nextButton.textContent = 'След. неделя';
+        
+    } else if (currentView === 'month') {
+        const targetMonth = new Date(today.getFullYear(), today.getMonth() + currentMonthOffset, 1);
+        
+        currentPeriodElement.innerHTML = `
+            ${targetMonth.toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'})}
+        `;
+        prevButton.textContent = 'Пред. месяц';
+        nextButton.textContent = 'След. месяц';
+    }
+}
+
+// Загрузка и отображение расписания
+function loadSchedule() {
+    if (!STATIC_SCHEDULE || !STATIC_SCHEDULE.schedules) {
+        document.getElementById('scheduleContent').innerHTML = 
+            '<div class="alert alert-info">Данные расписания не загружены</div>';
+        return;
+    }
+    
+    // Фильтруем расписание
+    let filteredSchedules = STATIC_SCHEDULE.schedules;
+    
+    if (currentGroupId) {
+        filteredSchedules = filteredSchedules.filter(s => 
+            s.group && s.group.id === currentGroupId
+        );
+    }
+    
+    if (currentTeacherId) {
+        filteredSchedules = filteredSchedules.filter(s => 
+            s.teacher && s.teacher.id === currentTeacherId
+        );
+    }
+    
+    // Определяем период для отображения
+    const today = new Date();
+    let startDate, endDate;
+    
+    if (currentView === 'day') {
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + currentDayOffset);
+        startDate = new Date(targetDate);
+        endDate = new Date(targetDate);
+        
+    } else if (currentView === 'week') {
+        const currentMonday = new Date(today);
+        currentMonday.setDate(today.getDate() - today.getDay() + 1);
+        
+        const targetMonday = new Date(currentMonday);
+        targetMonday.setDate(currentMonday.getDate() + (currentWeekOffset * 7));
+        
+        const targetSunday = new Date(targetMonday);
+        targetSunday.setDate(targetMonday.getDate() + 6);
+        
+        startDate = targetMonday;
+        endDate = targetSunday;
+        
+    } else if (currentView === 'month') {
+        const targetMonth = new Date(today.getFullYear(), today.getMonth() + currentMonthOffset, 1);
+        startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+        endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+    }
+    
+    // Фильтруем по выбранному периоду
+    const startDateStr = startDate.getFullYear() + '-' + 
+        String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(startDate.getDate()).padStart(2, '0');
+    const endDateStr = endDate.getFullYear() + '-' + 
+        String(endDate.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(endDate.getDate()).padStart(2, '0');
+        
+    const periodSchedules = filteredSchedules.filter(s => {
+        return s.date >= startDateStr && s.date <= endDateStr;
+    });
+    
+    // Отображаем расписание в зависимости от режима
+    console.log('loadSchedule data:', {
+        currentView: currentView,
+        filteredSchedulesCount: filteredSchedules.length,
+        periodSchedulesCount: periodSchedules.length,
+        startDate: startDate,
+        endDate: endDate,
+        startDateStr: startDateStr,
+        endDateStr: endDateStr,
+        currentTeacherId: currentTeacherId,
+        currentGroupId: currentGroupId,
+        periodSchedules: periodSchedules
+    });
+    
+    if (currentView === 'day') {
+        displayDaySchedule(periodSchedules, startDate);
+    } else if (currentView === 'week') {
+        displayWeekSchedule(periodSchedules, startDate, endDate);
+    } else if (currentView === 'month') {
+        displayMonthSchedule(periodSchedules, startDate, endDate);
+    }
+}
+
+// Глобальные константы времени пар
+const PAIR_TIMES = {
+    1: {start: '08:30', end: '09:50'},
+    2: {start: '10:00', end: '11:20'},
+    3: {start: '11:30', end: '12:50'},
+    4: {start: '13:30', end: '14:50'},
+    5: {start: '15:00', end: '16:20'},
+    6: {start: '16:30', end: '17:50'},
+    7: {start: '18:00', end: '19:20'}
+};
+
+// Глобальная функция для получения информации о статусе
+function getStatusInfo(status) {
+    switch(status) {
+        case 'planned':
+            return { color: 'primary', name: 'Запланирована' };
+        case 'done':
+            return { color: 'success', name: 'Проведена' };
+        case 'cancelled':
+            return { color: 'danger', name: 'Отменена' };
+        case 'rescheduled':
+            return { color: 'warning', name: 'Перенесена' };
+        case 'substitution':
+            return { color: 'info', name: 'Замена' };
+        case 'completed':
+            return { color: 'dark', name: 'Последняя пара' };
+        default:
+            return { color: 'secondary', name: status || 'Неизвестно' };
+    }
+}
+
+// Отображение недельного расписания
+function displayWeekSchedule(schedules, startDate, endDate) {
+    // Создаем сетку расписания
+    const scheduleGrid = {};
+    
+    schedules.forEach(schedule => {
+        const scheduleDate = new Date(schedule.date);
+        const dayOfWeek = scheduleDate.getDay();
+        const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Понедельник = 0
+        
+        if (!scheduleGrid[dayIndex]) {
+            scheduleGrid[dayIndex] = {};
+        }
+        
+        if (!scheduleGrid[dayIndex][schedule.pair_number]) {
+            scheduleGrid[dayIndex][schedule.pair_number] = [];
+        }
+        
+        scheduleGrid[dayIndex][schedule.pair_number].push(schedule);
+    });
+    
+    const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+    
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">Пара</th>
+                                <th style="width: 100px;">Время</th>`;
+    
+    WEEK_DAYS.forEach((day, index) => {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + index);
+        html += `<th class="text-center">
+            ${day}<br>
+            <small class="text-muted">${currentDate.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})}</small>
+        </th>`;
+    });
+    
+    html += `</tr></thead><tbody>`;
+    
+    for (let pairNum = 1; pairNum <= 7; pairNum++) {
+        html += `<tr>
+            <td class="text-center fw-bold">${pairNum}</td>
+            <td class="text-center">
+                <small>${PAIR_TIMES[pairNum].start}<br>${PAIR_TIMES[pairNum].end}</small>
+            </td>`;
+        
+        for (let dayIndex = 0; dayIndex < 5; dayIndex++) {
+            const daySchedules = scheduleGrid[dayIndex] && scheduleGrid[dayIndex][pairNum];
+            if (daySchedules && daySchedules.length > 0) {
+                const schedule = daySchedules[0]; // Берем первое занятие
+                html += `<td class="schedule-cell status-${schedule.status}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="discipline">${schedule.discipline}</div>
+                        <span class="badge bg-${getStatusInfo(schedule.status).color} badge-sm">${getStatusInfo(schedule.status).name}</span>
+                    </div>`;
+                
+                // Показываем преподавателя если выбрана группа, или группу если выбран преподаватель
+                if (currentTeacherId && schedule.group) {
+                    html += `<div class="teacher">гр. ${schedule.group.name}</div>`;
+                } else if (schedule.teacher) {
+                    html += `<div class="teacher">${schedule.teacher.name}</div>`;
+                }
+                
+                html += `<div class="room">ауд. ${schedule.room ? schedule.room.number : '-'}</div>
+                </td>`;
+            } else {
+                html += `<td class="schedule-cell status-empty"></td>`;
+            }
+        }
+        
+        html += `</tr>`;
+        
+        // Обеденный перерыв после 3 пары
+        if (pairNum === 3) {
+            html += `<tr class="table-secondary">
+                <td colspan="7" class="text-center py-1"><strong>ОБЕД</strong> 12:50 - 13:30</td>
+            </tr>`;
+        }
+    }
+    
+    html += `</tbody></table></div></div></div>`;
+    
+    document.getElementById('scheduleContent').innerHTML = html;
+}
+
+// Отображение дневного расписания
+function displayDaySchedule(schedules, targetDate) {
+    
+    const targetDateStr = targetDate.getFullYear() + '-' + 
+        String(targetDate.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(targetDate.getDate()).padStart(2, '0');
+    
+    
+    // schedules уже отфильтрованы по дате в loadSchedule()
+    const daySchedules = schedules;
+    
+    // Группируем по парам
+    const scheduleByPair = {};
+    daySchedules.forEach(schedule => {
+        if (!scheduleByPair[schedule.pair_number]) {
+            scheduleByPair[schedule.pair_number] = [];
+        }
+        scheduleByPair[schedule.pair_number].push(schedule);
+    });
+    
+    const dayName = targetDate.toLocaleDateString('ru-RU', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    
+    let html = `
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">${dayName}</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">`;
+    
+    for (let pairNum = 1; pairNum <= 7; pairNum++) {
+        const pairSchedules = scheduleByPair[pairNum];
+        if (pairSchedules && pairSchedules.length > 0) {
+            pairSchedules.forEach(schedule => {
+                html += `
+                    <div class="list-group-item schedule-cell status-${schedule.status || 'normal'} d-flex align-items-center">
+                        <div class="me-3">
+                            <strong>${pairNum}</strong><br>
+                            <small>${PAIR_TIMES[pairNum].start}<br>${PAIR_TIMES[pairNum].end}</small>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="discipline">${schedule.discipline || '-'}</div>
+                                <span class="badge bg-${getStatusInfo(schedule.status).color}">${getStatusInfo(schedule.status).name}</span>
+                            </div>`;
+                            
+                if (currentTeacherId && schedule.group) {
+                    html += `<div class="teacher">гр. ${schedule.group.name}</div>`;
+                } else if (schedule.teacher) {
+                    html += `<div class="teacher">${schedule.teacher.name}</div>`;
+                }
+                
+                html += `<div class="room">ауд. ${schedule.room?.number || '-'}</div>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            html += `
+                <div class="list-group-item schedule-cell status-empty d-flex align-items-center">
+                    <div class="me-3">
+                        <strong>${pairNum}</strong><br>
+                        <small>${PAIR_TIMES[pairNum].start}<br>${PAIR_TIMES[pairNum].end}</small>
+                    </div>
+                    <div class="flex-grow-1 text-muted">Свободно</div>
+                </div>`;
+        }
+        
+        if (pairNum === 3) {
+            html += `
+                <div class="list-group-item bg-light text-center">
+                    <strong>ОБЕД</strong> 12:50 - 13:30
+                </div>`;
+        }
+    }
+    
+    html += `</div></div></div>`;
+    document.getElementById('scheduleContent').innerHTML = html;
+}
+
+// Отображение месячного расписания
+function displayMonthSchedule(schedules, startDate, endDate) {
+    const schedulesByDate = {};
+    schedules.forEach(schedule => {
+        const dateKey = schedule.date;
+        if (!schedulesByDate[dateKey]) {
+            schedulesByDate[dateKey] = [];
+        }
+        schedulesByDate[dateKey].push(schedule);
+    });
+    
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-2">`;
+    
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+        const dateKey = currentDate.toISOString().split('T')[0];
+        const daySchedules = schedulesByDate[dateKey] || [];
+        const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+        
+        html += `
+            <div class="col-md-6 col-lg-4">
+                <div class="card ${isWeekend ? 'bg-light' : ''}">
+                    <div class="card-header py-1">
+                        <small><strong>${currentDate.toLocaleDateString('ru-RU', {weekday: 'short', day: '2-digit', month: '2-digit'})}</strong></small>
+                    </div>
+                    <div class="card-body py-2">`;
+        
+        if (daySchedules.length > 0) {
+            daySchedules.forEach(schedule => {
+                html += `
+                    <div class="schedule-cell status-${schedule.status} mb-1 p-1">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div class="discipline" style="font-size: 0.75rem;">${schedule.discipline}</div>
+                            <span class="badge bg-${getStatusInfo(schedule.status).color}" style="font-size: 0.6rem;">${getStatusInfo(schedule.status).name}</span>
+                        </div>`;
+                        
+                if (currentTeacherId && schedule.group) {
+                    html += `<div class="teacher" style="font-size: 0.65rem;">гр. ${schedule.group.name}</div>`;
+                } else if (schedule.teacher) {
+                    html += `<div class="teacher" style="font-size: 0.65rem;">${schedule.teacher.name}</div>`;
+                }
+                
+                html += `<div class="room" style="font-size: 0.65rem;">ауд. ${schedule.room ? schedule.room.number : '-'}</div>
+                    </div>`;
+            });
+        } else if (!isWeekend) {
+            html += `<div class="text-muted" style="font-size: 0.75rem;">Нет занятий</div>`;
+        }
+        
+        html += `
+                    </div>
+                </div>
+            </div>`;
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    html += `</div></div></div>`;
+    document.getElementById('scheduleContent').innerHTML = html;
+}
+
+// Показать сообщение о выборе
+function showNoSelectionMessage() {
+    document.getElementById('scheduleContent').innerHTML = `
+        <div class="alert alert-info text-center">
+            <h5><i class="bi bi-info-circle"></i> Выберите группу или преподавателя</h5>
+            <p class="mb-0">Для просмотра расписания выберите группу или преподавателя из списков выше</p>
+        </div>
+    `;
+}
+</script>
+</body>
+</html>

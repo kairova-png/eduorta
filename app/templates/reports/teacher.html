@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Табель преподавателя - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+        <li class="breadcrumb-item active">Табель</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-earmark-text"></i> Табель преподавателя</h2>
+    {% if teacher %}
+    <a href="{{ url_for('reports.teacher_export', teacher_id=selected_teacher, month=month, year=year) }}"
+       class="btn btn-success">
+        <i class="bi bi-file-earmark-excel"></i> Экспорт Excel
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Преподаватель</label>
+                <select name="teacher_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите преподавателя --</option>
+                    {% for t in teachers %}
+                    <option value="{{ t.id }}" {% if selected_teacher == t.id %}selected{% endif %}>
+                        {{ t.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Месяц</label>
+                <select name="month" class="form-select" onchange="this.form.submit()">
+                    {% for m, name in months_ru.items() %}
+                    <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Год</label>
+                <select name="year" class="form-select" onchange="this.form.submit()">
+                    {% for y in range(2024, 2028) %}
+                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if teacher %}
+<!-- Report Table -->
+<div class="card">
+    <div class="card-header">
+        <strong>{{ teacher.full_name }}</strong> - {{ months_ru[month] }} {{ year }}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Группа</th>
+                        <th>Дисциплина</th>
+                        <th>Тип</th>
+                        <th class="text-center">Основные часы</th>
+                        <th class="text-center">Замены</th>
+                        <th class="text-center">Итого</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for wl_id, data in workload_hours.items() %}
+                    <tr {% if data.get('is_substitution') %}class="table-warning"{% endif %}>
+                        <td>{{ data.workload.group.name if data.workload.group else '-' }}</td>
+                        <td>
+                            {% if data.get('is_substitution') %}<span class="badge bg-warning text-dark me-1">Замена</span>{% endif %}
+                            {{ data.workload.discipline }}
+                        </td>
+                        <td>
+                            {% if data.workload.lesson_type == 'theory' %}
+                                <span class="badge bg-primary">Т</span>
+                            {% elif data.workload.lesson_type == 'practice' %}
+                                <span class="badge bg-success">П</span>
+                            {% elif data.workload.lesson_type == 'consultation' %}
+                                <span class="badge bg-info">К</span>
+                            {% elif data.workload.lesson_type == 'exam' %}
+                                <span class="badge bg-danger">Э</span>
+                            {% else %}
+                                <span class="badge bg-secondary">?</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ data.hours }}</td>
+                        <td class="text-center">{{ data.substitution_hours or 0 }}</td>
+                        <td class="text-center"><strong>{{ data.hours + (data.substitution_hours or 0) }}</strong></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Нет данных за выбранный период</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if workload_hours %}
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="3">ИТОГО за месяц</th>
+                        <th class="text-center">{{ total_main_hours }}</th>
+                        <th class="text-center">{{ total_substitution_hours }}</th>
+                        <th class="text-center"><strong>{{ total_hours }}</strong></th>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Выберите преподавателя для просмотра табеля
+</div>
+{% endif %}
+{% endblock %}

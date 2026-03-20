@@ -1,0 +1,30 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}Заседание #{{ meeting.meeting_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4><i class="bi bi-calendar-event"></i> Заседание #{{ meeting.meeting_number }} — {{ meeting.title }}</h4>
+        <span class="text-muted">{{ meeting.meeting_date.strftime('%d.%m.%Y') }} | {{ meeting.commission.name if meeting.commission else '' }}</span>
+    </div>
+    {% if cmk_user.is_chair %}
+    <a href="{{ url_for('cmk.meetings_edit', id=meeting.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Редактировать</a>
+    {% endif %}
+</div>
+
+<div class="card mb-3">
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#v-agenda">Повестка дня</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-protocol">Протокол</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-decisions">Решения</a></li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="v-agenda">{{ meeting.agenda|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-protocol">{{ meeting.protocol|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-decisions">{{ meeting.decisions|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

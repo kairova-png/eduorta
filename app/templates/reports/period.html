@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Табель по периоду{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-earmark-spreadsheet"></i> Табель по периоду</h2>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Учебный год</label>
+                <select name="year_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите год --</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if selected_year and selected_year.id == year.id %}selected{% endif %}>
+                        {{ year.name }} {% if year.is_current %}(текущий){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if selected_year %}
+            <div class="col-md-4">
+                <label class="form-label">Период (неделя)</label>
+                <select name="week" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите период --</option>
+                    {% for w in weeks %}
+                    <option value="{{ w.week_number }}" {% if selected_week == w.week_number %}selected{% endif %}>
+                        Неделя {{ w.week_number }} ({{ w.start_date.strftime('%d.%m') }} - {{ w.end_date.strftime('%d.%m.%Y') }}){% if w.status == 'closed' %} [Закрыт]{% elif w.status == 'open' %} [Открыт]{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if selected_year and not weeks %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Нет периодов для выбранного учебного года.
+    <a href="{{ url_for('periods.index', year_id=selected_year.id) }}">Перейти к управлению периодами</a>
+</div>
+{% endif %}
+
+{% if period %}
+<!-- Period info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Период:</strong> Неделя {{ period.week_number }}
+            </div>
+            <div class="col-md-3">
+                <strong>Даты:</strong> {{ period.start_date.strftime('%d.%m.%Y') }} - {{ period.end_date.strftime('%d.%m.%Y') }}
+            </div>
+            <div class="col-md-3">
+                <strong>Статус:</strong>
+                {% if period.status == 'closed' %}
+                <span class="badge bg-success"><i class="bi bi-lock"></i> Закрыт</span>
+                {% elif period.status == 'archived' %}
+                <span class="badge bg-secondary"><i class="bi bi-archive"></i> Архив</span>
+                {% else %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-unlock"></i> Открыт</span>
+                {% endif %}
+            </div>
+            <div class="col-md-3">
+                {% if period.closed_at %}
+                <strong>Закрыт:</strong> {{ period.closed_at.strftime('%d.%m.%Y %H:%M') }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ teacher_data|length }}</h3>
+                <small>Преподавателей</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ total_pairs }}</h3>
+                <small>Проведено пар</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ total_hours }}</h3>
+                <small>Всего часов</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export button -->
+<div class="mb-4">
+    <a href="{{ url_for('reports.period_export', year_id=selected_year.id, week=period.week_number) }}"
+       class="btn btn-success">
+        <i class="bi bi-file-earmark-excel"></i> Экспорт в Excel
+    </a>
+</div>
+
+<!-- Teacher data table -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table"></i> Табель преподавателей за неделю {{ period.week_number }}
+    </div>
+    <div class="card-body">
+        {% if teacher_data %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">№</th>
+                        <th>Преподаватель</th>
+                        <th>Дисциплины</th>
+                        <th style="width: 100px;">Пар</th>
+                        <th style="width: 100px;">Часов</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in teacher_data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ t.teacher.full_name }}</td>
+                        <td>
+                            {% for disc, count in t.disciplines.items() %}
+                            <span class="badge bg-secondary me-1">{{ disc }}: {{ count }}</span>
+                            {% endfor %}
+                        </td>
+                        <td><strong>{{ t.pairs }}</strong></td>
+                        <td><strong>{{ t.pairs * 2 }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="3">Итого:</th>
+                        <th>{{ total_pairs }}</th>
+                        <th>{{ total_hours }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i>
+            Нет проведённых пар за этот период
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% elif selected_year and weeks %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Выберите период для формирования табеля
+</div>
+{% elif not selected_year %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Выберите учебный год
+</div>
+{% endif %}
+{% endblock %}

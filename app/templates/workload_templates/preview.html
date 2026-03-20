@@ -1,0 +1,907 @@
+{% extends "base.html" %}
+
+{% block title %}Предпросмотр шаблона - APEC Petrotechnic{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Базовые стили как в index.html */
+:root {
+    --sidebar-width: 0px;
+}
+
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+    width: 100% !important;
+    overflow-x: auto;
+}
+
+.container-fluid {
+    padding: 0.75rem !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Стили расписания точно как в index.html */
+.schedule-cell {
+    min-height: 80px;
+    font-size: 0.85rem;
+    vertical-align: top;
+    padding: 0.5rem !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.schedule-cell .discipline {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.schedule-cell .teacher {
+    color: #666;
+    font-size: 0.8rem;
+    line-height: 1.1;
+}
+
+.schedule-cell .room {
+    color: #999;
+    font-size: 0.75rem;
+    line-height: 1.1;
+}
+
+/* Статусы занятий - точно как в index.html */
+.status-planned { background-color: #fff !important; border: 2px solid #6c757d !important; }
+.status-done { background-color: #d4edda !important; border: 2px solid #28a745 !important; }
+.status-substitution { background-color: #fff3cd !important; border: 2px solid #ffc107 !important; }
+.status-cancelled { background-color: #f8d7da !important; border: 2px solid #dc3545 !important; text-decoration: line-through !important; opacity: 0.7 !important; }
+.status-completed { background-color: #e2d5f1 !important; border: 2px solid #6f42c1 !important; }
+.status-rescheduled { background-color: #d1ecf1 !important; border: 2px solid #17a2b8 !important; }
+.status-empty { background-color: #f8f9fa !important; }
+
+/* НОВЫЕ СИНИЕ СТИЛИ ДЛЯ ШАБЛОННЫХ ДАННЫХ */
+.status-template { background-color: #cce7ff !important; border: 2px solid #007bff !important; }
+.status-template .teacher { color: white !important; font-weight: 500 !important; }
+.status-template-selected { background-color: #0066cc !important; border: 2px solid #004499 !important; color: white !important; }
+.status-template-preferred { background-color: #66b3ff !important; border: 2px solid #3399ff !important; }
+
+/* Таблица расписания */
+.table-responsive {
+    border-radius: 8px;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    margin-bottom: 0 !important;
+    min-width: 800px;
+}
+
+/* Секции предпросмотра */
+.preview-section {
+    margin-bottom: 2rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    padding: 1rem 1.5rem;
+    color: white;
+    margin: 0;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.section-header.real-schedule {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.section-header.template-schedule {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.section-content {
+    padding: 1.5rem;
+    background: white;
+}
+
+/* Навигация как в index.html */
+#navigationCard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+/* Фильтры */
+.filters-card {
+    margin-bottom: 1.5rem;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 0.5rem !important;
+    }
+    
+    h2 {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .schedule-cell {
+        min-height: 50px !important;
+        font-size: 0.7rem !important;
+        padding: 0.25rem !important;
+    }
+    
+    .schedule-cell .discipline {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+    
+    .schedule-cell .teacher,
+    .schedule-cell .room {
+        font-size: 0.6rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.25rem !important;
+        font-size: 0.75rem;
+    }
+    
+    .table th:first-child,
+    .table td:first-child {
+        width: 30px !important;
+        font-size: 0.7rem;
+    }
+    
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        width: 60px !important;
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .table {
+        min-width: 700px;
+    }
+    
+    .schedule-cell {
+        min-height: 45px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    .schedule-cell .discipline {
+        font-size: 0.65rem !important;
+    }
+    
+    .schedule-cell .teacher,
+    .schedule-cell .room {
+        font-size: 0.55rem !important;
+    }
+    
+    h2 {
+        font-size: 1.1rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.2rem !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* Стили для легенды статусов */
+.status-example {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 2px solid;
+}
+
+.status-example.status-planned { background-color: #fff; border-color: #6c757d; }
+.status-example.status-done { background-color: #d4edda; border-color: #28a745; }
+.status-example.status-substitution { background-color: #fff3cd; border-color: #ffc107; }
+.status-example.status-cancelled { background-color: #f8d7da; border-color: #dc3545; }
+.status-example.status-completed { background-color: #e2d5f1; border-color: #6f42c1; }
+.status-example.status-rescheduled { background-color: #d1ecf1; border-color: #17a2b8; }
+.status-example.status-empty { background-color: #f8f9fa; border-color: #dee2e6; }
+.status-example.status-template { background-color: #cce7ff; border-color: #007bff; }
+.status-example.status-template-selected { background-color: #0066cc; border-color: #004499; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-3">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-eye"></i> Предпросмотр шаблона нагрузки</h2>
+            <p class="text-muted mb-0">{{ workload.discipline }} • Группа: {{ group.name }} • Преподаватель: {{ workload.teacher.full_name if workload.teacher else 'Не назначен' }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('workload_templates.editor') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Назад к редактору
+            </a>
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                <i class="bi bi-arrow-clockwise"></i> Обновить
+            </button>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="card mb-4 filters-card">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Период отображения</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="view" id="view_week" value="week" checked onchange="updateScheduleView()">
+                        <label class="btn btn-outline-primary" for="view_week">Неделя</label>
+                        
+                        <input type="radio" class="btn-check" name="view" id="view_month" value="month" onchange="updateScheduleView()">
+                        <label class="btn btn-outline-primary" for="view_month">Месяц</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Группа</label>
+                    <select id="groupFilter" class="form-select" onchange="updateScheduleView()">
+                        <option value="">-- Выберите группу --</option>
+                        <option value="{{ group.id }}" selected>{{ group.name }}</option>
+                        <!-- Здесь будут добавлены другие группы через JS -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Преподаватель</label>
+                    <select id="teacherFilter" class="form-select" onchange="updateScheduleView()">
+                        <option value="">-- Или преподавателя --</option>
+                        {% if workload.teacher %}
+                        <option value="{{ workload.teacher.id }}">{{ workload.teacher.full_name }}</option>
+                        {% endif %}
+                        <!-- Здесь будут добавлены другие преподаватели через JS -->
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация по неделям -->
+    <div id="navigationCard" style="display: flex;">
+        <button class="btn btn-outline-primary" onclick="navigatePeriod(-1)">
+            <i class="bi bi-chevron-left"></i> Предыдущая неделя
+        </button>
+        <h5 class="mb-0 text-center flex-grow-1" id="currentPeriod">Неделя</h5>
+        <button class="btn btn-outline-primary" onclick="navigatePeriod(1)">
+            Следующая неделя <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Легенда статусов -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="card-title mb-3"><i class="bi bi-info-circle"></i> Статусы занятий:</h6>
+            <div class="row g-2">
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-center">
+                        <div class="status-example status-done me-2"></div>
+                        <small>Реальные занятия (проведены)</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-center">
+                        <div class="status-example status-planned me-2"></div>
+                        <small>Реальные занятия (запланированы)</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-center">
+                        <div class="status-example status-template-selected me-2"></div>
+                        <small>Шаблон (обязательные слоты)</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-center">
+                        <div class="status-example status-empty me-2"></div>
+                        <small>Свободные слоты</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- РЕАЛЬНОЕ РАСПИСАНИЕ -->
+    <div class="preview-section">
+        <h4 class="section-header real-schedule">
+            <span><i class="bi bi-calendar3"></i> Реальное расписание группы {{ group.name }}</span>
+            <small id="realScheduleInfo">Загружается...</small>
+        </h4>
+        <div class="section-content">
+            <div id="realScheduleContent">
+                <div class="text-center p-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загружаем реальное расписание...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ШАБЛОН НАГРУЗКИ -->
+    <div class="preview-section">
+        <h4 class="section-header template-schedule">
+            <span><i class="bi bi-grid-3x3"></i> Шаблон нагрузки: {{ workload.discipline }}</span>
+            <small id="templateScheduleInfo">Загружается...</small>
+        </h4>
+        <div class="section-content">
+            <div id="templateScheduleContent">
+                <div class="text-center p-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загружаем шаблон нагрузки...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Глобальные переменные
+const GROUP_ID = {{ group.id }};
+const WORKLOAD_ID = {{ workload.id }};
+const PAIR_TIMES = {
+    1: {start: '08:30', end: '09:50'},
+    2: {start: '10:00', end: '11:20'},
+    3: {start: '11:30', end: '12:50'},
+    4: {start: '13:30', end: '14:50'},
+    5: {start: '15:00', end: '16:20'},
+    6: {start: '16:30', end: '17:50'},
+    7: {start: '18:00', end: '19:20'}
+};
+
+// Настройки отображения
+let currentView = 'week';
+// Вычисляем offset для недели 20 (12-18 января 2026)
+// Сегодня: 2026-01-12, неделя 20 начинается с 12 января
+const WEEK_20_START = new Date(2026, 0, 12); // 12 января 2026
+const today = new Date();
+const currentMonday = new Date(today);
+currentMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7)); // Получаем понедельник текущей недели
+const weekDiff = Math.round((WEEK_20_START - currentMonday) / (7 * 24 * 60 * 60 * 1000));
+let currentWeekOffset = weekDiff; // Автоматически вычисляем offset до недели 20
+let currentMonthOffset = 0;
+
+console.log('Week offset calculated:', currentWeekOffset, 'weeks from current week to week 20');
+
+// Данные расписания из backend
+const REAL_SCHEDULE_DATA = {{ existing_schedule|tojson }};
+const TEMPLATE_DATA = {{ template_schedule|tojson }};
+let realScheduleData = REAL_SCHEDULE_DATA || [];
+let templateScheduleData = TEMPLATE_DATA || [];
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DEBUG: Page loaded');
+    console.log('DEBUG: Real schedule data:', REAL_SCHEDULE_DATA);
+    console.log('DEBUG: Group ID:', GROUP_ID, 'Workload ID:', WORKLOAD_ID);
+    
+    // Заполняем фильтры с доступными группами и преподавателями
+    populateFilters();
+    
+    updateNavigationLabels();
+    loadPreviewData();
+});
+
+// Заполнение фильтров группами и преподавателями
+async function populateFilters() {
+    const groupFilter = document.getElementById('groupFilter');
+    const teacherFilter = document.getElementById('teacherFilter');
+    
+    try {
+        // Загружаем все группы
+        const groupsResponse = await fetch('/workload-templates/api/groups');
+        if (groupsResponse.ok) {
+            const groups = await groupsResponse.json();
+            
+            // Очищаем и заполняем фильтр групп
+            groupFilter.innerHTML = '<option value="">-- Выберите группу --</option>';
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = `${group.name} (${group.course} курс)`;
+                if (group.id === GROUP_ID) {
+                    option.selected = true;
+                }
+                groupFilter.appendChild(option);
+            });
+        }
+        
+        // Загружаем всех преподавателей
+        const teachersResponse = await fetch('/workload-templates/api/teachers');
+        if (teachersResponse.ok) {
+            const teachers = await teachersResponse.json();
+            
+            // Очищаем и заполняем фильтр преподавателей
+            teacherFilter.innerHTML = '<option value="">-- Или преподавателя --</option>';
+            teachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher.id;
+                option.textContent = teacher.full_name;
+                teacherFilter.appendChild(option);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error loading filter data:', error);
+        // Fallback: Простые опции если API недоступно
+        groupFilter.innerHTML = '<option value="">-- Выберите группу --</option><option value="' + GROUP_ID + '" selected>' + '{{ group.name }}' + '</option>';
+        teacherFilter.innerHTML = '<option value="">-- Или преподавателя --</option>';
+    }
+    
+    // После заполнения фильтров инициализируем текущие значения
+    currentGroupId = groupFilter.value ? parseInt(groupFilter.value) : null;
+    currentTeacherId = teacherFilter.value ? parseInt(teacherFilter.value) : null;
+    
+    console.log('DEBUG: Initialized filters - groupId:', currentGroupId, 'teacherId:', currentTeacherId);
+}
+
+// Обновление лейблов навигации
+function updateNavigationLabels() {
+    const currentPeriodElement = document.getElementById('currentPeriod');
+    const today = new Date();
+    
+    if (currentView === 'week') {
+        const currentMonday = new Date(today);
+        currentMonday.setDate(today.getDate() - today.getDay() + 1);
+        
+        const targetMonday = new Date(currentMonday);
+        targetMonday.setDate(currentMonday.getDate() + (currentWeekOffset * 7));
+        
+        const targetSunday = new Date(targetMonday);
+        targetSunday.setDate(targetMonday.getDate() + 6);
+        
+        currentPeriodElement.innerHTML = 
+            `Неделя ${targetMonday.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} - 
+            ${targetSunday.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'})}`;
+    } else if (currentView === 'month') {
+        const targetMonth = new Date(today.getFullYear(), today.getMonth() + currentMonthOffset, 1);
+        currentPeriodElement.innerHTML = 
+            `${targetMonth.toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'})}`;
+    }
+}
+
+// Навигация по периодам
+function navigatePeriod(direction) {
+    if (currentView === 'week') {
+        currentWeekOffset += direction;
+    } else if (currentView === 'month') {
+        currentMonthOffset += direction;
+    }
+    updateNavigationLabels();
+    loadPreviewData();
+}
+
+// Глобальные переменные для фильтрации
+let currentGroupId = null;
+let currentTeacherId = null;
+
+// Обновление вида расписания
+function updateScheduleView() {
+    const groupFilter = document.getElementById('groupFilter');
+    const teacherFilter = document.getElementById('teacherFilter');
+    const viewRadios = document.querySelectorAll('input[name="view"]');
+    
+    // Получаем новые значения фильтров
+    const newGroupId = groupFilter.value ? parseInt(groupFilter.value) : null;
+    const newTeacherId = teacherFilter.value ? parseInt(teacherFilter.value) : null;
+    
+    // Определяем что изменилось и сбрасываем противоположный фильтр
+    if (newGroupId !== currentGroupId) {
+        // Изменилась группа (выбрана новая или сброшена)
+        if (newGroupId) {
+            // Выбрана группа - сбрасываем преподавателя
+            teacherFilter.value = '';
+            currentTeacherId = null;
+            console.log('Group selected:', newGroupId, '- teacher filter reset');
+        }
+        currentGroupId = newGroupId;
+    } else if (newTeacherId !== currentTeacherId) {
+        // Изменился преподаватель (выбран новый или сброшен)
+        if (newTeacherId) {
+            // Выбран преподаватель - сбрасываем группу
+            groupFilter.value = '';
+            currentGroupId = null;
+            console.log('Teacher selected:', newTeacherId, '- group filter reset');
+        }
+        currentTeacherId = newTeacherId;
+    }
+    
+    viewRadios.forEach(radio => {
+        if (radio.checked) currentView = radio.value;
+    });
+    
+    updateNavigationLabels();
+    loadPreviewData();
+}
+
+// Обновление данных
+function refreshData() {
+    loadPreviewData();
+}
+
+// Загрузка данных предпросмотра
+async function loadPreviewData() {
+    try {
+        console.log('Loading preview data for group', GROUP_ID, 'workload', WORKLOAD_ID);
+        
+        // Определяем период для отображения
+        const today = new Date();
+        let startDate, endDate;
+        
+        if (currentView === 'week') {
+            const currentMonday = new Date(today);
+            currentMonday.setDate(today.getDate() - today.getDay() + 1);
+            
+            const targetMonday = new Date(currentMonday);
+            targetMonday.setDate(currentMonday.getDate() + (currentWeekOffset * 7));
+            
+            const targetSunday = new Date(targetMonday);
+            targetSunday.setDate(targetMonday.getDate() + 6);
+            
+            startDate = targetMonday;
+            endDate = targetSunday;
+            
+            console.log(`Week view: offset=${currentWeekOffset}, showing week ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+        } else if (currentView === 'month') {
+            const targetMonth = new Date(today.getFullYear(), today.getMonth() + currentMonthOffset, 1);
+            startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+            endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+        }
+        
+        // Загружаем реальное расписание
+        await loadRealSchedule(startDate, endDate);
+        
+        // Загружаем шаблон
+        await loadTemplateSchedule(startDate, endDate);
+        
+    } catch (error) {
+        console.error('Error loading preview data:', error);
+        showError('Ошибка загрузки данных предпросмотра');
+    }
+}
+
+// Загрузка реального расписания (через API)
+async function loadRealSchedule(startDate, endDate) {
+    const realContent = document.getElementById('realScheduleContent');
+    const realInfo = document.getElementById('realScheduleInfo');
+
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    // Показываем индикатор загрузки
+    realContent.innerHTML = `
+        <div class="text-center p-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загружаем расписание...</p>
+        </div>`;
+
+    try {
+        // Формируем URL для API
+        let apiUrl = `/workload-templates/api/schedule-by-period?start_date=${startDateStr}&end_date=${endDateStr}`;
+
+        if (currentTeacherId) {
+            apiUrl += `&teacher_id=${currentTeacherId}`;
+            console.log('Loading teacher schedule from API:', currentTeacherId);
+        } else if (currentGroupId) {
+            apiUrl += `&group_id=${currentGroupId}`;
+            console.log('Loading group schedule from API:', currentGroupId);
+        } else {
+            // По умолчанию используем группу из URL
+            apiUrl += `&group_id=${GROUP_ID}`;
+            console.log('Loading default group schedule from API:', GROUP_ID);
+        }
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const scheduleData = await response.json();
+        console.log('Loaded schedule from API:', scheduleData.length, 'entries');
+
+        // Преобразуем в формат для таблицы
+        const scheduleForTable = scheduleData.map(item => {
+            const itemDate = new Date(item.date);
+            const dayIndex = itemDate.getDay() === 0 ? 6 : itemDate.getDay() - 1; // Понедельник = 0
+
+            return {
+                dayIndex: dayIndex,
+                pairNumber: item.pair_number,
+                discipline: item.discipline,
+                teacher: item.teacher ? item.teacher.name : 'Не назначен',
+                room: item.room ? item.room.number : '-',
+                status: item.status,
+                date: item.date,
+                group_name: item.group ? item.group.name : null
+            };
+        }).filter(item => item.dayIndex >= 0 && item.dayIndex < 5); // Только будние дни
+
+        realContent.innerHTML = generateWeekTable(scheduleForTable, 'real');
+        realInfo.textContent = `${startDate.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} - ${endDate.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} • ${scheduleForTable.length} пар`;
+
+    } catch (error) {
+        console.error('Error loading schedule from API:', error);
+        realContent.innerHTML = `
+            <div class="alert alert-danger text-center">
+                <h6><i class="bi bi-exclamation-triangle"></i> Ошибка загрузки</h6>
+                <p class="mb-0">${error.message}</p>
+            </div>`;
+        realInfo.textContent = 'Ошибка';
+    }
+}
+
+// Загрузка шаблона нагрузки
+async function loadTemplateSchedule(startDate, endDate) {
+    const templateContent = document.getElementById('templateScheduleContent');
+    const templateInfo = document.getElementById('templateScheduleInfo');
+    
+    console.log('Loading template schedule for period:', startDate, '-', endDate);
+    console.log('Template data available:', templateScheduleData.length, 'entries');
+    console.log('Template data type:', typeof templateScheduleData);
+    
+    if (templateScheduleData.length > 0) {
+        console.log('First template entry:', templateScheduleData[0]);
+        console.log('Last template entry:', templateScheduleData[templateScheduleData.length - 1]);
+        
+        // Покажем диапазон дат в шаблоне
+        const dates = templateScheduleData.map(item => item.date).sort();
+        console.log('Template date range:', dates[0], 'to', dates[dates.length - 1]);
+        console.log('Unique dates in template:', [...new Set(dates)].slice(0, 10)); // Первые 10 уникальных дат
+    }
+    
+    if (!templateScheduleData || templateScheduleData.length === 0) {
+        templateContent.innerHTML = generateWeekTable([], 'template');
+        templateInfo.textContent = 'Шаблон не создан';
+        return;
+    }
+    
+    // Фильтруем данные шаблона по периоду
+    console.log('==== TEMPLATE FILTERING DEBUG ====');
+    console.log('Filtering template data for period:', startDate, 'to', endDate);
+    console.log('Total template entries:', templateScheduleData.length);
+    
+    // Покажем первые несколько записей для анализа
+    if (templateScheduleData.length > 0) {
+        console.log('First 3 template entries:', templateScheduleData.slice(0, 3));
+        console.log('Sample entry date type:', typeof templateScheduleData[0]?.date, templateScheduleData[0]?.date);
+    }
+    
+    const filteredData = templateScheduleData.filter(item => {
+        // Более надежное сравнение дат - сравниваем только даты без времени
+        const itemDate = new Date(item.date + 'T00:00:00');
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        const inRange = itemDate >= startDateOnly && itemDate <= endDateOnly;
+        if (!inRange) {
+            console.log('Template entry filtered OUT:', item.date, 'not in range', startDateOnly.toDateString(), 'to', endDateOnly.toDateString());
+        } else {
+            console.log('Template entry KEPT:', item.date, 'pair', item.pair_number);
+        }
+        return inRange;
+    });
+    
+    console.log('Filtered template entries for period:', filteredData.length);
+    if (filteredData.length > 0) {
+        console.log('Sample filtered entry:', filteredData[0]);
+        console.log('All filtered template entries:', filteredData);
+        
+        // Группируем по дням недели для анализа
+        const byDay = {};
+        filteredData.forEach(entry => {
+            const date = entry.date;
+            if (!byDay[date]) byDay[date] = [];
+            byDay[date].push(entry);
+        });
+        console.log('Template entries grouped by day:', byDay);
+    }
+    
+    const scheduleForTable = filteredData.map(item => {
+        const itemDate = new Date(item.date);
+        const dayIndex = (itemDate.getDay() + 6) % 7; // Понедельник = 0
+        return {
+            dayIndex: dayIndex,
+            pairNumber: item.pair_number,
+            discipline: item.discipline,
+            teacher: item.teacher?.name || item.teacher,
+            room: item.room?.number || item.room,
+            status: item.status,
+            date: item.date
+        };
+    }).filter(item => item.dayIndex < 5); // Только будние дни
+    
+    console.log('Final schedule for table:', scheduleForTable);
+    console.log('Schedule by day for table:');
+    const tableByDay = {};
+    scheduleForTable.forEach(entry => {
+        if (!tableByDay[entry.dayIndex]) tableByDay[entry.dayIndex] = [];
+        tableByDay[entry.dayIndex].push(entry);
+    });
+    console.log(tableByDay);
+    
+    templateContent.innerHTML = generateWeekTable(scheduleForTable, 'template');
+    templateInfo.textContent = `${startDate.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} - ${endDate.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit'})} • ${scheduleForTable.length} пар шаблона`;
+}
+
+// Преобразование данных шаблона в формат расписания
+function convertTemplateToSchedule(templateData, startDate, endDate) {
+    const results = [];
+    
+    // Проходим по неделям в шаблоне
+    for (const [weekNumber, weekData] of Object.entries(templateData)) {
+        // Проходим по дням недели
+        for (const [dayIndex, dayData] of Object.entries(weekData)) {
+            if (!dayData || typeof dayData !== 'object') continue;
+            
+            // Проходим по парам
+            for (const [pairNumber, status] of Object.entries(dayData)) {
+                if (status === 'selected') {
+                    // Вычисляем дату этого дня (упрощенно)
+                    const dayIndexNum = parseInt(dayIndex);
+                    const pairNumberNum = parseInt(pairNumber);
+                    
+                    if (dayIndexNum < 5 && pairNumberNum >= 1 && pairNumberNum <= 7) {
+                        results.push({
+                            dayIndex: dayIndexNum,
+                            pairNumber: pairNumberNum,
+                            discipline: '{{ workload.discipline }}',
+                            teacher: '{{ workload.teacher.full_name if workload.teacher else "Не назначен" }}',
+                            room: null,
+                            status: 'template',
+                            weekNumber: parseInt(weekNumber)
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    return results;
+}
+
+// Генерация таблицы недели
+function generateWeekTable(scheduleData, type) {
+    const WEEK_DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+    
+    console.log(`==== GENERATE WEEK TABLE (${type}) ====`);
+    console.log('Input scheduleData:', scheduleData);
+    console.log('Schedule data length:', scheduleData.length);
+    
+    // Создаем сетку расписания
+    const scheduleGrid = {};
+    scheduleData.forEach(item => {
+        console.log(`Adding to grid: day ${item.dayIndex}, pair ${item.pairNumber}`);
+        if (!scheduleGrid[item.dayIndex]) {
+            scheduleGrid[item.dayIndex] = {};
+        }
+        scheduleGrid[item.dayIndex][item.pairNumber] = item;
+    });
+    
+    console.log('Final scheduleGrid:', scheduleGrid);
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">Пара</th>
+                        <th style="width: 100px;">Время</th>`;
+    
+    WEEK_DAYS.forEach((day) => {
+        html += `<th class="text-center">${day}</th>`;
+    });
+    
+    html += `</tr></thead><tbody>`;
+    
+    for (let pairNum = 1; pairNum <= 7; pairNum++) {
+        html += `<tr>
+            <td class="text-center fw-bold">${pairNum}</td>
+            <td class="text-center">
+                <small>${PAIR_TIMES[pairNum].start}<br>${PAIR_TIMES[pairNum].end}</small>
+            </td>`;
+        
+        for (let dayIndex = 0; dayIndex < 5; dayIndex++) {
+            const item = scheduleGrid[dayIndex] && scheduleGrid[dayIndex][pairNum];
+            if (item) {
+                const statusClass = type === 'template' ? 'status-template-selected' : `status-${item.status || 'planned'}`;
+                const badgeClass = type === 'template' ? 'bg-primary' : 'bg-success';
+                const badgeText = type === 'template' ? 'Шаблон' : 'Реальная';
+                
+                // Определяем тип фильтрации на основе глобальных переменных
+                const isTeacherFilter = currentTeacherId !== null;
+                const isGroupFilter = currentGroupId !== null;
+                
+                html += `<td class="schedule-cell ${statusClass}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="discipline">${item.discipline || 'Дисциплина'}</div>
+                        <span class="badge ${badgeClass} badge-sm">${badgeText}</span>
+                    </div>`;
+                
+                // Показываем группу при фильтре по преподавателю, преподавателя при фильтре по группе
+                if (isTeacherFilter && item.group_name) {
+                    html += `<div class="teacher">Группа: ${item.group_name}</div>`;
+                } else if (item.teacher) {
+                    html += `<div class="teacher">${item.teacher}</div>`;
+                }
+                
+                html += `<div class="room">ауд. ${item.room || '-'}</div>
+                </td>`;
+            } else {
+                html += `<td class="schedule-cell status-empty"></td>`;
+            }
+        }
+        
+        html += `</tr>`;
+        
+        // Обеденный перерыв после 3 пары
+        if (pairNum === 3) {
+            html += `<tr class="table-secondary">
+                <td colspan="7" class="text-center py-1"><strong>ОБЕД</strong> 12:50 - 13:30</td>
+            </tr>`;
+        }
+    }
+    
+    html += `</tbody></table></div>`;
+    
+    if (scheduleData.length === 0) {
+        html += `<div class="alert alert-info text-center mt-3">
+            <h6><i class="bi bi-info-circle"></i> Нет данных</h6>
+            <p class="mb-0">${type === 'template' ? 'Шаблон не содержит занятий в этом периоде' : 'Нет реальных занятий в этом периоде'}</p>
+        </div>`;
+    }
+    
+    return html;
+}
+
+// Генерация примера шаблона (заглушка)
+function generateMockTemplate() {
+    return [
+        {dayIndex: 0, pairNumber: 1, discipline: '{{ workload.discipline }}', teacher: '{{ workload.teacher.full_name if workload.teacher else "Не назначен" }}', room: null},
+        {dayIndex: 0, pairNumber: 3, discipline: '{{ workload.discipline }}', teacher: '{{ workload.teacher.full_name if workload.teacher else "Не назначен" }}', room: null},
+        {dayIndex: 2, pairNumber: 2, discipline: '{{ workload.discipline }}', teacher: '{{ workload.teacher.full_name if workload.teacher else "Не назначен" }}', room: null},
+        {dayIndex: 4, pairNumber: 4, discipline: '{{ workload.discipline }}', teacher: '{{ workload.teacher.full_name if workload.teacher else "Не назначен" }}', room: null}
+    ];
+}
+
+// Показ ошибки
+function showError(message) {
+    const realContent = document.getElementById('realScheduleContent');
+    const templateContent = document.getElementById('templateScheduleContent');
+    
+    const errorHtml = `<div class="alert alert-danger text-center">
+        <h6><i class="bi bi-exclamation-triangle"></i> Ошибка</h6>
+        <p class="mb-0">${message}</p>
+    </div>`;
+    
+    realContent.innerHTML = errorHtml;
+    templateContent.innerHTML = errorHtml;
+}
+</script>
+{% endblock %}

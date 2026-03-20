@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Учёт часов - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+        <li class="breadcrumb-item active">Учёт часов</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clock-history"></i> Учёт часов</h2>
+    {% if group %}
+    <a href="{{ url_for('reports.hours_export', group_id=selected_group, semester=selected_semester) }}"
+       class="btn btn-success">
+        <i class="bi bi-file-earmark-excel"></i> Экспорт Excel
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Группа</label>
+                <select name="group_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите группу --</option>
+                    {% for g in groups %}
+                    <option value="{{ g.id }}" {% if selected_group == g.id %}selected{% endif %}>
+                        {{ g.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Семестр</label>
+                <select name="semester" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все семестры</option>
+                    {% for s in range(1, 9) %}
+                    <option value="{{ s }}" {% if selected_semester == s %}selected{% endif %}>{{ s }} семестр</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if group %}
+<!-- Report Table -->
+<div class="card">
+    <div class="card-header">
+        <strong>{{ group.name }}</strong> - {{ group.course }} курс
+        {% if selected_semester %}({{ selected_semester }} семестр){% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Дисциплина</th>
+                        <th>Тип</th>
+                        <th>Преподаватель</th>
+                        <th class="text-center">План</th>
+                        <th class="text-center">Факт</th>
+                        <th class="text-center">Остаток</th>
+                        <th style="width: 200px;">Прогресс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for wl in workloads %}
+                    <tr>
+                        <td>{{ wl.discipline }}</td>
+                        <td>
+                            {% if wl.lesson_type == 'theory' %}
+                                <span class="badge bg-primary">Т</span>
+                            {% elif wl.lesson_type == 'practice' %}
+                                <span class="badge bg-success">П</span>
+                            {% elif wl.lesson_type == 'consultation' %}
+                                <span class="badge bg-info">К</span>
+                            {% elif wl.lesson_type == 'exam' %}
+                                <span class="badge bg-danger">Э</span>
+                            {% else %}
+                                <span class="badge bg-secondary">?</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ wl.teacher.full_name if wl.teacher else '-' }}</td>
+                        <td class="text-center">{{ wl.total_hours }}</td>
+                        <td class="text-center">{{ wl.hours_completed_actual }}</td>
+                        <td class="text-center">{{ wl.hours_remaining_for_discipline }}</td>
+                        <td>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar {{ 'bg-success' if wl.progress_percent_discipline >= 100 else 'bg-primary' }}"
+                                     style="width: {{ wl.progress_percent_discipline }}%">
+                                    {{ wl.progress_percent_discipline }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Нет данных</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if workloads %}
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="3">ИТОГО</th>
+                        <th class="text-center">{{ total_plan }}</th>
+                        <th class="text-center">{{ total_fact }}</th>
+                        <th class="text-center">{{ total_plan - total_fact }}</th>
+                        <th>
+                            {% set total_progress = ((total_fact / total_plan * 100) | int) if total_plan > 0 else 0 %}
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar {{ 'bg-success' if total_progress >= 100 else 'bg-primary' }}"
+                                     style="width: {{ total_progress }}%">
+                                    {{ total_progress }}%
+                                </div>
+                            </div>
+                        </th>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Выберите группу для просмотра отчёта
+</div>
+{% endif %}
+{% endblock %}

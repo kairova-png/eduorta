@@ -1,0 +1,2551 @@
+{
+  "БНГС 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Нурланұлы С.",
+          "Даулетбаева Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Кабиден К."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Кабиден К.",
+          "Ажгалиев М."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Ермеков Д."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Нурланұлы С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А.",
+          "Кабиден К"
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А.",
+          "Ермеков Д."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "География",
+        "teachers": [
+          "Нурланұлы С.",
+          "Ибетова Г."
+        ]
+      }
+    }
+  },
+  "ТДНГ 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э.",
+          "Кабиден К."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физическая культура",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э.",
+          "Нурланұлы С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Кабиден К."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Ибетова Г.",
+          "Даулетбаева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Ермеков Д."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Кабиден К.",
+          "Ажгалиев М"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "-------",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "--------",
+          "Ермеков Д."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Нурланұлы С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      }
+    }
+  },
+  "ЭНГМ 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Кабиден К.",
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Даулетбаева Г.",
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Кабиден К."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Ажгалиев М.",
+          "Кабиден К."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Ермеков Д."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "География",
+        "teachers": [
+          "Рыскалиева А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э",
+          "Ихсанова Г."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Физическая культура",
+        "teachers": [
+          "Ермеков Д.",
+          "Тастанбеков С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      }
+    }
+  },
+  "ЭС 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Кабиден К."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э.",
+          "Кабиден К."
+        ]
+      },
+      "4": {
+        "type": "left_only",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Саржанова Э.",
+          "Даулетова Э."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Ғалымжанов А."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Тулегенова К.",
+          "Ажгалиев М."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "География",
+        "teachers": [
+          "Даулетбаева Г.",
+          "Ибетова Г."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Ғалымжанов А.",
+          "Кабиден К."
+        ]
+      }
+    }
+  },
+  "ЭС 2-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Кабиден К."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Ажгалиев М.",
+          "Кабиден К."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Ермеков Д."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "География",
+        "teachers": [
+          "Ермеков Д.",
+          "Ибетова Г"
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Тастанбеков С.",
+          "Даулетбаева Г."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А.",
+          "Кабиден К."
+        ]
+      },
+      "4": {
+        "type": "left_only",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    }
+  },
+  "ХТП 2-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Аристанов А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Кабиден К.",
+          "Даулетбаева Г."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Мурынов Б.",
+          "Рахым К."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Ажгалиев М.",
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Аристанов А.",
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Рахым К."
+        ]
+      },
+      "4": {
+        "type": "left_only",
+        "discipline": "География",
+        "teachers": [
+          "Рыскалиева А."
+        ]
+      }
+    }
+  },
+  "ХТП 3-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Всемирная История",
+        "teachers": [
+          "Берік А.",
+          "Ихсанова Г.",
+          "Даулетбаева Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Берік А.",
+          "Ихсанова Г.",
+          "Жолдаскалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Берік А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Берік А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Ихсанова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Ихсанова Г."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Рахым К.",
+          "Кабиден К."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Берік А.",
+          "Ихсанова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Берік А.",
+          "Ихсанова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Аристанов А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Рыскалиева А.",
+          "Мурынов Б."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Рахым К."
+        ]
+      }
+    }
+  },
+  "АиУ 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Мурынов Б",
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Саржанова Э."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "География",
+        "teachers": [
+          "Даулетбаева Г",
+          "Рыскалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Ғалымжанов А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Иманалиева Г."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Казахская литература",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Иманалиева Г.",
+          "Жолдаскалиева А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "Казахская литература",
+        "teachers": [
+          "Берік А.",
+          "Иманалиева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Физическая культура",
+        "teachers": [
+          "Тулегенова К.",
+          "Ғалымжанов А."
+        ]
+      }
+    }
+  },
+  "АиУ 2-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "right_only",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Иманалиева Г."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Иманалиева Г."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Багытова А.",
+          "Лян А.",
+          "Даулетбаева Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Багытова А.",
+          "Лян А.",
+          "Жолдаскалиева А"
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "География",
+        "teachers": [
+          "Берік А.",
+          "Рыскалиева А."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Мурынов Б.",
+          "Тулегенова К."
+        ]
+      }
+    }
+  },
+  "АиУ 3-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Жолдаскалиева А.",
+          "Берік А."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Даулетбаева Г.",
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Мурынов Б",
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Кайыров А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Сырымбетұлы Ш."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Даулетова Э.",
+          "Ихсанова Г."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Рыскалиева А.",
+          "Кайыров А."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Сырымбетұлы Ш."
+        ]
+      }
+    }
+  },
+  "АиУ 4-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Кайыров А."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "Всемирная история",
+        "teachers": [
+          "Даулетбаева Г."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Сырымбетұлы Ш."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Кайыров А.",
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Жолдаскалиева А.",
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Сырымбетұлы Ш.",
+          "Берік А."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Ибетова Г.",
+          "Мурынов Б."
+        ]
+      }
+    }
+  },
+  "АиУ 5-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Даулетбаева Г.",
+          "Берік А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Кайыров А."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Сырымбетұлы Ш."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Темирханова Г."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "География",
+        "teachers": [
+          "Ибетова Г."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Темирханова Г.",
+          "Кайыров А."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Мурынов Б.",
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Физическая культура",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Сырымбетұлы Ш.",
+          "Аяпбергенова О.",
+          "Убигалиева А."
+        ]
+      }
+    }
+  },
+  "ПО 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Кайыров А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Кабиден К.",
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Ибетова Г.",
+          "Багытова А.",
+          "Лян А."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Жолдаскалиева А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Ғалымжанов А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Всемирная история",
+        "right_discipline": "Физическая культура",
+        "teachers": [
+          "Даулетбаева Г.",
+          "Ғалымжанов А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Жолдаскалиева А",
+          "Мурынов Б."
+        ]
+      }
+    }
+  },
+  "ПО 2-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Кайыров А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Бекет А."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "left_only",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С",
+          "------------"
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Бекет А.",
+          "Кабиден К."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Рыскалиева А.",
+          "Даулетбаева Г."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Базарбаева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Кайыров А.",
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Физика",
+        "right_discipline": "Английский язык",
+        "teachers": [
+          "Мурынов Б.",
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Кабиденова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Тастанбеков С"
+        ]
+      }
+    }
+  },
+  "ЭС 3-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Багытова А.",
+          "Лян А.",
+          "Мурынов Б."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Химия",
+        "teachers": [
+          "Багытова А.",
+          "Лян А.",
+          "Ажгалиев М."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Аристанов А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "alternating",
+        "left_discipline": "География",
+        "right_discipline": "Всемирная история",
+        "teachers": [
+          "Ибетова Г.",
+          "Даулетбаева Г."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Аристанов А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Рахым К."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Информатика",
+        "right_discipline": "Глобальные компетенции",
+        "teachers": [
+          "Рахым К.",
+          "Кабиден К."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Багытова А.",
+          "Лян А."
+        ]
+      }
+    }
+  },
+  "ХТП 1-25": {
+    "ПОНЕДЕЛЬНИК": {
+      "2": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "3": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физическая культура",
+        "teachers": [
+          "Султангалиева А.",
+          "Ихсанова Г.",
+          "Нурланұлы С."
+        ]
+      },
+      "4": {
+        "type": "alternating",
+        "left_discipline": "Английский язык",
+        "right_discipline": "Физика",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А.",
+          "Мурынов Б."
+        ]
+      }
+    },
+    "ВТОРНИК": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Начальная военная и технологическая подготовка",
+        "teachers": [
+          "Махсотов Д."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Химия",
+        "teachers": [
+          "Ажгалиев М."
+        ]
+      },
+      "4": {
+        "type": "right_only",
+        "discipline": "Всемирная история",
+        "teachers": [
+          "Даулетбаева Г."
+        ]
+      }
+    },
+    "СРЕДА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Русский язык и литература",
+        "teachers": [
+          "Амангалиева Г."
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Глобальные компетенции",
+        "right_discipline": "География",
+        "teachers": [
+          "Кабиден К.",
+          "Рыскалиева А."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Ихсанова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      }
+    },
+    "ЧЕТВЕРГ": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Физика",
+        "teachers": [
+          "Мурынов Б."
+        ]
+      },
+      "2": {
+        "type": "every_week",
+        "discipline": "Физическая культура",
+        "teachers": [
+          "Нурланұлы С."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Казахская литература",
+        "teachers": [
+          "Изимова С."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Информатика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      }
+    },
+    "ПЯТНИЦА": {
+      "1": {
+        "type": "every_week",
+        "discipline": "Математика",
+        "teachers": [
+          "Тулегенова К"
+        ]
+      },
+      "2": {
+        "type": "alternating",
+        "left_discipline": "Химия",
+        "right_discipline": "Информатика",
+        "teachers": [
+          "Ажгалиев М.",
+          "Тулегенова К."
+        ]
+      },
+      "3": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Ихсанова Г."
+        ]
+      },
+      "4": {
+        "type": "every_week",
+        "discipline": "Английский язык",
+        "teachers": [
+          "Султангалиева А.",
+          "Берік А."
+        ]
+      }
+    }
+  }
+}

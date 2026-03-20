@@ -1,0 +1,1268 @@
+{% extends "base.html" %}
+
+{% block title %}Расписание - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar3"></i> Расписание</h2>
+    <div class="btn-group">
+        {% if selected_group or selected_teacher %}
+        <button onclick="showScheduleOverview({{ selected_group }})" class="btn btn-info">
+            <i class="bi bi-calendar2-month"></i> Обзор
+        </button>
+        {% endif %}
+        <a href="{{ url_for('schedule.create', group_id=selected_group) }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> Добавить пару
+        </a>
+        <a href="{{ url_for('schedule.generate') }}" class="btn btn-warning">
+            <i class="bi bi-magic"></i> Генерация
+        </a>
+        <a href="{{ url_for('schedule.generate_smart') }}" class="btn btn-success">
+            <i class="bi bi-cpu"></i> Умная генерация
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Группа</label>
+                <select name="group_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите группу --</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if selected_group == group.id %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Преподаватель</label>
+                <select name="teacher_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Или преподавателя --</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if selected_teacher == teacher.id %}selected{% endif %}>
+                        {{ teacher.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="view" id="view_week" value="week" 
+                           {% if view_type == 'week' %}checked{% endif %} onchange="this.form.submit()">
+                    <label class="btn btn-outline-primary" for="view_week">Неделя</label>
+                    
+                    <input type="radio" class="btn-check" name="view" id="view_month" value="month" 
+                           {% if view_type == 'month' %}checked{% endif %} onchange="this.form.submit()">
+                    <label class="btn btn-outline-primary" for="view_month">Месяц</label>
+                    
+                    <input type="radio" class="btn-check" name="view" id="view_year" value="year" 
+                           {% if view_type == 'year' %}checked{% endif %} onchange="this.form.submit()">
+                    <label class="btn btn-outline-primary" for="view_year">Год</label>
+                </div>
+                <input type="hidden" name="week" value="{{ week_offset }}">
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Period Navigation -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    {% if view_type == 'week' %}
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&week={{ week_offset - 1 }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-chevron-left"></i> Пред. неделя
+        </a>
+        <h5 class="mb-0">
+            {{ view_title }}<br>
+            <small class="text-muted">{{ period_start.strftime('%d.%m.%Y') }} - {{ period_end.strftime('%d.%m.%Y') }}</small>
+        </h5>
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&week={{ week_offset + 1 }}"
+           class="btn btn-outline-primary">
+            След. неделя <i class="bi bi-chevron-right"></i>
+        </a>
+    {% elif view_type == 'month' %}
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&month={{ (request.args.get('month', 0)|int) - 1 }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-chevron-left"></i> Пред. месяц
+        </a>
+        <h5 class="mb-0">
+            {{ view_title }}<br>
+            <small class="text-muted">{{ period_start.strftime('%d.%m.%Y') }} - {{ period_end.strftime('%d.%m.%Y') }}</small>
+        </h5>
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&month={{ (request.args.get('month', 0)|int) + 1 }}"
+           class="btn btn-outline-primary">
+            След. месяц <i class="bi bi-chevron-right"></i>
+        </a>
+    {% elif view_type == 'year' %}
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&year_offset={{ (request.args.get('year_offset', 0)|int) - 1 }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-chevron-left"></i> Пред. год
+        </a>
+        <h5 class="mb-0">
+            {{ view_title }}<br>
+            <small class="text-muted">{{ period_start.strftime('%Y') }} год</small>
+        </h5>
+        <a href="?{% if selected_group or selected_teacher %}group_id={{ selected_group }}&{% endif %}{% if selected_teacher %}teacher_id={{ selected_teacher }}&{% endif %}view={{ view_type }}&year_offset={{ (request.args.get('year_offset', 0)|int) + 1 }}"
+           class="btn btn-outline-primary">
+            След. год <i class="bi bi-chevron-right"></i>
+        </a>
+    {% endif %}
+</div>
+
+<!-- Schedule Display -->
+{% if selected_group or selected_teacher %}
+<div class="card">
+    <div class="card-body">
+        {% if view_type == 'week' %}
+        <!-- Week View Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="table-light">
+                        <th style="width: 60px;">Пара</th>
+                        <th style="width: 100px;">Время</th>
+                        <th>Понедельник<br><small>{{ (period_start).strftime('%d.%m') }}</small></th>
+                        <th>Вторник<br><small>{{ (period_start + timedelta(days=1)).strftime('%d.%m') }}</small></th>
+                        <th>Среда<br><small>{{ (period_start + timedelta(days=2)).strftime('%d.%m') }}</small></th>
+                        <th>Четверг<br><small>{{ (period_start + timedelta(days=3)).strftime('%d.%m') }}</small></th>
+                        <th>Пятница<br><small>{{ (period_start + timedelta(days=4)).strftime('%d.%m') }}</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pair_num in range(1, 8) %}
+                    <tr>
+                        <td class="text-center fw-bold">{{ pair_num }}</td>
+                        <td class="text-center">
+                            <small>{{ pair_times[pair_num]['start'] }}<br>{{ pair_times[pair_num]['end'] }}</small>
+                        </td>
+                        {% for day_idx in range(5) %}
+                        {% set schedule = schedule_grid.get((day_idx, pair_num)) %}
+                        {% set day_gup = gup_info.get(day_idx) %}
+                        <td class="schedule-cell status-{{ schedule.status if schedule else ('gup-' + (day_gup.activity_code or 'up').lower() if day_gup else 'empty') }}">
+                            {% if schedule %}
+                            <div class="discipline">{{ schedule.workload.discipline }}</div>
+                            {% if selected_teacher %}
+                                <div class="teacher">гр. {{ schedule.workload.group.name if schedule.workload.group else '-' }}</div>
+                                {# Если это замена и выбранный преподаватель - заменяющий #}
+                                {% if schedule.substitute_teacher_id == selected_teacher %}
+                                    <div class="text-info"><small><i class="bi bi-arrow-left-right"></i> Замена за: {{ schedule.workload.teacher.full_name }}</small></div>
+                                {% elif schedule.status == 'substitution' and schedule.substitute_teacher %}
+                                    {# Если выбранный преподаватель - оригинальный, и его заменяют #}
+                                    <div class="text-warning"><small><i class="bi bi-person-dash"></i> Ведёт: {{ schedule.substitute_teacher.full_name }}</small></div>
+                                {% endif %}
+                            {% else %}
+                                <div class="teacher">{{ schedule.workload.teacher.full_name if schedule.workload.teacher else '-' }}</div>
+                            {% endif %}
+                            <div class="room">ауд. {{ schedule.room.number if schedule.room else '-' }}</div>
+                            {% if not selected_teacher and schedule.status == 'substitution' and schedule.substitute_teacher %}
+                                <div class="text-warning"><small>Замена: {{ schedule.substitute_teacher.full_name }}</small></div>
+                                <div class="text-muted"><small>Вакант: {{ schedule.workload.teacher.full_name }}</small></div>
+                            {% endif %}
+                            {% if schedule.status == 'rescheduled' %}
+                            <div class="text-info"><small>Перенесена</small></div>
+                            {% endif %}
+                            {% if schedule.change_reason %}
+                            <div class="text-muted"><small>{{ schedule.change_reason }}</small></div>
+                            {% endif %}
+                            <div class="mt-1">
+                                <a href="{{ url_for('schedule.edit', id=schedule.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="openChangeModal({{ schedule.id }})">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                            </div>
+                            {% elif day_gup %}
+                            <!-- ГУП информация для пустых ячеек -->
+                            <div class="gup-info text-center">
+                                {% set activity_name = day_gup.activity_name or 'Учебный процесс' %}
+                                {% set activity_code = day_gup.activity_code or 'УП' %}
+                                
+                                {% if activity_code == 'К' %}
+                                    <div class="text-primary mb-1">🏖️ КАНИКУЛЫ</div>
+                                    <small class="text-muted">{{ activity_name }}</small>
+                                {% elif activity_code == ':::' %}
+                                    <div class="text-warning mb-1">📝 ЭКЗАМЕНЫ</div>
+                                    <small class="text-muted">{{ activity_name }}</small>
+                                {% elif activity_code == 'ПП' %}
+                                    <div class="text-info mb-1">🏭 ПРАКТИКА</div>
+                                    <small class="text-muted">{{ activity_name }}</small>
+                                {% elif activity_code == '*' %}
+                                    <div class="text-secondary mb-1">📅 ПОДГОТОВКА</div>
+                                    <small class="text-muted">{{ activity_name }}</small>
+                                {% else %}
+                                    <div class="text-muted mb-1">📚 {{ activity_name }}</div>
+                                    <small class="text-muted">Неделя {{ day_gup.week_number }}</small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% if pair_num == 3 %}
+                    <tr class="table-secondary">
+                        <td colspan="7" class="text-center py-1"><strong>ОБЕД</strong> 12:50 - 13:30</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% elif view_type == 'month' %}
+        <!-- Month View -->
+        <div class="month-view">
+            <h5 class="mb-3">
+                <i class="bi bi-calendar-month"></i> {{ period_start.strftime('%B %Y') }}
+            </h5>
+            {% set first_weekday = period_start.weekday() %}
+            {% set calendar_start = period_start - timedelta(days=first_weekday) %}
+            {% set total_days = (period_end - calendar_start).days + 1 %}
+            {% set weeks_in_month = (total_days + 6) // 7 %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="table-light">
+                        <th>Понедельник</th>
+                        <th>Вторник</th>
+                        <th>Среда</th>
+                        <th>Четверг</th>
+                        <th>Пятница</th>
+                        <th class="table-secondary">Суббота</th>
+                        <th class="table-secondary">Воскресенье</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in range(weeks_in_month) %}
+                    <tr>
+                        {% for day in range(7) %}
+                        {% set current_date = calendar_start + timedelta(days=week*7 + day) %}
+                        {% set is_current_month = current_date >= period_start and current_date <= period_end %}
+                        {% if current_date %}
+                        <td class="month-day {% if day >= 5 %}table-secondary{% endif %} {% if not is_current_month %}text-muted bg-light{% endif %}" style="height: 120px; vertical-align: top;">
+                            <div class="fw-bold mb-1 {% if not is_current_month %}text-muted{% endif %}">{{ current_date.day }}</div>
+                            {% if is_current_month and day < 5 %}
+                            <!-- Будние дни - показываем занятия -->
+                            {% set day_schedules = month_schedule_data.get(current_date.strftime('%Y-%m-%d'), []) %}
+                            {% for schedule in day_schedules %}
+                            {% if schedule.pair_number <= 7 %}
+                            <div class="small mb-1 p-1 rounded status-{{ schedule.status }} schedule-entry position-relative" 
+                                 style="font-size: 0.7em; cursor: pointer;" 
+                                 onclick="openChangeModal({{ schedule.id }})"
+                                 title="Нажмите для редактирования - {{ schedule.workload.discipline }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <span>{{ pair_times[schedule.pair_number]['start'] }} {{ schedule.workload.discipline[:15] }}{% if schedule.workload.discipline|length > 15 %}...{% endif %}</span>
+                                    <button class="btn btn-sm btn-outline-primary schedule-edit-btn" 
+                                            onclick="event.stopPropagation(); window.location.href='{{ url_for('schedule.edit', id=schedule.id) }}'"
+                                            style="padding: 1px 4px; font-size: 0.6em; line-height: 1;"
+                                            title="Быстрое редактирование">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.6em;">
+                                    {% if selected_teacher %}
+                                    <i class="bi bi-people"></i> гр. {{ schedule.workload.group.name if schedule.workload.group else '-' }}
+                                    {% else %}
+                                    <i class="bi bi-person"></i> {{ schedule.workload.teacher.full_name[:10] if schedule.workload.teacher else '-' }}...
+                                    {% endif %}
+                                    {% if schedule.room %}
+                                    <br><i class="bi bi-geo-alt"></i> {{ schedule.room.number }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            {% elif is_current_month %}
+                            <!-- Выходные дни текущего месяца -->
+                            <div class="text-muted small">Выходной</div>
+                            {% endif %}
+                        </td>
+                        {% else %}
+                        <td class="month-day bg-light"></td>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% elif view_type == 'year' %}
+        <!-- Year View - Simple Table Style like Month -->
+        <div class="year-view">
+            <h5 class="mb-3">
+                <i class="bi bi-calendar-year"></i> {{ period_start.year }} год
+            </h5>
+            
+            <!-- Простая легенда -->
+            <div class="alert alert-info py-2 mb-3">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Голубой фон</strong> - дни с занятиями. Кликните для просмотра подробностей.
+            </div>
+            
+            <div class="row">
+                {% for month in range(1, 13) %}
+                {% set month_start = period_start.replace(month=month, day=1) %}
+                {% set month_name = month_start.strftime('%B') %}
+                {% set days_in_month = (month_start.replace(day=28) + timedelta(days=4) - timedelta(days=(month_start.replace(day=28) + timedelta(days=4)).day)).day %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card">
+                        <div class="card-header text-center py-2 bg-primary text-white">
+                            <strong>{{ month_name }} {{ period_start.year }}</strong>
+                        </div>
+                        <div class="card-body p-2">
+                            <table class="table table-bordered table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center p-1" style="font-size: 0.75rem;">Пн</th>
+                                        <th class="text-center p-1" style="font-size: 0.75rem;">Вт</th>
+                                        <th class="text-center p-1" style="font-size: 0.75rem;">Ср</th>
+                                        <th class="text-center p-1" style="font-size: 0.75rem;">Чт</th>
+                                        <th class="text-center p-1" style="font-size: 0.75rem;">Пт</th>
+                                        <th class="text-center p-1 table-secondary" style="font-size: 0.75rem;">Сб</th>
+                                        <th class="text-center p-1 table-secondary" style="font-size: 0.75rem;">Вс</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set first_day = month_start.weekday() %}
+                                    {% for week in range(6) %}
+                                    <tr>
+                                        {% for day in range(7) %}
+                                        {% set day_counter = week * 7 + day - first_day + 1 %}
+                                        {% if (week == 0 and day < first_day) or day_counter > days_in_month or day_counter < 1 %}
+                                            <td class="p-1" style="height: 35px;"></td>
+                                        {% else %}
+                                            {% set day_date = month_start.replace(day=day_counter) %}
+                                            {% set day_schedules = [] %}
+                                            {% for schedule in schedules %}
+                                                {% if schedule.date == day_date and schedule.pair_number <= 7 %}
+                                                    {% set _ = day_schedules.append(schedule) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% set day_of_week = day_date.weekday() %}
+                                            {% if day_of_week < 5 %}
+                                                {% set day_schedules_filtered = day_schedules %}
+                                            {% else %}
+                                                {% set day_schedules_filtered = [] %}
+                                            {% endif %}
+                                            
+                                            <td class="text-center p-1 {% if day_of_week >= 5 %}table-secondary{% endif %} {% if day_schedules_filtered|length > 0 %}table-info{% endif %}"
+                                                style="height: 35px; {% if day_schedules_filtered|length > 0 %}cursor: pointer;{% endif %} vertical-align: middle;"
+                                                {% if day_schedules_filtered|length > 0 %}onclick="showDaySchedules('{{ day_date.strftime('%Y-%m-%d') }}')" title="{{ day_schedules_filtered|length }} занятий - кликните для просмотра"{% endif %}>
+                                                <strong>{{ day_counter }}</strong>
+                                                {% if day_schedules_filtered|length > 0 %}
+                                                <br><small class="badge bg-primary">{{ day_schedules_filtered|length }}</small>
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<!-- Сообщение когда группа не выбрана -->
+<div class="card">
+    <div class="card-body text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-calendar-check" style="font-size: 4rem; color: #6c757d;"></i>
+        </div>
+        <h4 class="text-muted mb-3">Выберите группу или преподавателя</h4>
+        <p class="text-muted mb-4">
+            Для просмотра расписания выберите группу или преподавателя из списка выше
+        </p>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Подсказка:</strong> Используйте переключатели "Неделя", "Месяц", "Год" для выбора типа отображения расписания
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+{% if selected_group and schedule_grid %}
+<div class="card mt-4">
+    <div class="card-body d-flex gap-2 flex-wrap">
+        <form action="{{ url_for('schedule.mark_week_done') }}" method="post" class="d-inline"
+              onsubmit="return confirm('Отметить все пары недели как проведённые?')">
+            <input type="hidden" name="group_id" value="{{ selected_group }}">
+            <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-all"></i> Отметить неделю проведённой
+            </button>
+        </form>
+        <form action="{{ url_for('schedule.mark_week_planned') }}" method="post" class="d-inline"
+              onsubmit="return confirm('Вернуть все проведённые пары недели в запланированные?')">
+            <input type="hidden" name="group_id" value="{{ selected_group }}">
+            <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+            <button type="submit" class="btn btn-warning">
+                <i class="bi bi-arrow-counterclockwise"></i> Вернуть неделю в запланированные
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Global Month Action - Mark all pairs as done -->
+<div class="card mt-4 border-info">
+    <div class="card-header bg-info text-white">
+        <i class="bi bi-calendar-check"></i> Массовое действие на месяц
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('schedule.mark_month_done') }}" method="post" class="row g-3 align-items-end"
+              onsubmit="return confirm('Вы собираетесь отметить ВСЕ запланированные пары за выбранный месяц как проведённые для всех групп и преподавателей. Продолжить?')">
+            <div class="col-md-3">
+                <label class="form-label">Месяц</label>
+                <select name="month" class="form-select" required>
+                    <option value="1" {% if request.args.get('month', '')|int == 1 %}selected{% endif %}>Январь</option>
+                    <option value="2" {% if request.args.get('month', '')|int == 2 %}selected{% endif %}>Февраль</option>
+                    <option value="3" {% if request.args.get('month', '')|int == 3 %}selected{% endif %}>Март</option>
+                    <option value="4" {% if request.args.get('month', '')|int == 4 %}selected{% endif %}>Апрель</option>
+                    <option value="5" {% if request.args.get('month', '')|int == 5 %}selected{% endif %}>Май</option>
+                    <option value="6" {% if request.args.get('month', '')|int == 6 %}selected{% endif %}>Июнь</option>
+                    <option value="7" {% if request.args.get('month', '')|int == 7 %}selected{% endif %}>Июль</option>
+                    <option value="8" {% if request.args.get('month', '')|int == 8 %}selected{% endif %}>Август</option>
+                    <option value="9" {% if request.args.get('month', '')|int == 9 %}selected{% endif %}>Сентябрь</option>
+                    <option value="10" {% if request.args.get('month', '')|int == 10 %}selected{% endif %}>Октябрь</option>
+                    <option value="11" {% if request.args.get('month', '')|int == 11 %}selected{% endif %}>Ноябрь</option>
+                    <option value="12" {% if request.args.get('month', '')|int == 12 %}selected{% endif %}>Декабрь</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Год</label>
+                <select name="year" class="form-select" required>
+                    {% for y in range(2024, 2030) %}
+                    <option value="{{ y }}" {% if y == period_start.year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check2-all"></i> Отметить ВСЕ пары месяца проведёнными
+                </button>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Затронет все группы и преподавателей
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6>Статусы занятий:</h6>
+        <div class="d-flex flex-wrap gap-3">
+            {% for status, info in status_colors.items() %}
+            <span class="badge status-{{ status }} border px-3 py-2">{{ info.name_ru }}</span>
+            {% endfor %}
+        </div>
+        
+        {% if selected_group or selected_teacher %}
+        <h6 class="mt-3">Типы недель по ГУП:</h6>
+        <div class="d-flex flex-wrap gap-3">
+            <span class="badge status-gup-up border px-3 py-2">📚 Учебный процесс</span>
+            <span class="badge status-gup-к border px-3 py-2">🏖️ Каникулы</span>
+            <span class="badge status-gup-::: border px-3 py-2">📝 Экзамены</span>
+            <span class="badge status-gup-пп border px-3 py-2">🏭 Практика</span>
+            <span class="badge status-gup-* border px-3 py-2">📅 Подготовка</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Placeholder для модального окна изменений -->
+<div id="scheduleChangeModalContainer"></div>
+
+<!-- Модальное окно обзора расписания -->
+<div class="modal fade" id="scheduleOverviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar2-month"></i> Обзор расписания</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="scheduleOverviewContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status"></div>
+                    <div class="mt-2">Загрузка обзора...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно информации о дне -->
+<div class="modal fade" id="dayInfoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-day"></i> Расписание на день</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayInfoContent">
+                <!-- Контент будет заполнен через JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openChangeModal(scheduleId) {
+    // Загружаем модальное окно
+    fetch(`/schedule/changes/${scheduleId}/modal`)
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('scheduleChangeModalContainer').innerHTML = html;
+        
+        // Открываем модальное окно
+        const modal = new bootstrap.Modal(document.getElementById('scheduleChangeModal'));
+        modal.show();
+        
+        // Присоединяем обработчики форм к загруженному модальному окну
+        setupModalForms();
+        
+        // Загружаем историю изменений
+        loadScheduleHistory(scheduleId);
+        
+        // Удаляем модальное окно из DOM после закрытия
+        modal._element.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('scheduleChangeModalContainer').innerHTML = '';
+        });
+    })
+    .catch(error => {
+        alert('Ошибка загрузки модального окна: ' + error.message);
+    });
+}
+
+function setupModalForms() {
+    // Обработчики форм
+    const forms = ['substituteForm', 'rescheduleForm', 'cancelForm', 'completeForm', 'restoreForm', 'deleteForm', 'cancelSubstitutionForm'];
+
+    forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) {
+            // Удаляем существующие обработчики
+            form.replaceWith(form.cloneNode(true));
+            const newForm = document.getElementById(formId);
+
+            newForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Подтверждение для удаления
+                if (formId === 'deleteForm') {
+                    if (!confirm('Вы уверены, что хотите удалить эту пару? Это действие нельзя отменить.')) {
+                        return;
+                    }
+                }
+
+                const formData = new FormData(newForm);
+                const data = Object.fromEntries(formData.entries());
+
+                // Преобразуем checkbox в boolean
+                if (data.return_to_workload !== undefined) {
+                    data.return_to_workload = formData.has('return_to_workload');
+                }
+
+                let endpoint = '';
+                switch (formId) {
+                    case 'substituteForm':
+                        endpoint = '/schedule/substitute';
+                        break;
+                    case 'rescheduleForm':
+                        endpoint = '/schedule/reschedule';
+                        break;
+                    case 'cancelForm':
+                        endpoint = '/schedule/cancel';
+                        break;
+                    case 'completeForm':
+                        endpoint = '/schedule/complete';
+                        break;
+                    case 'restoreForm':
+                        endpoint = '/schedule/restore';
+                        break;
+                    case 'deleteForm':
+                        endpoint = '/schedule/delete_single';
+                        break;
+                    case 'cancelSubstitutionForm':
+                        endpoint = '/schedule/restore';
+                        break;
+                }
+
+                // Показываем индикатор загрузки
+                const submitBtn = newForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Обработка...';
+                submitBtn.disabled = true;
+
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // Закрываем модальное окно
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleChangeModal'));
+                        modal.hide();
+
+                        // Перезагружаем страницу с сохранением всех параметров URL
+                        window.location.href = window.location.href;
+                    } else {
+                        alert('Ошибка: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Произошла ошибка: ' + error.message);
+                })
+                .finally(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+    });
+}
+
+function loadScheduleHistory(scheduleId) {
+    const historyContainer = document.getElementById('scheduleHistory');
+    
+    fetch(`/schedule/history/${scheduleId}`)
+    .then(response => response.json())
+    .then(history => {
+        if (history.length === 0) {
+            historyContainer.innerHTML = '<p class="text-muted">История изменений пуста</p>';
+            return;
+        }
+        
+        let historyHtml = '<div class="list-group list-group-flush">';
+        history.forEach(change => {
+            historyHtml += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${change.change_type}</h6>
+                        <small>${change.changed_at}</small>
+                    </div>
+                    <p class="mb-1">${change.reason}</p>
+                    <small>Изменил: ${change.changed_by}</small>
+                    ${change.old_teacher && change.new_teacher ? `<br><small>Замена: ${change.old_teacher} → ${change.new_teacher}</small>` : ''}
+                    ${change.notes ? `<br><small class="text-muted">${change.notes}</small>` : ''}
+                </div>
+            `;
+        });
+        historyHtml += '</div>';
+        
+        historyContainer.innerHTML = historyHtml;
+    })
+    .catch(error => {
+        historyContainer.innerHTML = '<p class="text-danger">Ошибка загрузки истории</p>';
+    });
+}
+
+function showScheduleOverview(groupId) {
+    // Открываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('scheduleOverviewModal'));
+    modal.show();
+    
+    // Загружаем данные обзора
+    fetch(`/schedule/api/group-overview/${groupId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayScheduleOverview(data);
+            } else {
+                document.getElementById('scheduleOverviewContent').innerHTML = 
+                    '<div class="alert alert-danger">Ошибка загрузки данных</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('scheduleOverviewContent').innerHTML = 
+                '<div class="alert alert-danger">Ошибка: ' + error.message + '</div>';
+        });
+}
+
+function displayScheduleOverview(data) {
+    let html = `
+        <div class="row mb-3">
+            <div class="col">
+                <h6>📊 Группа: ${data.group_name} (${data.group_course} курс)</h6>
+                <p class="text-muted">Семестр: ${data.semester} • Период: ${data.date_range}</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white text-center">
+                    <div class="card-body py-2">
+                        <h5>${data.total_pairs}</h5>
+                        <small>Всего пар</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white text-center">
+                    <div class="card-body py-2">
+                        <h5>${data.done_pairs}</h5>
+                        <small>Проведено</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white text-center">
+                    <div class="card-body py-2">
+                        <h5>${data.planned_pairs}</h5>
+                        <small>Запланировано</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white text-center">
+                    <div class="card-body py-2">
+                        <h5>${data.remaining_hours}ч</h5>
+                        <small>Остается</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6>📚 По дисциплинам:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Дисциплина</th>
+                                <th>Проведено</th>
+                                <th>Запланировано</th>
+                                <th>Прогресс</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+    
+    data.disciplines.forEach(disc => {
+        const progress = disc.total_hours > 0 ? Math.round((disc.done_hours / disc.total_hours) * 100) : 0;
+        html += `
+            <tr>
+                <td class="small">${disc.discipline.substring(0, 25)}...</td>
+                <td><span class="badge bg-success">${disc.done_hours}ч</span></td>
+                <td><span class="badge bg-info">${disc.planned_hours}ч</span></td>
+                <td>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: ${progress}%"></div>
+                    </div>
+                    <small>${progress}%</small>
+                </td>
+            </tr>`;
+    });
+    
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6>📅 Календарь (уменьшенный):</h6>
+                <div class="calendar-mini">`;
+    
+    // Мини-календарь по неделям
+    data.weeks.forEach(week => {
+        const statusClass = week.planned_count > 0 ? 'bg-info' : (week.done_count > 0 ? 'bg-success' : 'bg-light');
+        html += `
+            <div class="week-mini ${statusClass} m-1 p-1 rounded text-center small" 
+                 title="Неделя ${week.week_number}: ${week.done_count} проведено, ${week.planned_count} запланировано">
+                ${week.week_number}<br>
+                <small>${week.done_count}/${week.total_count}</small>
+            </div>`;
+    });
+    
+    html += `
+                </div>
+                <div class="mt-2 small">
+                    <span class="badge bg-success">●</span> Проведено 
+                    <span class="badge bg-info">●</span> Запланировано 
+                    <span class="badge bg-light">●</span> Пусто
+                </div>
+            </div>
+        </div>`;
+    
+    document.getElementById('scheduleOverviewContent').innerHTML = html;
+}
+</script>
+
+<script>
+// Функция для показа информации о дне
+// Добавляем объект с временами пар
+const pairTimes = {
+    1: { start: '08:30', end: '09:50' },
+    2: { start: '10:00', end: '11:20' },
+    3: { start: '11:30', end: '12:50' },
+    4: { start: '13:30', end: '14:50' },
+    5: { start: '15:00', end: '16:20' },
+    6: { start: '16:30', end: '17:50' },
+    7: { start: '18:00', end: '19:20' }
+};
+
+// Global schedules data for year view
+{% if view_type == 'year' and schedules %}
+window.allSchedulesData = {{ schedules_json|tojson|safe }};
+{% else %}
+window.allSchedulesData = [];
+{% endif %}
+
+// Function for year view simplified day clicks
+function showDaySchedules(clickedDate) {
+    console.log('showDaySchedules called with:', { clickedDate });
+    
+    // Filter schedules for the clicked date
+    const daySchedules = window.allSchedulesData.filter(schedule => schedule.date === clickedDate);
+    
+    console.log('Filtered schedules for', clickedDate, ':', daySchedules);
+    
+    // Use existing showDayInfo function
+    showDayInfo(clickedDate, daySchedules);
+}
+
+function showDayInfo(date, schedules) {
+    console.log('showDayInfo called with:', { date, schedules });
+    
+    const modalElement = document.getElementById('dayInfoModal');
+    if (!modalElement) {
+        console.error('Modal element dayInfoModal not found');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(modalElement);
+    const content = document.getElementById('dayInfoContent');
+    
+    if (!content) {
+        console.error('Content element dayInfoContent not found');
+        return;
+    }
+    
+    // Форматируем дату
+    const dateObj = new Date(date + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('ru-RU', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    // Устанавливаем заголовок
+    document.querySelector('#dayInfoModal .modal-title').innerHTML = 
+        `<i class="bi bi-calendar-day"></i> Расписание на ${formattedDate}`;
+    
+    // Формируем содержимое
+    let html = '';
+    
+    if (schedules.length === 0) {
+        html = '<div class="alert alert-info"><i class="bi bi-info-circle"></i> На этот день занятий нет</div>';
+    } else {
+        // Сортируем расписания по номеру пары
+        schedules.sort((a, b) => a.pair_number - b.pair_number);
+        
+        // Группируем по статусам
+        const doneSchedules = schedules.filter(s => ['done', 'completed', 'substitution'].includes(s.status));
+        const plannedSchedules = schedules.filter(s => s.status === 'planned');
+        const otherSchedules = schedules.filter(s => !['done', 'completed', 'substitution', 'planned'].includes(s.status));
+        
+        if (doneSchedules.length > 0) {
+            html += '<h6 class="text-success"><i class="bi bi-check-circle"></i> Проведенные пары:</h6>';
+            doneSchedules.forEach(schedule => {
+                html += `
+                    <div class="card mb-2 border-success">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${schedule.pair_number} пара</strong> 
+                                    <span class="text-muted">(${pairTimes[schedule.pair_number]?.start || '?'} - ${pairTimes[schedule.pair_number]?.end || '?'})</span>
+                                </div>
+                                <span class="badge bg-success">Проведена</span>
+                            </div>
+                            <div class="mt-1">
+                                <div class="fw-bold">${schedule.workload.discipline}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-people"></i> ${schedule.workload.group ? 'гр. ' + schedule.workload.group.name : 'Нет группы'}
+                                    <br><i class="bi bi-person"></i> ${schedule.workload.teacher ? schedule.workload.teacher.full_name : 'Нет преподавателя'}
+                                    <br><i class="bi bi-geo-alt"></i> ${schedule.room ? 'ауд. ' + schedule.room.number : 'Аудитория не назначена'}
+                                    ${schedule.notes ? '<br><i class="bi bi-chat-left-text"></i> ' + schedule.notes : ''}
+                                </small>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.location.href='/schedule/${schedule.id}/edit'">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="openChangeModal(${schedule.id})">
+                                        <i class="bi bi-gear"></i> Управление
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+        
+        if (plannedSchedules.length > 0) {
+            html += '<h6 class="text-primary mt-3"><i class="bi bi-calendar-check"></i> Запланированные пары:</h6>';
+            plannedSchedules.forEach(schedule => {
+                html += `
+                    <div class="card mb-2 border-primary">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${schedule.pair_number} пара</strong> 
+                                    <span class="text-muted">(${pairTimes[schedule.pair_number]?.start || '?'} - ${pairTimes[schedule.pair_number]?.end || '?'})</span>
+                                </div>
+                                <span class="badge bg-primary">Запланирована</span>
+                            </div>
+                            <div class="mt-1">
+                                <div class="fw-bold">${schedule.workload.discipline}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-people"></i> ${schedule.workload.group ? 'гр. ' + schedule.workload.group.name : 'Нет группы'}
+                                    <br><i class="bi bi-person"></i> ${schedule.workload.teacher ? schedule.workload.teacher.full_name : 'Нет преподавателя'}
+                                    <br><i class="bi bi-geo-alt"></i> ${schedule.room ? 'ауд. ' + schedule.room.number : 'Аудитория не назначена'}
+                                    ${schedule.notes ? '<br><i class="bi bi-chat-left-text"></i> ' + schedule.notes : ''}
+                                </small>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.location.href='/schedule/${schedule.id}/edit'">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="openChangeModal(${schedule.id})">
+                                        <i class="bi bi-gear"></i> Управление
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+        
+        if (otherSchedules.length > 0) {
+            html += '<h6 class="text-warning mt-3"><i class="bi bi-exclamation-triangle"></i> Изменения в расписании:</h6>';
+            otherSchedules.forEach(schedule => {
+                // Определяем цвет и название статуса
+                let statusInfo = { color: 'secondary', name: schedule.status };
+                switch(schedule.status) {
+                    case 'cancelled':
+                        statusInfo = { color: 'danger', name: 'Отменена' };
+                        break;
+                    case 'rescheduled':
+                        statusInfo = { color: 'warning', name: 'Перенесена' };
+                        break;
+                    case 'substitution':
+                        statusInfo = { color: 'info', name: 'Замена' };
+                        break;
+                    case 'completed':
+                        statusInfo = { color: 'purple', name: 'Последняя пара' };
+                        break;
+                }
+                
+                html += `
+                    <div class="card mb-2 border-${statusInfo.color}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${schedule.pair_number} пара</strong> 
+                                    <span class="text-muted">(${pairTimes[schedule.pair_number]?.start || '?'} - ${pairTimes[schedule.pair_number]?.end || '?'})</span>
+                                </div>
+                                <span class="badge bg-${statusInfo.color}">${statusInfo.name}</span>
+                            </div>
+                            <div class="mt-1">
+                                <div class="fw-bold">${schedule.workload.discipline}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-people"></i> ${schedule.workload.group ? 'гр. ' + schedule.workload.group.name : 'Нет группы'}
+                                    <br><i class="bi bi-person"></i> ${schedule.workload.teacher ? schedule.workload.teacher.full_name : 'Нет преподавателя'}
+                                    <br><i class="bi bi-geo-alt"></i> ${schedule.room ? 'ауд. ' + schedule.room.number : 'Аудитория не назначена'}
+                                    ${schedule.notes ? '<br><i class="bi bi-chat-left-text"></i> ' + schedule.notes : ''}
+                                </small>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.location.href='/schedule/${schedule.id}/edit'">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="openChangeModal(${schedule.id})">
+                                        <i class="bi bi-gear"></i> Управление
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+        
+        html += `<div class="mt-4 pt-3 border-top">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Всего пар в этот день: ${schedules.length}</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg"></i> Закрыть
+                            </button>
+                        </div>
+                    </div>
+                 </div>`;
+    }
+    
+    content.innerHTML = html;
+    modal.show();
+}
+
+// Глобальные данные расписания для JavaScript
+const scheduleData = {{ schedules_json|tojson|safe }};
+
+// Функция для поиска расписания по дате
+function getSchedulesByDate(date) {
+    return scheduleData.filter(schedule => schedule.date === date);
+}
+
+// Добавляем обработчики событий для кликов по дням
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик для кликабельных областей дней
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('day-click-area') || e.target.closest('.day-click-area')) {
+            const clickArea = e.target.classList.contains('day-click-area') ? e.target : e.target.closest('.day-click-area');
+            const date = clickArea.getAttribute('data-date');
+            const schedules = getSchedulesByDate(date);
+            showDayInfo(date, schedules);
+        }
+        
+        // Обработчик для кнопок списка
+        if (e.target.classList.contains('day-list-btn') || e.target.closest('.day-list-btn')) {
+            e.stopPropagation();
+            const listBtn = e.target.classList.contains('day-list-btn') ? e.target : e.target.closest('.day-list-btn');
+            const date = listBtn.getAttribute('data-date');
+            const schedules = getSchedulesByDate(date);
+            showDayInfo(date, schedules);
+        }
+    });
+});
+</script>
+
+<style>
+.calendar-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+.week-mini {
+    width: 45px;
+    height: 35px;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Стили для упрощенного годового календаря */
+.year-view .table-info {
+    background-color: #d1ecf1 !important;
+}
+
+.year-view .table-info:hover {
+    background-color: #bee5eb !important;
+    transform: scale(1.02);
+    transition: all 0.2s;
+}
+
+.year-view .badge {
+    font-size: 0.6rem;
+    padding: 0.2em 0.4em;
+}
+
+.year-view td {
+    transition: all 0.2s;
+}
+
+.year-view td:hover {
+    box-shadow: inset 0 0 0 2px #007bff;
+}
+
+.pairs-indicator {
+    display: flex;
+    gap: 1px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.badge-mini {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+    line-height: 1;
+    margin: 0 1px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.calendar-legend {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border: 1px solid #dee2e6;
+}
+
+.calendar-day.has-schedule {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+/* Hover эффекты */
+.calendar-day.has-schedule:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1;
+}
+
+/* Стили для месячного вида */
+.schedule-entry {
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.schedule-entry:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+    border-color: #007bff;
+}
+
+.schedule-edit-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.schedule-entry:hover .schedule-edit-btn {
+    opacity: 1;
+}
+
+.month-day {
+    position: relative;
+}
+
+.month-day:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Улучшенные статусы для месячного вида */
+.status-planned {
+    background-color: #e3f2fd !important;
+    border-left: 3px solid #2196f3 !important;
+}
+
+.status-done {
+    background-color: #e8f5e8 !important;
+    border-left: 3px solid #4caf50 !important;
+}
+
+.status-cancelled {
+    background-color: #ffebee !important;
+    border-left: 3px solid #f44336 !important;
+}
+
+.status-substitution {
+    background-color: #fff8e1 !important;
+    border-left: 3px solid #ff9800 !important;
+}
+
+/* Стили для годового вида */
+.year-day-actions {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.calendar-day:hover .year-day-actions {
+    opacity: 1 !important;
+}
+
+.year-edit-btn {
+    border: none !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.year-edit-btn:hover {
+    background: rgba(255, 255, 255, 1) !important;
+    transform: scale(1.1);
+}
+
+/* Улучшенные hover эффекты для годового календаря */
+.calendar-day.has-schedule:hover {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.calendar-day.has-schedule:hover .day-number {
+    font-weight: bold;
+}
+
+/* Улучшенные индикаторы статусов */
+.badge-mini {
+    font-size: 0.5rem;
+    padding: 1px 3px;
+    line-height: 1;
+    margin: 0 1px;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Улучшенная видимость дней в календаре */
+.calendar-day .day-number {
+    font-size: 1.1rem !important;
+    width: 28px !important;
+    height: 28px !important;
+    background: rgba(255,255,255,0.95) !important;
+    border: 1px solid rgba(0,0,0,0.2) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+}
+
+.calendar-day:hover .day-number {
+    transform: scale(1.1);
+    background: rgba(255,255,255,1) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Лучшая видимость обычных дней */
+.calendar-day:not(.has-schedule):not(.empty) {
+    background-color: #fafafa;
+    border: 1px solid #e0e0e0;
+}
+
+.calendar-day:not(.has-schedule):not(.empty):hover {
+    background-color: #f0f0f0 !important;
+    border-color: #bdbdbd !important;
+}
+
+
+</style>
+{% endblock %}
+

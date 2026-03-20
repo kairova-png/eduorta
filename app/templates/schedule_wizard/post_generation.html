@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Результаты генерации - {{ group.name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-check-circle"></i> Результаты генерации для группы {{ group.name }}</h2>
+        <div>
+            <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-calendar3"></i> Просмотр расписания
+            </a>
+            <a href="{{ url_for('schedule_wizard.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> К мастеру
+            </a>
+        </div>
+    </div>
+
+    <!-- Панель массового редактирования -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-tools"></i> Массовое редактирование аудиторий</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="text-muted">Выберите пары и новую аудиторию для массового изменения</p>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Фильтр по дисциплине:</label>
+                                    <select id="discipline-filter" class="form-select" onchange="filterByDiscipline()">
+                                        <option value="">Все дисциплины</option>
+                                        {% for workload in workloads %}
+                                        <option value="{{ workload.discipline }}">{{ workload.discipline }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Новая аудитория:</label>
+                                    <select id="new-room-select" class="form-select">
+                                        <option value="">Выберите аудиторию...</option>
+                                        {% for room in rooms %}
+                                        <option value="{{ room.id }}">{{ room.number }} ({{ room.room_type }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button class="btn btn-warning" onclick="bulkChangeRooms()">
+                                        <i class="bi bi-arrow-repeat"></i> Изменить выбранные
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-light">
+                                <small>
+                                    <strong>Выбрано пар:</strong> <span id="selected-count">0</span><br>
+                                    <strong>Совет:</strong> Сначала отфильтруйте по дисциплине, затем выберите все нужные пары галочками
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="selectAll()">Выбрать все</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="selectNone()">Снять все</button>
+                        <button class="btn btn-outline-info btn-sm" onclick="selectByRoom()">Выбрать по аудитории</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Расписание по дисциплинам -->
+    <div class="row">
+        {% for workload in workloads %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6>
+                        <i class="bi bi-book"></i> {{ workload.discipline }}
+                        <span class="badge bg-secondary">{{ schedules_by_workload[workload.id]|length }} пар</span>
+                    </h6>
+                    <small class="text-muted">
+                        Преподаватель: {{ workload.teacher.full_name if workload.teacher else 'Не назначен' }}
+                    </small>
+                </div>
+                <div class="card-body">
+                    {% set schedules = schedules_by_workload[workload.id] %}
+                    {% if schedules %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th width="30">
+                                        <input type="checkbox" onchange="toggleDisciplineSelection(this, '{{ workload.discipline }}')">
+                                    </th>
+                                    <th>Дата</th>
+                                    <th>Пара</th>
+                                    <th>Аудитория</th>
+                                    <th width="80">Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr data-discipline="{{ workload.discipline }}" data-room-id="{{ schedule.room_id }}">
+                                    <td>
+                                        <input type="checkbox" class="schedule-checkbox" 
+                                               value="{{ schedule.id }}" 
+                                               onchange="updateSelectedCount()">
+                                    </td>
+                                    <td>{{ schedule.date.strftime('%d.%m') }}</td>
+                                    <td>{{ schedule.pair_number }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ schedule.room.number if schedule.room else 'Нет аудитории' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-primary btn-sm" 
+                                                onclick="editSingleSchedule({{ schedule.id }})">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Нет запланированных пар</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-graph-up"></i> Статистика сгенерированного расписания</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ schedules_by_workload.values()|sum(attribute='|length')|sum }}</h4>
+                                <small class="text-muted">Всего пар</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ workloads|length }}</h4>
+                                <small class="text-muted">Дисциплин</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                {% set total_hours = schedules_by_workload.values()|sum(attribute='|length')|sum * 2 %}
+                                <h4 class="text-info">{{ total_hours }}</h4>
+                                <small class="text-muted">Часов</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                {% set unique_rooms = [] %}
+                                {% for workload in workloads %}
+                                    {% for schedule in schedules_by_workload[workload.id] %}
+                                        {% if schedule.room and schedule.room.id not in unique_rooms %}
+                                            {% set _ = unique_rooms.append(schedule.room.id) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                <h4 class="text-warning">{{ unique_rooms|length }}</h4>
+                                <small class="text-muted">Используется аудиторий</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования отдельной пары -->
+<div class="modal fade" id="edit-schedule-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать пару</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-single-form">
+                    <input type="hidden" id="edit-schedule-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Аудитория:</label>
+                        <select id="edit-room-select" class="form-select">
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}">{{ room.number }} ({{ room.room_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveSingleEdit()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.schedule-checkbox:checked');
+    document.getElementById('selected-count').textContent = checked.length;
+}
+
+function selectAll() {
+    document.querySelectorAll('.schedule-checkbox').forEach(cb => {
+        if (cb.closest('tr').style.display !== 'none') {
+            cb.checked = true;
+        }
+    });
+    updateSelectedCount();
+}
+
+function selectNone() {
+    document.querySelectorAll('.schedule-checkbox').forEach(cb => cb.checked = false);
+    updateSelectedCount();
+}
+
+function selectByRoom() {
+    const room = prompt('Введите номер аудитории:');
+    if (!room) return;
+    
+    document.querySelectorAll('.schedule-checkbox').forEach(cb => {
+        const row = cb.closest('tr');
+        const roomBadge = row.querySelector('td:nth-child(4) .badge');
+        if (roomBadge && roomBadge.textContent.includes(room)) {
+            cb.checked = true;
+        }
+    });
+    updateSelectedCount();
+}
+
+function toggleDisciplineSelection(checkbox, discipline) {
+    document.querySelectorAll(`tr[data-discipline="${discipline}"] .schedule-checkbox`).forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    updateSelectedCount();
+}
+
+function filterByDiscipline() {
+    const filter = document.getElementById('discipline-filter').value;
+    
+    document.querySelectorAll('tr[data-discipline]').forEach(row => {
+        if (!filter || row.dataset.discipline === filter) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+            // Снимаем галочку у скрытых строк
+            row.querySelector('.schedule-checkbox').checked = false;
+        }
+    });
+    updateSelectedCount();
+}
+
+function bulkChangeRooms() {
+    const selectedIds = Array.from(document.querySelectorAll('.schedule-checkbox:checked'))
+        .map(cb => parseInt(cb.value));
+    const newRoomId = document.getElementById('new-room-select').value;
+    
+    if (selectedIds.length === 0) {
+        alert('Выберите пары для изменения');
+        return;
+    }
+    
+    if (!newRoomId) {
+        alert('Выберите новую аудиторию');
+        return;
+    }
+    
+    if (!confirm(`Изменить аудиторию для ${selectedIds.length} пар?`)) {
+        return;
+    }
+    
+    fetch(`{{ url_for('schedule_wizard.bulk_change_rooms') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            changes: [{
+                schedule_ids: selectedIds,
+                new_room_id: parseInt(newRoomId)
+            }]
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Изменено ${data.changes_count} пар`);
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Ошибка изменения аудиторий');
+    });
+}
+
+function editSingleSchedule(scheduleId) {
+    document.getElementById('edit-schedule-id').value = scheduleId;
+    
+    // Находим текущую аудиторию
+    const row = document.querySelector(`input[value="${scheduleId}"]`).closest('tr');
+    const currentRoomText = row.querySelector('td:nth-child(4) .badge').textContent;
+    
+    // Устанавливаем в селекте
+    const select = document.getElementById('edit-room-select');
+    for (let option of select.options) {
+        if (option.textContent.includes(currentRoomText.split('(')[0].trim())) {
+            select.value = option.value;
+            break;
+        }
+    }
+    
+    new bootstrap.Modal(document.getElementById('edit-schedule-modal')).show();
+}
+
+function saveSingleEdit() {
+    const scheduleId = document.getElementById('edit-schedule-id').value;
+    const newRoomId = document.getElementById('edit-room-select').value;
+    
+    fetch(`{{ url_for('schedule_wizard.bulk_change_rooms') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            changes: [{
+                schedule_ids: [parseInt(scheduleId)],
+                new_room_id: parseInt(newRoomId)
+            }]
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('edit-schedule-modal')).hide();
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Ошибка изменения аудитории');
+    });
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

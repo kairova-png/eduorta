@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Группы - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Группы</h2>
+    <a href="{{ url_for('groups.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> Добавить группу
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Специальность</label>
+                <select name="specialty_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все специальности</option>
+                    {% for spec in specialties %}
+                    <option value="{{ spec.id }}" {% if selected_specialty == spec.id %}selected{% endif %}>
+                        {{ spec.code }} - {{ spec.name_ru }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Курс</label>
+                <select name="course" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все курсы</option>
+                    {% for c in range(1, 5) %}
+                    <option value="{{ c }}" {% if selected_course == c %}selected{% endif %}>{{ c }} курс</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <a href="{{ url_for('groups.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Groups Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Специальность</th>
+                        <th>Курс</th>
+                        <th>Время обучения</th>
+                        <th>Год поступления</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('groups.view', id=group.id) }}">{{ group.name }}</a>
+                        </td>
+                        <td>{{ group.specialty.code if group.specialty else '-' }}</td>
+                        <td><span class="badge bg-primary">{{ group.course }} курс</span></td>
+                        <td>
+                            {% if group.shift == 1 %}
+                                <span class="badge bg-info">Утро (1-4)</span>
+                            {% elif group.shift == 2 %}
+                                <span class="badge bg-warning">День (5-8)</span>
+                            {% elif group.shift == 3 %}
+                                <span class="badge bg-success">Смешанная (1-8)</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Не определено</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ group.enrollment_year }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('workload.rup', group_id=group.id) }}" class="btn btn-outline-info" title="РУП">
+                                    <i class="bi bi-journal-text"></i>
+                                </a>
+                                <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-primary" title="Расписание">
+                                    <i class="bi bi-calendar3"></i>
+                                </a>
+                                <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-outline-warning" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ url_for('groups.delete', id=group.id) }}" method="post" class="d-inline" onsubmit="return confirm('Удалить группу?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Группы не найдены</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted">Всего: {{ groups|length }} групп</div>
+    </div>
+</div>
+{% endblock %}

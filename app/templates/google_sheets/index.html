@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Google Sheets - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Google Sheets</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Главная информация -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-cloud-upload"></i> Синхронизация расписания</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="bi bi-github text-success" style="font-size: 2rem;"></i>
+                                <h5 class="card-title mt-2">GitHub Pages</h5>
+                                <p class="card-text">Автоматическая публикация расписания на GitHub Pages</p>
+                                <a href="{{ url_for('google_sheets_simple.sites_index') }}" class="btn btn-success">
+                                    <i class="bi bi-box-arrow-up-right"></i> Перейти к GitHub Pages
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                                <h5 class="card-title mt-2">Расписание</h5>
+                                <p class="card-text">Всего записей в расписании: <strong>{{ total_schedules }}</strong></p>
+                                <a href="{{ url_for('schedule.index') }}" class="btn btn-info">
+                                    <i class="bi bi-calendar3"></i> Просмотр расписания
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Статистика</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="border rounded p-3 mb-3">
+                            <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                            <h4 class="mt-2 mb-0">{{ groups|length }}</h4>
+                            <small class="text-muted">Групп</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="border rounded p-3 mb-3">
+                            <i class="bi bi-person-badge text-success" style="font-size: 2rem;"></i>
+                            <h4 class="mt-2 mb-0">{{ teachers|length }}</h4>
+                            <small class="text-muted">Преподавателей</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="border rounded p-3 mb-3">
+                            <i class="bi bi-calendar3 text-warning" style="font-size: 2rem;"></i>
+                            <h4 class="mt-2 mb-0">{{ total_schedules }}</h4>
+                            <small class="text-muted">Пар в расписании</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="col-lg-4">
+        <!-- Автосинхронизация -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Автосинхронизация</h6>
+            </div>
+            <div class="card-body">
+                <div id="autoSyncStatus">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <p class="mb-0 mt-2">Проверка статуса...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Быстрые действия</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('schedule.generate_smart') }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-magic"></i> Умная генерация
+                    </a>
+                    <a href="{{ url_for('schedule.index') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-calendar3"></i> Просмотр расписания
+                    </a>
+                    <a href="{{ url_for('groups.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-people"></i> Управление группами
+                    </a>
+                    <a href="{{ url_for('teachers.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-person-badge"></i> Преподаватели
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Информация</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2"><strong>Дата:</strong> {{ current_date.strftime('%d.%m.%Y') }}</p>
+                <p class="small mb-2"><strong>GitHub:</strong> azamat313.github.io/apec_schedule</p>
+                <p class="small mb-0"><strong>Статус:</strong> <span class="text-success">Активен</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Проверка статуса автосинхронизации
+function checkAutoSyncStatus() {
+    fetch('/google-sheets/api/auto-sync-status')
+        .then(response => response.json())
+        .then(data => {
+            const statusDiv = document.getElementById('autoSyncStatus');
+            
+            if (data.success && data.enabled) {
+                statusDiv.innerHTML = `
+                    <div class="text-success text-center">
+                        <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2"><strong>Активна</strong></p>
+                        <small class="text-muted">GitHub Pages синхронизация</small>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="text-warning text-center">
+                        <i class="bi bi-exclamation-circle" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2"><strong>Неактивна</strong></p>
+                        <small class="text-muted">Автосинхронизация отключена</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            const statusDiv = document.getElementById('autoSyncStatus');
+            statusDiv.innerHTML = `
+                <div class="text-danger text-center">
+                    <i class="bi bi-x-circle" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2"><strong>Ошибка</strong></p>
+                    <small class="text-muted">Не удается подключиться</small>
+                </div>
+            `;
+        });
+}
+
+// Проверяем статус при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    checkAutoSyncStatus();
+    
+    // Обновляем статус каждые 30 секунд
+    setInterval(checkAutoSyncStatus, 30000);
+});
+</script>
+
+{% endblock %}

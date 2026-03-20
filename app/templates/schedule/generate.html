@@ -1,0 +1,1333 @@
+{% extends "base.html" %}
+
+{% block title %}Генерация расписания - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('schedule.index') }}">Расписание</a></li>
+        <li class="breadcrumb-item active">Генерация</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-magic"></i> Генерация расписания</h2>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Параметры генерации</div>
+            <div class="card-body">
+                {% if groups_data %}
+                <form method="post" id="singleGenerationForm">
+                    <div class="mb-3">
+                        <label class="form-label">Группа *</label>
+                        <select name="group_id" class="form-select" required onchange="showGroupDetails(this.value)">
+                            <option value="">-- Выберите группу --</option>
+                            {% for item in groups_data %}
+                            <option value="{{ item.group.id }}" 
+                                    data-total-hours="{{ item.total_hours }}"
+                                    data-completed-hours="{{ item.completed_hours }}"
+                                    data-remaining-hours="{{ item.remaining_hours }}"
+                                    data-active-workloads="{{ item.active_workloads }}"
+                                    data-available-semesters="{{ item.available_semesters|join(',') }}">
+                                {{ item.group.name }} ({{ item.group.course }} курс) 
+                                - Остатков: {{ item.remaining_hours }}ч из {{ item.total_hours }}ч
+                                {% if item.active_workloads > 0 %}
+                                    [{{ item.active_workloads }} дисциплин нужно генерировать]
+                                {% else %}
+                                    [все выполнено]
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Показаны группы с нагрузкой и статистика остатков</small>
+                    </div>
+                    
+                    <!-- Детальная информация о выбранной группе -->
+                    <div id="groupDetails" class="card mb-3" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="mb-0">📊 Детали нагрузки для группы <span id="selectedGroupName"></span></h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="h4 mb-0 text-primary" id="totalHours">0</div>
+                                        <small class="text-muted">Всего часов</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="h4 mb-0 text-success" id="completedHours">0</div>
+                                        <small class="text-muted">Проведено</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="h4 mb-0 text-warning" id="remainingHours">0</div>
+                                        <small class="text-muted">Остается</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="h4 mb-0 text-info" id="activeWorkloads">0</div>
+                                        <small class="text-muted">Активных дисциплин</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" id="progressBar" style="width: 0%">
+                                    <span id="progressText">0%</span>
+                                </div>
+                            </div>
+                            
+                            <div id="disciplinesList"></div>
+                            
+                            <!-- Кнопка для просмотра детальных ошибок -->
+                            <div id="errorAnalysisBtn" class="mt-3" style="display: none;">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDetailedErrors()">
+                                    <i class="bi bi-bug"></i> Анализ ошибок размещения
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Семестр * 
+                            <small class="text-muted">(показаны только с нагрузками)</small>
+                        </label>
+                        <select name="semester" class="form-select" required id="semesterSelect">
+                            <option value="">-- Выберите семестр --</option>
+                            {% for s in available_semesters %}
+                            <option value="{{ s }}">
+                                {{ s }} семестр
+                                {% if semester_gup_info.get(s) %}
+                                    - {{ semester_gup_info[s].period }}
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div id="noSemestersWarning" class="alert alert-warning mt-2" style="display: none;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Нет доступных семестров</strong> для выбранной группы с остаточными часами.
+                        </div>
+                        <small class="text-info">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>Расписание будет размещено в соответствующем семестре ГУП:</strong><br>
+                            • Нечётные семестры (1,3,5,7) → 1-й семестр ГУП (сентябрь-январь)<br>
+                            • Чётные семестры (2,4,6,8) → 2-й семестр ГУП (январь-июнь)
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Режим генерации *</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="generation_mode" id="mode_remaining" value="remaining" checked onchange="updateWarning()">
+                            <label class="form-check-label" for="mode_remaining">
+                                <strong>🛡️ Только остатки (безопасно)</strong>
+                                <br><small class="text-muted">Генерирует недостающие часы. Сохраняет проведенные пары.</small>
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="generation_mode" id="mode_full_replan" value="full_replan" onchange="updateWarning()">
+                            <label class="form-check-label" for="mode_full_replan">
+                                <strong>⚠️ Полная перепланировка (осторожно)</strong>
+                                <br><small class="text-muted">Удаляет запланированные и отмененные пары. Сохраняет проведенные.</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="generation_mode" id="mode_force_reset" value="force_reset" onchange="updateWarning()">
+                            <label class="form-check-label" for="mode_force_reset">
+                                <strong>🚨 Сброс с нуля (опасно)</strong>
+                                <br><small class="text-muted">Удаляет ВСЁ расписание. Полная перегенерация.</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" id="warning_remaining">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Безопасный режим:</strong> Сохраняет все проведенные пары. Генерирует только недостающие часы.
+                    </div>
+                    
+                    <div class="alert alert-warning" id="warning_full_replan" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Осторожно:</strong> Удалит запланированные, отмененные и перенесенные пары. Проведенные пары будут сохранены.
+                    </div>
+                    
+                    <div class="alert alert-danger" id="warning_force_reset" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>ОПАСНО:</strong> Удалит ВСЁ расписание включая проведенные пары! Используйте только при необходимости полного пересоздания.
+                    </div>
+
+                    <!-- Дополнительные настройки генерации -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">⚙️ Дополнительные настройки</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#additionalSettings">
+                                <i class="bi bi-gear"></i> Настроить
+                            </button>
+                        </div>
+                        <div class="collapse" id="additionalSettings">
+                            <div class="card-body">
+                                
+                                <!-- Предпочтительные аудитории -->
+                                <div class="mb-3">
+                                    <label class="form-label">🏛️ Предпочтительные аудитории</label>
+                                    <div id="roomPreferences">
+                                        <div class="room-preference-item mb-2">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <select name="room_ids[]" class="form-select form-select-sm">
+                                                        <option value="">-- Выберите аудиторию --</option>
+                                                        {% if rooms %}
+                                                            {% for room in rooms %}
+                                                            <option value="{{ room.id }}">{{ room.number }} ({{ room.capacity }} мест)</option>
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <select name="room_priorities[]" class="form-select form-select-sm">
+                                                        <option value="1">Высокий приоритет</option>
+                                                        <option value="2">Средний приоритет</option>
+                                                        <option value="3">Низкий приоритет</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <input type="text" name="room_reasons[]" class="form-control form-control-sm" placeholder="Причина (необязательно)">
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomPreference(this)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRoomPreference()">
+                                        <i class="bi bi-plus"></i> Добавить аудиторию
+                                    </button>
+                                    <small class="text-muted d-block mt-1">Генератор будет приоритизировать выбранные аудитории</small>
+                                </div>
+
+                                <!-- Предпочтительные дни недели -->
+                                <div class="mb-3">
+                                    <label class="form-label">📅 Предпочтительные дни недели</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="1" id="day_mon" checked>
+                                                <label class="form-check-label" for="day_mon">Понедельник</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="2" id="day_tue" checked>
+                                                <label class="form-check-label" for="day_tue">Вторник</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="3" id="day_wed" checked>
+                                                <label class="form-check-label" for="day_wed">Среда</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="4" id="day_thu" checked>
+                                                <label class="form-check-label" for="day_thu">Четверг</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="5" id="day_fri" checked>
+                                                <label class="form-check-label" for="day_fri">Пятница</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="6" id="day_sat">
+                                                <label class="form-check-label" for="day_sat">Суббота</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_days[]" value="0" id="day_sun">
+                                                <label class="form-check-label" for="day_sun">Воскресенье</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Генератор будет стараться размещать пары в выбранные дни</small>
+                                </div>
+
+                                <!-- Предпочтительные пары -->
+                                <div class="mb-3">
+                                    <label class="form-label">🕐 Предпочтительные пары</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="1" id="pair_1" checked>
+                                                <label class="form-check-label" for="pair_1">1 пара (08:30-10:00)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="2" id="pair_2" checked>
+                                                <label class="form-check-label" for="pair_2">2 пара (10:10-11:40)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="3" id="pair_3" checked>
+                                                <label class="form-check-label" for="pair_3">3 пара (12:20-13:50)</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="4" id="pair_4" checked>
+                                                <label class="form-check-label" for="pair_4">4 пара (14:00-15:30)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="5" id="pair_5">
+                                                <label class="form-check-label" for="pair_5">5 пара (15:40-17:10)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="preferred_pairs[]" value="6" id="pair_6">
+                                                <label class="form-check-label" for="pair_6">6 пара (17:20-18:50)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Генератор будет размещать пары в выбранное время</small>
+                                </div>
+
+                                <!-- Интервал повторения -->
+                                <div class="mb-3">
+                                    <label class="form-label">🔄 Интервал повторения</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="repeat_interval" value="weekly" id="repeat_weekly" checked>
+                                        <label class="form-check-label" for="repeat_weekly">
+                                            <strong>Каждую неделю</strong>
+                                            <small class="text-muted d-block">Пары размещаются каждую неделю в одни дни</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="repeat_interval" value="biweekly" id="repeat_biweekly">
+                                        <label class="form-check-label" for="repeat_biweekly">
+                                            <strong>Через неделю</strong>
+                                            <small class="text-muted d-block">Пары размещаются с интервалом в неделю</small>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Соответствие ГУП -->
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="follow_gup" value="1" id="follow_gup" checked>
+                                        <label class="form-check-label" for="follow_gup">
+                                            <strong>📋 Строго следовать ГУП</strong>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Генератор будет учитывать календарно-учебный график (ГУП) при размещении пар</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="singleGenerateBtn">
+                            <i class="bi bi-magic"></i> Сгенерировать расписание
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-lg" id="deleteWorkloadScheduleBtn" data-bs-toggle="modal" data-bs-target="#deleteWorkloadModal">
+                            <i class="bi bi-eraser"></i> Удалить одну дисциплину
+                        </button>
+                        <button type="button" class="btn btn-warning btn-lg" id="deleteFutureScheduleBtn">
+                            <i class="bi bi-trash3"></i> Удалить будущие пары
+                        </button>
+                        <button type="button" class="btn btn-danger btn-lg" id="deleteCompletedScheduleBtn">
+                            <i class="bi bi-trash3-fill"></i> Удалить проведенные пары
+                        </button>
+                    </div>
+                    
+                    <!-- Прогресс-бар для одиночной генерации -->
+                    <div id="singleProgressContainer" class="mt-3" style="display: none;">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-hourglass-split"></i> Генерация расписания
+                            </div>
+                            <div class="card-body">
+                                <div class="progress mb-3">
+                                    <div id="singleProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%">
+                                        <span id="singleProgressText">0%</span>
+                                    </div>
+                                </div>
+                                <div id="singleProgressMessage" class="text-muted">
+                                    Подготовка к генерации...
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button id="singleCancelBtn" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-x-circle"></i> Отменить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Кнопка массовой генерации -->
+                {% if groups_data|selectattr('remaining_hours', 'gt', 0)|list|length > 1 %}
+                <div class="mt-3">
+                    <hr>
+                    <div class="card bg-light">
+                        <div class="card-body p-3">
+                            <h6 class="card-title mb-2">
+                                <i class="bi bi-lightning"></i> Массовая генерация
+                            </h6>
+                            <p class="card-text small mb-3">
+                                Сгенерировать остатки для всех групп с незавершенными дисциплинами 
+                                ({{ groups_data|selectattr('remaining_hours', 'gt', 0)|list|length }} групп)
+                            </p>
+                            <form id="massGenerationForm">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <select name="generation_mode" class="form-select form-select-sm" required>
+                                            <option value="remaining">🛡️ Только остатки (безопасно)</option>
+                                            <option value="full_replan">⚠️ Полная перепланировка</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" id="generateBtn" class="btn btn-warning w-100">
+                                            <i class="bi bi-lightning-charge"></i> Генерировать все остатки
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <!-- Прогресс-бар -->
+                            <div id="progressContainer" class="mt-3" style="display: none;">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <i class="bi bi-hourglass-split"></i> Генерация расписания
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="progress mb-3">
+                                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" style="width: 0%">
+                                                <span id="progressText">0%</span>
+                                            </div>
+                                        </div>
+                                        <div id="progressMessage" class="text-muted">
+                                            Подготовка к генерации...
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            <button id="cancelBtn" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-x-circle"></i> Отменить
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Нет групп с нагрузкой</strong>
+                    <p class="mb-2">Для генерации расписания сначала создайте нагрузку для группы.</p>
+                    <a href="{{ url_for('workload.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> Создать нагрузку
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Информация</div>
+            <div class="card-body">
+                <h6>Перед генерацией убедитесь:</h6>
+                <ul>
+                    <li>Импортированы данные (группы, преподаватели, аудитории)</li>
+                    <li>Импортирован ГУП (график учебного процесса)</li>
+                    <li>Добавлены нагрузки для выбранной группы</li>
+                </ul>
+
+                <h6 class="mt-4">Алгоритм генерации:</h6>
+                <ol>
+                    <li><strong>Умная очистка</strong> с учетом режима</li>
+                    <li>Получает нагрузки с остаточными часами</li>
+                    <li>Генерирует только на <strong>будущие даты</strong></li>
+                    <li>Определяет учебные недели из ГУП</li>
+                    <li>Распределяет пары равномерно</li>
+                    <li>Проверяет занятость преподавателей</li>
+                    <li>Назначает свободные аудитории</li>
+                </ol>
+
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>Остаточные часы</strong> = План - Проведено
+                    <br>
+                    Генератор учитывает статусы пар и защищает завершенные занятия.
+                </div>
+
+                <h6 class="mt-4">Защищенные статусы:</h6>
+                <ul class="small">
+                    <li><span class="badge bg-success">Проведена</span> - всегда защищена</li>
+                    <li><span class="badge" style="background-color: #6f42c1; color: white;">Последняя пара</span> - всегда защищена</li>
+                    <li><span class="badge bg-warning text-dark">Замена</span> - всегда защищена</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для удаления одной дисциплины -->
+<div class="modal fade" id="deleteWorkloadModal" tabindex="-1" aria-labelledby="deleteWorkloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteWorkloadModalLabel">
+                    <i class="bi bi-eraser"></i> Удалить расписание дисциплины
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Внимание!</strong> Будет удалено ВСЁ расписание выбранной дисциплины (включая проведённые пары).
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Группа</label>
+                    <input type="text" class="form-control" id="modalGroupName" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Выберите дисциплину для удаления</label>
+                    <select class="form-select" id="modalWorkloadSelect">
+                        <option value="">-- Загрузка дисциплин... --</option>
+                    </select>
+                </div>
+
+                <div id="workloadDeleteInfo" class="card bg-light" style="display: none;">
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Дисциплина:</strong> <span id="infoWorkloadName">-</span></p>
+                        <p class="mb-1"><strong>Преподаватель:</strong> <span id="infoTeacher">-</span></p>
+                        <p class="mb-1"><strong>Запланировано пар:</strong> <span id="infoScheduledPairs">-</span></p>
+                        <p class="mb-0"><strong>Проведено часов:</strong> <span id="infoCompletedHours">-</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteWorkloadBtn" disabled>
+                    <i class="bi bi-trash"></i> Удалить расписание
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateWarning() {
+    // Скрыть все предупреждения
+    document.getElementById('warning_remaining').style.display = 'none';
+    document.getElementById('warning_full_replan').style.display = 'none';
+    document.getElementById('warning_force_reset').style.display = 'none';
+    
+    // Показать нужное предупреждение
+    const selectedMode = document.querySelector('input[name="generation_mode"]:checked').value;
+    document.getElementById('warning_' + selectedMode).style.display = 'block';
+    
+    // Изменить текст кнопки в зависимости от режима
+    const button = document.querySelector('button[type="submit"]');
+    switch(selectedMode) {
+        case 'remaining':
+            button.innerHTML = '<i class="bi bi-magic"></i> 🛡️ Безопасная генерация';
+            button.className = 'btn btn-primary btn-lg w-100';
+            break;
+        case 'full_replan':
+            button.innerHTML = '<i class="bi bi-magic"></i> ⚠️ Полная перепланировка';
+            button.className = 'btn btn-warning btn-lg w-100';
+            break;
+        case 'force_reset':
+            button.innerHTML = '<i class="bi bi-magic"></i> 🚨 ПОЛНЫЙ СБРОС';
+            button.className = 'btn btn-danger btn-lg w-100';
+            break;
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    updateWarning();
+    
+    // Обработчик кнопки удаления будущих пар
+    const deleteBtn = document.getElementById('deleteFutureScheduleBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const groupSelect = document.querySelector('select[name="group_id"]');
+            const semesterSelect = document.getElementById('semesterSelect');
+            
+            if (!groupSelect) {
+                alert('Ошибка: не найден селектор группы');
+                return;
+            }
+            if (!semesterSelect) {
+                alert('Ошибка: не найден селектор семестра');
+                return;
+            }
+            
+            const groupId = groupSelect.value;
+            const semester = semesterSelect.value;
+            
+            if (!groupId) {
+                alert('Выберите группу');
+                return;
+            }
+            if (!semester) {
+                alert('Выберите семестр');
+                return;
+            }
+            
+            const groupName = groupSelect.options[groupSelect.selectedIndex].text;
+            
+            const confirmMessage = `Удалить будущие (незавершенные) пары для группы "${groupName}" семестр ${semester}?\n\nБудут удалены только запланированные и отмененные пары.\nПроведенные пары останутся нетронутыми.\n\nПродолжить?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Отключаем кнопку
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Удаление...';
+            
+            // Отправляем запрос
+            fetch(`/schedule/delete_future_schedule/${groupId}/${semester}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let message = `✅ ${data.message}`;
+                    if (data.deleted_count > 0) {
+                        message += `\n\nДетали: удалено ${data.deleted_count} пар`;
+                        if (data.planned_deleted > 0) {
+                            message += `\n- Запланированных: ${data.planned_deleted}`;
+                        }
+                        if (data.cancelled_deleted > 0) {
+                            message += `\n- Отмененных: ${data.cancelled_deleted}`;
+                        }
+                    }
+                    alert(message);
+                } else {
+                    alert(`❌ Ошибка: ${data.error}`);
+                }
+                
+                // Восстанавливаем кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash3"></i> Удалить будущие пары';
+            })
+            .catch(error => {
+                alert(`❌ Ошибка сети: ${error.message}`);
+                // Восстанавливаем кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash3"></i> Удалить будущие пары';
+            });
+        });
+    }
+
+    // Обработчик удаления проведенных пар
+    const deleteCompletedBtn = document.getElementById('deleteCompletedScheduleBtn');
+    if (deleteCompletedBtn) {
+        deleteCompletedBtn.addEventListener('click', function() {
+            const groupSelect = document.querySelector('select[name="group_id"]');
+            const semesterSelect = document.querySelector('select[name="semester"]');
+            
+            if (!groupSelect) {
+                alert('❌ Ошибка: не найден селектор группы');
+                return;
+            }
+            if (!semesterSelect) {
+                alert('❌ Ошибка: не найден селектор семестра');
+                return;
+            }
+            
+            const groupId = groupSelect.value;
+            const semester = semesterSelect.value;
+            
+            if (!groupId || !semester) {
+                alert('❌ Выберите группу и семестр');
+                return;
+            }
+            
+            // Подтверждение удаления с предупреждением
+            const confirmText = `⚠️ ВНИМАНИЕ! Вы собираетесь удалить ВСЕ ПРОВЕДЕННЫЕ пары.
+
+Это может повлиять на:
+• РУП (учебные планы)
+• Табели успеваемости  
+• Отчеты по нагрузке преподавателей
+• Статистику посещаемости
+
+Продолжить удаление проведенных пар?`;
+            
+            if (!confirm(confirmText)) {
+                return;
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Удаление...';
+            
+            // Отправляем запрос
+            fetch(`/schedule/delete_completed_schedule/${groupId}/${semester}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let alertMessage = `✅ ${data.message}`;
+                    if (data.warning) {
+                        alertMessage += `\n\n⚠️ ${data.warning}`;
+                    }
+                    alert(alertMessage);
+                    // Перезагружаем страницу для обновления статистики
+                    location.reload();
+                } else {
+                    alert(`❌ Ошибка: ${data.error}`);
+                }
+                
+                // Восстанавливаем кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash3-fill"></i> Удалить проведенные пары';
+            })
+            .catch(error => {
+                alert(`❌ Ошибка сети: ${error.message}`);
+                // Восстанавливаем кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash3-fill"></i> Удалить проведенные пары';
+            });
+        });
+    }
+});
+
+function showGroupDetails(groupId) {
+    const detailsDiv = document.getElementById('groupDetails');
+    const semesterSelect = document.getElementById('semesterSelect');
+    const noSemestersWarning = document.getElementById('noSemestersWarning');
+    
+    if (!groupId) {
+        detailsDiv.style.display = 'none';
+        // Сброс семестров к общему списку
+        updateSemesterOptions([{% for s in available_semesters %}{{ s }}{% if not loop.last %},{% endif %}{% endfor %}]);
+        noSemestersWarning.style.display = 'none';
+        return;
+    }
+    
+    // Получаем данные из option
+    const selectedOption = document.querySelector(`option[value="${groupId}"]`);
+    const groupName = selectedOption.textContent.split(' (')[0];
+    const totalHours = parseInt(selectedOption.dataset.totalHours);
+    const completedHours = parseInt(selectedOption.dataset.completedHours);
+    const remainingHours = parseInt(selectedOption.dataset.remainingHours);
+    const activeWorkloads = parseInt(selectedOption.dataset.activeWorkloads);
+    const availableSemesters = selectedOption.dataset.availableSemesters;
+    
+    // Обновляем список доступных семестров для этой группы
+    const semesterNumbers = availableSemesters ? availableSemesters.split(',').map(s => parseInt(s.trim())).filter(s => !isNaN(s)) : [];
+    updateSemesterOptions(semesterNumbers);
+    
+    // Показать/скрыть предупреждение о семестрах
+    if (semesterNumbers.length === 0) {
+        noSemestersWarning.style.display = 'block';
+    } else {
+        noSemestersWarning.style.display = 'none';
+    }
+    
+    // Обновляем данные в карточке
+    document.getElementById('selectedGroupName').textContent = groupName;
+    document.getElementById('totalHours').textContent = totalHours;
+    document.getElementById('completedHours').textContent = completedHours;
+    document.getElementById('remainingHours').textContent = remainingHours;
+    document.getElementById('activeWorkloads').textContent = activeWorkloads;
+    
+    // Обновляем прогресс бар
+    const progressPercent = totalHours > 0 ? Math.round((completedHours / totalHours) * 100) : 0;
+    document.getElementById('progressBar').style.width = progressPercent + '%';
+    document.getElementById('progressText').textContent = progressPercent + '%';
+    
+    // Показываем карточку
+    detailsDiv.style.display = 'block';
+    
+    // Загружаем детали дисциплин
+    loadDisciplineDetails(groupId);
+}
+
+function updateSemesterOptions(availableSemesters) {
+    const semesterSelect = document.getElementById('semesterSelect');
+    const currentValue = semesterSelect.value;
+    
+    // Очищаем текущие опции (кроме первой)
+    while (semesterSelect.children.length > 1) {
+        semesterSelect.removeChild(semesterSelect.lastChild);
+    }
+    
+    // Добавляем доступные семестры
+    availableSemesters.forEach(semester => {
+        const option = document.createElement('option');
+        option.value = semester;
+        option.textContent = `${semester} семестр`;
+        semesterSelect.appendChild(option);
+    });
+    
+    // Восстанавливаем выбранное значение, если оно все еще доступно
+    if (availableSemesters.includes(parseInt(currentValue))) {
+        semesterSelect.value = currentValue;
+    } else {
+        semesterSelect.value = '';
+    }
+}
+
+function loadDisciplineDetails(groupId) {
+    const disciplinesList = document.getElementById('disciplinesList');
+    const errorAnalysisBtn = document.getElementById('errorAnalysisBtn');
+    disciplinesList.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Загрузка дисциплин...</div>';
+    
+    fetch(`/schedule/api/group-disciplines/${groupId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = '<h6>📚 Дисциплины с остатками:</h6>';
+                let hasProblems = false;
+                
+                if (data.disciplines.length > 0) {
+                    html += '<div class="row">';
+                    data.disciplines.forEach(disc => {
+                        const remaining = disc.total_hours - disc.hours_completed;
+                        const progressPercent = disc.total_hours > 0 ? Math.round((disc.hours_completed / disc.total_hours) * 100) : 0;
+                        const plannedHours = disc.hours_planned || 0;
+                        const totalScheduled = disc.hours_completed + plannedHours;
+                        const totalProgressPercent = disc.total_hours > 0 ? Math.round((totalScheduled / disc.total_hours) * 100) : 0;
+                        
+                        if (remaining > 0) {
+                            hasProblems = true;
+                        }
+                        
+                        html += `
+                            <div class="col-md-6 mb-2">
+                                <div class="card card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${disc.discipline}</strong>
+                                            <br><small class="text-muted">${disc.teacher_name} • ${disc.semester} семестр</small>
+                                            ${plannedHours > 0 ? `<br><small class="text-primary">📅 Запланировано: ${plannedHours}ч</small>` : ''}
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="badge ${remaining > 0 ? 'bg-warning' : 'bg-success'}">${remaining}ч</div>
+                                            <div class="small text-muted">${disc.hours_completed}${plannedHours > 0 ? '+' + plannedHours : ''}/${disc.total_hours}ч</div>
+                                        </div>
+                                    </div>
+                                    <div class="progress mt-1" style="height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                                        ${plannedHours > 0 ? `<div class="progress-bar bg-info" style="width: ${(plannedHours / disc.total_hours) * 100}%"></div>` : ''}
+                                    </div>
+                                    ${plannedHours > 0 ? '<div class="small text-muted mt-1">🟢 Проведено 🔵 Запланировано</div>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    
+                    // Показываем кнопку анализа ошибок только если есть проблемы
+                    if (hasProblems) {
+                        errorAnalysisBtn.style.display = 'block';
+                    } else {
+                        errorAnalysisBtn.style.display = 'none';
+                    }
+                } else {
+                    html += '<div class="alert alert-success">✅ Все дисциплины завершены!</div>';
+                    errorAnalysisBtn.style.display = 'none';
+                }
+                
+                disciplinesList.innerHTML = html;
+            } else {
+                disciplinesList.innerHTML = '<div class="alert alert-danger">Ошибка загрузки дисциплин</div>';
+                errorAnalysisBtn.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            disciplinesList.innerHTML = '<div class="alert alert-danger">Ошибка: ' + error.message + '</div>';
+            errorAnalysisBtn.style.display = 'none';
+        });
+}
+
+function showDetailedErrors() {
+    const groupId = document.querySelector('select[name="group_id"]').value;
+    const semester = document.querySelector('select[name="semester"]').value;
+    
+    if (!groupId || !semester) {
+        alert('Пожалуйста, выберите группу и семестр для анализа ошибок');
+        return;
+    }
+    
+    // Открываем страницу детального анализа ошибок в новой вкладке
+    const url = `/schedule/errors/${groupId}/${semester}`;
+    window.open(url, '_blank');
+}
+
+// Прогресс-бар для генерации
+let currentTaskId = null;
+let progressInterval = null;
+
+document.getElementById('massGenerationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!confirm('Сгенерировать расписание для всех групп с остатками?\n\nЭто может занять несколько минут.')) {
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    // Показываем прогресс-бар и скрываем форму
+    document.getElementById('progressContainer').style.display = 'block';
+    document.getElementById('generateBtn').disabled = true;
+    
+    // Запускаем генерацию
+    fetch('{{ url_for("schedule.generate_with_progress") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            currentTaskId = data.task_id;
+            startProgressTracking();
+        } else {
+            showError('Ошибка запуска генерации');
+        }
+    })
+    .catch(error => {
+        showError('Ошибка: ' + error.message);
+    });
+});
+
+function startProgressTracking() {
+    progressInterval = setInterval(() => {
+        if (!currentTaskId) return;
+        
+        fetch(`{{ url_for("schedule.generation_progress_status", task_id="TASK_ID") }}`.replace('TASK_ID', currentTaskId))
+        .then(response => response.json())
+        .then(data => {
+            updateProgress(data);
+            
+            if (data.status === 'completed' || data.status === 'error') {
+                stopProgressTracking();
+                
+                if (data.status === 'completed') {
+                    showCompleted(data.message);
+                } else {
+                    showError(data.message);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка отслеживания прогресса:', error);
+        });
+    }, 1000); // Обновляем каждую секунду
+}
+
+function updateProgress(data) {
+    const percentage = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
+    
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressMessage = document.getElementById('progressMessage');
+    
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = percentage + '%';
+    progressMessage.textContent = `${data.message} (${data.current}/${data.total})`;
+    
+    // Меняем цвет прогресс-бара в зависимости от статуса
+    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+    if (data.status === 'error') {
+        progressBar.classList.add('bg-danger');
+    } else if (data.status === 'completed') {
+        progressBar.classList.add('bg-success');
+    } else {
+        progressBar.classList.add('bg-info');
+    }
+}
+
+function stopProgressTracking() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    currentTaskId = null;
+}
+
+function showCompleted(message) {
+    const formattedMessage = message.replace(/\n/g, '<br>');
+    document.getElementById('progressMessage').innerHTML = 
+        `<div class="alert alert-success mt-2">
+            <i class="bi bi-check-circle"></i> <strong>Массовая генерация завершена!</strong><br>${formattedMessage}
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="window.location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Обновить страницу
+            </button>
+            <button class="btn btn-outline-secondary" onclick="hideProgressContainer()">
+                <i class="bi bi-x"></i> Закрыть
+            </button>
+        </div>`;
+}
+
+function showError(message) {
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+    
+    alert('Ошибка: ' + message);
+}
+
+// Обработчик кнопки отмены
+document.getElementById('cancelBtn').addEventListener('click', function() {
+    stopProgressTracking();
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+});
+
+// Прогресс-бар для одиночной генерации
+let singleCurrentTaskId = null;
+let singleProgressInterval = null;
+
+document.getElementById('singleGenerationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Валидация формы
+    const groupId = document.querySelector('select[name="group_id"]').value;
+    const semester = document.querySelector('select[name="semester"]').value;
+    
+    if (!groupId || !semester) {
+        alert('Пожалуйста, выберите группу и семестр');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    // Показываем прогресс-бар и отключаем кнопку
+    document.getElementById('singleProgressContainer').style.display = 'block';
+    document.getElementById('singleGenerateBtn').disabled = true;
+    
+    // Запускаем генерацию
+    fetch('{{ url_for("schedule.generate_single_with_progress") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            singleCurrentTaskId = data.task_id;
+            startSingleProgressTracking();
+        } else {
+            showSingleError(data.message || 'Ошибка запуска генерации');
+        }
+    })
+    .catch(error => {
+        showSingleError('Ошибка: ' + error.message);
+    });
+});
+
+function startSingleProgressTracking() {
+    singleProgressInterval = setInterval(() => {
+        if (!singleCurrentTaskId) return;
+        
+        fetch(`{{ url_for("schedule.generation_progress_status", task_id="TASK_ID") }}`.replace('TASK_ID', singleCurrentTaskId))
+        .then(response => response.json())
+        .then(data => {
+            updateSingleProgress(data);
+            
+            if (data.status === 'completed' || data.status === 'error') {
+                stopSingleProgressTracking();
+                
+                if (data.status === 'completed') {
+                    showSingleCompleted(data.message);
+                } else {
+                    showSingleError(data.message);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка отслеживания прогресса:', error);
+        });
+    }, 1000); // Обновляем каждую секунду
+}
+
+function updateSingleProgress(data) {
+    const percentage = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
+    
+    const progressBar = document.getElementById('singleProgressBar');
+    const progressText = document.getElementById('singleProgressText');
+    const progressMessage = document.getElementById('singleProgressMessage');
+    
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = percentage + '%';
+    progressMessage.textContent = data.message;
+    
+    // Меняем цвет прогресс-бара в зависимости от статуса
+    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+    if (data.status === 'error') {
+        progressBar.classList.add('bg-danger');
+    } else if (data.status === 'completed') {
+        progressBar.classList.add('bg-success');
+    } else {
+        progressBar.classList.add('bg-primary');
+    }
+}
+
+function stopSingleProgressTracking() {
+    if (singleProgressInterval) {
+        clearInterval(singleProgressInterval);
+        singleProgressInterval = null;
+    }
+    singleCurrentTaskId = null;
+}
+
+function showSingleCompleted(message) {
+    const formattedMessage = message.replace(/\n/g, '<br>');
+    document.getElementById('singleProgressMessage').innerHTML = 
+        `<div class="alert alert-success mt-2">
+            <i class="bi bi-check-circle"></i> <strong>Генерация завершена!</strong><br>${formattedMessage}
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="window.location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Обновить страницу
+            </button>
+            <button class="btn btn-outline-secondary" onclick="hideSingleProgressContainer()">
+                <i class="bi bi-x"></i> Закрыть
+            </button>
+            <button class="btn btn-outline-info" onclick="showDetailedResultsForCurrentGroup()">
+                <i class="bi bi-bug"></i> Анализ ошибок
+            </button>
+        </div>`;
+}
+
+function showSingleError(message) {
+    document.getElementById('singleProgressContainer').style.display = 'none';
+    document.getElementById('singleGenerateBtn').disabled = false;
+    
+    alert('Ошибка: ' + message);
+}
+
+// Обработчик кнопки отмены для одиночной генерации
+document.getElementById('singleCancelBtn').addEventListener('click', function() {
+    stopSingleProgressTracking();
+    document.getElementById('singleProgressContainer').style.display = 'none';
+    document.getElementById('singleGenerateBtn').disabled = false;
+});
+
+// Функции для скрытия прогресс контейнеров
+function hideProgressContainer() {
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+}
+
+function hideSingleProgressContainer() {
+    document.getElementById('singleProgressContainer').style.display = 'none';
+    document.getElementById('singleGenerateBtn').disabled = false;
+}
+
+function showDetailedResultsForCurrentGroup() {
+    const groupId = document.querySelector('select[name="group_id"]').value;
+    const semester = document.querySelector('select[name="semester"]').value;
+    
+    if (groupId && semester) {
+        // Открываем страницу детального анализа ошибок в новой вкладке
+        const url = `/schedule/errors/${groupId}/${semester}`;
+        window.open(url, '_blank');
+    } else {
+        alert('Выберите группу и семестр для анализа результатов');
+    }
+}
+
+
+// Функции для управления предпочтительными аудиториями
+function addRoomPreference() {
+    const container = document.getElementById('roomPreferences');
+    const template = `
+        <div class="room-preference-item mb-2">
+            <div class="row">
+                <div class="col-md-4">
+                    <select name="room_ids[]" class="form-select form-select-sm">
+                        <option value="">-- Выберите аудиторию --</option>
+                        {% if rooms %}
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}">{{ room.number }} ({{ room.capacity }} мест)</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="room_priorities[]" class="form-select form-select-sm">
+                        <option value="1">Высокий приоритет</option>
+                        <option value="2">Средний приоритет</option>
+                        <option value="3">Низкий приоритет</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="room_reasons[]" class="form-control form-control-sm" placeholder="Причина (необязательно)">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomPreference(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', template);
+}
+
+function removeRoomPreference(button) {
+    const item = button.closest('.room-preference-item');
+    if (item) {
+        item.remove();
+    }
+}
+
+// ========== Удаление одной дисциплины ==========
+
+// Обработчик открытия модального окна удаления дисциплины
+document.getElementById('deleteWorkloadModal').addEventListener('show.bs.modal', function(event) {
+    const groupSelect = document.querySelector('select[name="group_id"]');
+    const modalGroupName = document.getElementById('modalGroupName');
+    const modalWorkloadSelect = document.getElementById('modalWorkloadSelect');
+    const confirmBtn = document.getElementById('confirmDeleteWorkloadBtn');
+
+    // Сбрасываем состояние
+    confirmBtn.disabled = true;
+    document.getElementById('workloadDeleteInfo').style.display = 'none';
+
+    if (!groupSelect || !groupSelect.value) {
+        modalGroupName.value = 'Группа не выбрана';
+        modalWorkloadSelect.innerHTML = '<option value="">-- Сначала выберите группу --</option>';
+        return;
+    }
+
+    const groupId = groupSelect.value;
+    const groupName = groupSelect.options[groupSelect.selectedIndex].text.split(' - ')[0];
+    modalGroupName.value = groupName;
+
+    // Загружаем дисциплины для выбранной группы (all=true для показа всех с расписанием)
+    modalWorkloadSelect.innerHTML = '<option value="">-- Загрузка... --</option>';
+
+    fetch(`/schedule/api/group-disciplines/${groupId}?all=true`)
+        .then(response => response.json())
+        .then(data => {
+            // API возвращает {success: true, disciplines: [...]}
+            if (!data.success) {
+                modalWorkloadSelect.innerHTML = '<option value="">-- Ошибка: ' + (data.error || 'неизвестная') + ' --</option>';
+                return;
+            }
+
+            const disciplines = data.disciplines || [];
+            if (disciplines.length === 0) {
+                modalWorkloadSelect.innerHTML = '<option value="">-- Нет дисциплин с расписанием --</option>';
+                return;
+            }
+
+            let options = '<option value="">-- Выберите дисциплину --</option>';
+            disciplines.forEach(item => {
+                const scheduledPairs = item.scheduled_pairs || 0;
+                const status = `(${scheduledPairs} пар)`;
+                options += `<option value="${item.id}"
+                    data-discipline="${item.discipline}"
+                    data-teacher="${item.teacher_name || 'Не назначен'}"
+                    data-scheduled="${scheduledPairs}"
+                    data-completed="${item.hours_completed || 0}">
+                    ${item.discipline} ${status}
+                </option>`;
+            });
+            modalWorkloadSelect.innerHTML = options;
+        })
+        .catch(error => {
+            modalWorkloadSelect.innerHTML = '<option value="">-- Ошибка загрузки --</option>';
+            console.error('Error loading disciplines:', error);
+        });
+});
+
+// Обработчик выбора дисциплины в модальном окне
+document.getElementById('modalWorkloadSelect').addEventListener('change', function() {
+    const confirmBtn = document.getElementById('confirmDeleteWorkloadBtn');
+    const infoDiv = document.getElementById('workloadDeleteInfo');
+
+    if (!this.value) {
+        confirmBtn.disabled = true;
+        infoDiv.style.display = 'none';
+        return;
+    }
+
+    const option = this.options[this.selectedIndex];
+    document.getElementById('infoWorkloadName').textContent = option.dataset.discipline;
+    document.getElementById('infoTeacher').textContent = option.dataset.teacher;
+    document.getElementById('infoScheduledPairs').textContent = option.dataset.scheduled;
+    document.getElementById('infoCompletedHours').textContent = option.dataset.completed + ' ч';
+
+    infoDiv.style.display = 'block';
+    confirmBtn.disabled = false;
+});
+
+// Обработчик кнопки подтверждения удаления
+document.getElementById('confirmDeleteWorkloadBtn').addEventListener('click', function() {
+    const workloadSelect = document.getElementById('modalWorkloadSelect');
+    const workloadId = workloadSelect.value;
+    const disciplineName = workloadSelect.options[workloadSelect.selectedIndex].dataset.discipline;
+    const groupName = document.getElementById('modalGroupName').value;
+
+    if (!workloadId) {
+        alert('Выберите дисциплину');
+        return;
+    }
+
+    const confirmText = `Вы уверены, что хотите удалить ВСЁ расписание для:\n\n` +
+        `Дисциплина: ${disciplineName}\n` +
+        `Группа: ${groupName}\n\n` +
+        `Это действие нельзя отменить!`;
+
+    if (!confirm(confirmText)) {
+        return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Удаление...';
+
+    fetch(`/schedule/delete_workload_schedule/${workloadId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ ${data.message}\n\nУдалено пар: ${data.deleted_count}\n- Запланированных: ${data.planned_deleted}\n- Проведённых: ${data.done_deleted}`);
+            // Закрываем модальное окно и перезагружаем страницу
+            bootstrap.Modal.getInstance(document.getElementById('deleteWorkloadModal')).hide();
+            location.reload();
+        } else {
+            alert(`❌ Ошибка: ${data.error}`);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash"></i> Удалить расписание';
+        }
+    })
+    .catch(error => {
+        alert(`❌ Ошибка сети: ${error.message}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash"></i> Удалить расписание';
+    });
+});
+
+</script>
+{% endblock %}

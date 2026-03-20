@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать ГУП {{ group.name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('gup.index') }}">ГУП</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('gup.group_detail', group_id=group.id) }}">{{ group.name }}</a></li>
+        <li class="breadcrumb-item active">Редактировать</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil"></i> Редактировать ГУП: {{ group.name }}</h2>
+    <div>
+        <a href="{{ url_for('gup.group_detail', group_id=group.id, year_id=selected_year.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-eye"></i> Просмотр
+        </a>
+        <button type="button" class="btn btn-outline-danger" onclick="deleteGUP()">
+            <i class="bi bi-trash"></i> Удалить ГУП
+        </button>
+    </div>
+</div>
+
+<!-- Group Info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">
+                <strong>Группа:</strong> {{ group.name }}
+            </div>
+            <div class="col-md-2">
+                <strong>Курс:</strong> <span class="badge bg-primary">{{ group.course }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Специальность:</strong> {{ group.specialty.code if group.specialty else '-' }}
+            </div>
+            <div class="col-md-3">
+                <strong>Учебный год:</strong> {{ selected_year.name }}
+            </div>
+            <div class="col-md-2">
+                <strong>Недель:</strong> {{ gup_entries|length }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-palette"></i> Обозначения
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for code, info in activity_types.items() %}
+            <div class="col-md-3 col-lg-2 mb-2">
+                <div class="d-flex align-items-center">
+                    <div class="badge me-2" 
+                         style="background-color: {{ info.color }}; color: {{ info.text }}; min-width: 30px;">
+                        {{ info.name if info.name else 'Т' }}
+                    </div>
+                    <small>{{ info.full_name }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Edit Tools -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-tools"></i> Массовое редактирование
+    </div>
+    <div class="card-body">
+        <form onsubmit="bulkUpdate(event)" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">С недели</label>
+                <input type="number" id="startWeek" class="form-control" min="1" max="52" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">По неделю</label>
+                <input type="number" id="endWeek" class="form-control" min="1" max="52" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Тип активности</label>
+                <select id="bulkActivity" class="form-select" required>
+                    <option value="">-- Выберите тип --</option>
+                    {% for code, info in activity_types.items() %}
+                    <option value="{{ code }}">{{ info.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-arrow-repeat"></i> Применить ко всем
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- GUP Calendar -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-calendar3"></i> График учебного процесса (клик для редактирования)
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Неделя</th>
+                        <th style="width: 120px;">Даты</th>
+                        <th>Активность</th>
+                        <th style="width: 200px;">Быстрая смена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gup in gup_entries %}
+                    {% set activity_info = activity_types.get(gup.activity_code, activity_types['']) %}
+                    <tr>
+                        <td class="text-center">
+                            <strong>{{ gup.week_number }}</strong>
+                        </td>
+                        <td class="text-center">
+                            <small>{{ gup.start_date.strftime('%d.%m') }} - {{ gup.end_date.strftime('%d.%m') }}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="badge me-2" 
+                                     style="background-color: {{ activity_info.color }}; color: {{ activity_info.text }}; min-width: 30px;">
+                                    {{ activity_info.name if activity_info.name else 'Т' }}
+                                </div>
+                                <span id="activity-name-{{ gup.week_number }}">{{ gup.activity_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm" 
+                                    onchange="updateWeek({{ gup.week_number }}, this.value)">
+                                <option value="">-- Изменить --</option>
+                                {% for code, info in activity_types.items() %}
+                                <option value="{{ code }}" {% if code == gup.activity_code %}selected{% endif %}>
+                                    {{ info.full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const groupId = {{ group.id }};
+const yearId = {{ selected_year.id }};
+
+function updateWeek(weekNumber, activityCode) {
+    fetch('/gup/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            group_id: groupId,
+            year_id: yearId,
+            week_number: weekNumber,
+            activity_code: activityCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update display
+            document.getElementById(`activity-name-${weekNumber}`).textContent = data.activity_name;
+            
+            // Show success notification
+            showNotification('success', `Неделя ${weekNumber} обновлена`);
+            
+            // Reload page to update colors
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('error', data.error || 'Ошибка обновления');
+        }
+    })
+    .catch(error => {
+        showNotification('error', 'Ошибка сети: ' + error.message);
+    });
+}
+
+function bulkUpdate(event) {
+    event.preventDefault();
+    
+    const startWeek = parseInt(document.getElementById('startWeek').value);
+    const endWeek = parseInt(document.getElementById('endWeek').value);
+    const activityCode = document.getElementById('bulkActivity').value;
+    
+    if (!startWeek || !endWeek || !activityCode) {
+        showNotification('error', 'Заполните все поля');
+        return;
+    }
+    
+    if (startWeek > endWeek) {
+        showNotification('error', 'Начальная неделя больше конечной');
+        return;
+    }
+    
+    if (!confirm(`Изменить недели ${startWeek}-${endWeek}?`)) {
+        return;
+    }
+    
+    fetch('/gup/bulk-update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            group_id: groupId,
+            year_id: yearId,
+            start_week: startWeek,
+            end_week: endWeek,
+            activity_code: activityCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('error', data.error || 'Ошибка обновления');
+        }
+    })
+    .catch(error => {
+        showNotification('error', 'Ошибка сети: ' + error.message);
+    });
+}
+
+function deleteGUP() {
+    if (!confirm('Удалить весь ГУП для группы {{ group.name }}?\nЭто действие нельзя отменить!')) {
+        return;
+    }
+    
+    window.location.href = `/gup/delete/${groupId}?year_id=${yearId}`;
+}
+
+function showNotification(type, message) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> 
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

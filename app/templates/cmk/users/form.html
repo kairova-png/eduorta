@@ -1,0 +1,67 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}{{ 'Редактировать' if user else 'Создать' }} пользователя{% endblock %}
+{% block content %}
+<h4 class="mb-4">
+    <i class="bi bi-person-{{ 'pencil' if user else 'plus' }}"></i>
+    {{ 'Редактировать' if user else 'Создать' }} пользователя
+</h4>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-3">
+                {% if not user %}
+                <div class="col-md-6">
+                    <label class="form-label">Логин</label>
+                    <input type="text" name="username" class="form-control" required value="{{ user.username if user else '' }}">
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                    <label class="form-label">ФИО</label>
+                    <input type="text" name="full_name" class="form-control" required value="{{ user.full_name if user else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ 'Новый пароль (оставьте пустым)' if user else 'Пароль' }}</label>
+                    <input type="password" name="password" class="form-control" {{ '' if user else 'required' }}>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Роль</label>
+                    <select name="role" class="form-select">
+                        <option value="teacher" {{ 'selected' if user and user.role == 'teacher' }}>Преподаватель</option>
+                        <option value="cmk_chair" {{ 'selected' if user and user.role == 'cmk_chair' }}>Председатель ЦМК</option>
+                        <option value="admin" {{ 'selected' if user and user.role == 'admin' }}>Администратор</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Привязка к преподавателю</label>
+                    <select name="teacher_id" class="form-select">
+                        <option value="">— Не привязан —</option>
+                        {% for t in teachers %}
+                        <option value="{{ t.id }}" {{ 'selected' if user and user.teacher_id == t.id }}>{{ t.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if user %}
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="is_active"
+                               {{ 'checked' if not user or user.is_active }}>
+                        <label class="form-check-label" for="is_active">Активен</label>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Сохранить</button>
+                <a href="{{ url_for('cmk.users_list') }}" class="btn btn-outline-secondary">Отмена</a>
+                {% if user %}
+                <form method="POST" action="{{ url_for('cmk.users_delete', id=user.id) }}" class="ms-auto"
+                      onsubmit="return confirm('Удалить пользователя?')">
+                    <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Удалить</button>
+                </form>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

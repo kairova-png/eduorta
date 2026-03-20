@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('groups.index') }}">Группы</a></li>
+        <li class="breadcrumb-item active">{{ group.name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> {{ group.name }}</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-primary">
+            <i class="bi bi-calendar3"></i> Расписание
+        </a>
+        <a href="{{ url_for('workload.rup', group_id=group.id) }}" class="btn btn-info">
+            <i class="bi bi-journal-text"></i> РУП
+        </a>
+        <a href="{{ url_for('gup.group_detail', group_id=group.id) }}" class="btn btn-success">
+            <i class="bi bi-calendar3-range"></i> ГУП
+        </a>
+        <a href="{{ url_for('groups.edit', id=group.id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Редактировать
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Информация</div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Специальность:</th>
+                        <td>{{ group.specialty.name_ru if group.specialty else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Код специальности:</th>
+                        <td>{{ group.specialty.code if group.specialty else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Номер группы:</th>
+                        <td>{{ group.group_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Год поступления:</th>
+                        <td>{{ group.enrollment_year }}</td>
+                    </tr>
+                    <tr>
+                        <th>Курс:</th>
+                        <td><span class="badge bg-primary fs-6">{{ group.course }} курс</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Нагрузки</div>
+            <div class="card-body">
+                {% if group.workloads.count() > 0 %}
+                <ul class="list-group list-group-flush">
+                    {% for wl in group.workloads.limit(5).all() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ wl.discipline }}</strong>
+                            <small class="text-muted d-block">{{ wl.teacher.full_name if wl.teacher else '-' }}</small>
+                        </div>
+                        <span class="badge bg-secondary">{{ wl.total_hours }}ч</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if group.workloads.count() > 5 %}
+                <a href="{{ url_for('workload.index', group_id=group.id) }}" class="btn btn-link">
+                    Показать все ({{ group.workloads.count() }})
+                </a>
+                {% endif %}
+                {% else %}
+                <p class="text-muted mb-0">Нагрузки не добавлены</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

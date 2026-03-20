@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Нагрузки - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-list-check"></i> Нагрузки</h2>
+    <a href="{{ url_for('workload.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> Добавить нагрузку
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" id="filterForm" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Группа</label>
+                <div class="position-relative" id="groupDropdown">
+                    <input type="text" class="form-control" id="searchGroup"
+                           placeholder="Поиск группы..." autocomplete="off"
+                           value="{% if selected_group %}{% for g in groups %}{% if g.id == selected_group %}{{ g.name }}{% endif %}{% endfor %}{% endif %}">
+                    <input type="hidden" name="group_id" id="hiddenGroup" value="{{ selected_group or '' }}">
+                    <div class="list-group position-absolute w-100 shadow-sm" id="groupList"
+                         style="z-index:1050; max-height:250px; overflow-y:auto; display:none;">
+                        <a href="#" class="list-group-item list-group-item-action list-group-item-light" data-id="">Все группы</a>
+                        {% for group in groups %}
+                        <a href="#" class="list-group-item list-group-item-action" data-id="{{ group.id }}">{{ group.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Преподаватель</label>
+                <div class="position-relative" id="teacherDropdown">
+                    <input type="text" class="form-control" id="searchTeacher"
+                           placeholder="Поиск преподавателя..." autocomplete="off"
+                           value="{% if selected_teacher %}{% for t in teachers %}{% if t.id == selected_teacher %}{{ t.full_name }}{% endif %}{% endfor %}{% endif %}">
+                    <input type="hidden" name="teacher_id" id="hiddenTeacher" value="{{ selected_teacher or '' }}">
+                    <div class="list-group position-absolute w-100 shadow-sm" id="teacherList"
+                         style="z-index:1050; max-height:250px; overflow-y:auto; display:none;">
+                        <a href="#" class="list-group-item list-group-item-action list-group-item-light" data-id="">Все преподаватели</a>
+                        {% for teacher in teachers %}
+                        <a href="#" class="list-group-item list-group-item-action" data-id="{{ teacher.id }}">{{ teacher.full_name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Полугодие</label>
+                <select name="semester" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все полугодия</option>
+                    {% for s in range(1, 9) %}
+                    {% set half_year = "1 полугодие" if s in [1,3,5,7] else "2 полугодие" %}
+                    <option value="{{ s }}" {% if selected_semester == s %}selected{% endif %}>{{ s }} сем. ({{ half_year }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <a href="{{ url_for('workload.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Workloads Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Группа</th>
+                        <th>Дисциплина</th>
+                        <th>Тип</th>
+                        <th>Преподаватель</th>
+                        <th>Полугодие</th>
+                        <th>Часов</th>
+                        <th>Ч/нед</th>
+                        <th>Выполнено</th>
+                        <th>Замены</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="workloadBody">
+                    {% for wl in workloads %}
+                    <tr>
+                        <td>{{ wl.group.name if wl.group else '-' }}</td>
+                        <td>{{ wl.discipline }}</td>
+                        <td>
+                            {% if wl.lesson_type == 'theory' %}
+                                <span class="badge bg-primary" title="Теория">Т</span>
+                            {% elif wl.lesson_type == 'practice' %}
+                                <span class="badge bg-success" title="Практика">П</span>
+                            {% elif wl.lesson_type == 'consultation' %}
+                                <span class="badge bg-info" title="Консультация">К</span>
+                            {% elif wl.lesson_type == 'exam' %}
+                                <span class="badge bg-danger" title="Экзамен/Сессия">Э</span>
+                            {% else %}
+                                <span class="badge bg-secondary">?</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ wl.teacher.full_name if wl.teacher else '-' }}</td>
+                        <td>
+                            {% set half_year = "1п" if wl.semester in [1,3,5,7] else "2п" %}
+                            {{ wl.semester }}с ({{ half_year }})
+                        </td>
+                        <td>{{ wl.total_hours }}</td>
+                        <td>{{ wl.hours_per_week or '-' }}</td>
+                        <td>
+                            <div class="progress progress-bar-hours" style="width: 100px;">
+                                <div class="progress-bar {{ 'bg-success' if wl.progress_percent >= 100 else '' }}"
+                                     style="width: {{ wl.progress_percent }}%">
+                                    {{ wl.progress_percent }}%
+                                </div>
+                            </div>
+                            <small class="text-muted d-block">
+                                {{ wl.hours_completed }}/{{ wl.total_hours }}ч
+                                {% if wl.hours_vacant_from_workload > 0 %}
+                                    <br><span class="text-warning">Вакант: {{ wl.hours_vacant_from_workload }}ч</span>
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            {% if wl.teacher %}
+                                {% set substitute_hours = wl.teacher.get_substitution_hours() %}
+                                {% if substitute_hours > 0 %}
+                                    <span class="badge bg-warning text-dark"
+                                          title="Дополнительные часы замен преподавателя">
+                                        +{{ substitute_hours }}ч
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('workload.edit', id=wl.id) }}" class="btn btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ url_for('workload.delete', id=wl.id) }}" method="post" class="d-inline" onsubmit="return confirm('Удалить нагрузку?')">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">Нагрузки не найдены</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-dark fw-bold">
+                        <td colspan="5">Итого</td>
+                        <td id="totalHours">{{ workloads|sum(attribute='total_hours') }}</td>
+                        <td></td>
+                        <td><small>{{ workloads|sum(attribute='hours_completed') }}/{{ workloads|sum(attribute='total_hours') }}ч</small></td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="text-muted" id="countLabel">Всего: {{ workloads|length }} нагрузок</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    /* ====== Searchable Dropdown ====== */
+    function setupSearchDropdown(inputId, hiddenId, listId) {
+        const input = document.getElementById(inputId);
+        const hidden = document.getElementById(hiddenId);
+        const list = document.getElementById(listId);
+        const items = Array.from(list.querySelectorAll('a'));
+
+        // Show dropdown on focus
+        input.addEventListener('focus', function() {
+            list.style.display = 'block';
+            filterItems();
+        });
+
+        // Filter items on typing + live table filter
+        input.addEventListener('input', function() {
+            list.style.display = 'block';
+            filterItems();
+            // Clear server selection when typing
+            hidden.value = '';
+            filterTable();
+        });
+
+        // Select item on click
+        items.forEach(item => {
+            item.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const text = this.textContent.trim();
+                if (id === '') {
+                    input.value = '';
+                    hidden.value = '';
+                } else {
+                    input.value = text;
+                    hidden.value = id;
+                }
+                list.style.display = 'none';
+                // Submit form for server-side filter
+                document.getElementById('filterForm').submit();
+            });
+        });
+
+        // Hide dropdown on blur
+        input.addEventListener('blur', function() {
+            setTimeout(() => { list.style.display = 'none'; }, 200);
+        });
+
+        // Enter key
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const visible = items.filter(i => i.style.display !== 'none' && i.dataset.id !== '');
+                if (visible.length === 1) {
+                    hidden.value = visible[0].dataset.id;
+                    input.value = visible[0].textContent.trim();
+                    list.style.display = 'none';
+                    document.getElementById('filterForm').submit();
+                } else if (visible.length > 0) {
+                    hidden.value = visible[0].dataset.id;
+                    input.value = visible[0].textContent.trim();
+                    list.style.display = 'none';
+                    document.getElementById('filterForm').submit();
+                }
+            }
+            if (e.key === 'Escape') {
+                list.style.display = 'none';
+            }
+        });
+
+        function filterItems() {
+            const q = input.value.toLowerCase().trim();
+            items.forEach(item => {
+                if (item.dataset.id === '') {
+                    // "All" option - always show
+                    item.style.display = q ? 'none' : '';
+                } else {
+                    const match = item.textContent.toLowerCase().includes(q);
+                    item.style.display = match ? '' : 'none';
+                }
+            });
+        }
+    }
+
+    setupSearchDropdown('searchGroup', 'hiddenGroup', 'groupList');
+    setupSearchDropdown('searchTeacher', 'hiddenTeacher', 'teacherList');
+
+    /* ====== Live Table Filtering ====== */
+    const searchGroup = document.getElementById('searchGroup');
+    const searchTeacher = document.getElementById('searchTeacher');
+    const hiddenGroup = document.getElementById('hiddenGroup');
+    const hiddenTeacher = document.getElementById('hiddenTeacher');
+    const rows = Array.from(document.querySelectorAll('#workloadBody tr'));
+    const countLabel = document.getElementById('countLabel');
+    const totalCount = rows.length;
+
+    function filterTable() {
+        // Only live-filter if no server-side selection is active
+        if (hiddenGroup.value || hiddenTeacher.value) return;
+
+        const qGroup = searchGroup.value.toLowerCase().trim();
+        const qTeacher = searchTeacher.value.toLowerCase().trim();
+        let visible = 0;
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 4) { row.style.display = ''; visible++; return; }
+            const groupText = (cells[0].textContent || '').toLowerCase();
+            const teacherText = (cells[3].textContent || '').toLowerCase();
+            const matchGroup = !qGroup || groupText.includes(qGroup);
+            const matchTeacher = !qTeacher || teacherText.includes(qTeacher);
+            if (matchGroup && matchTeacher) {
+                row.style.display = '';
+                visible++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        countLabel.textContent = 'Показано: ' + visible + ' из ' + totalCount + ' нагрузок';
+    }
+
+    searchGroup.addEventListener('input', filterTable);
+    searchTeacher.addEventListener('input', filterTable);
+})();
+</script>
+{% endblock %}

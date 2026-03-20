@@ -1,0 +1,95 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}РУПД: {{ rupd.discipline }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4><i class="bi bi-journal-text"></i> {{ rupd.discipline }}</h4>
+        <span class="badge bg-{{ rupd.status_color }}">{{ rupd.status_name }}</span>
+        <span class="text-muted ms-2">{{ rupd.teacher.full_name if rupd.teacher else '' }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if rupd.status != 'approved' or cmk_user.is_admin %}
+        <a href="{{ url_for('cmk.rupd_edit', id=rupd.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Редактировать</a>
+        {% endif %}
+        {% if rupd.status in ('draft', 'revision') %}
+        <form method="POST" action="{{ url_for('cmk.rupd_submit', id=rupd.id) }}">
+            <button class="btn btn-warning btn-sm"><i class="bi bi-send"></i> На рассмотрение</button>
+        </form>
+        {% endif %}
+        {% if rupd.status == 'under_review' and cmk_user.is_chair %}
+        <form method="POST" action="{{ url_for('cmk.rupd_approve', id=rupd.id) }}">
+            <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Утвердить</button>
+        </form>
+        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal"><i class="bi bi-x-lg"></i> На доработку</button>
+        {% endif %}
+    </div>
+</div>
+
+{% if rupd.review_comment %}
+<div class="alert alert-warning"><strong>Комментарий рецензента:</strong> {{ rupd.review_comment }}</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <strong>РУП:</strong> <a href="{{ url_for('cmk.rup_view', id=rupd.rup_id) }}">{{ rupd.rup.title if rupd.rup else '—' }}</a>
+        {% if rupd.approved_by %}
+        <span class="text-success ms-3"><i class="bi bi-check-circle"></i> {{ rupd.approved_by.full_name }} ({{ rupd.approved_at.strftime('%d.%m.%Y') if rupd.approved_at else '' }})</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sections -->
+<div class="card mb-3">
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#v-goals">Цели и задачи</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-comp">Компетенции</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-content">Содержание</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-lit">Литература</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-assess">Оценка</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-extra">Доп. разделы</a></li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="v-goals">{{ rupd.goals|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-comp">{{ rupd.competencies|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-content">{{ rupd.content_plan|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-lit">{{ rupd.literature|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-assess">{{ rupd.assessment|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-extra">{{ rupd.extra_content|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- History -->
+<div class="card">
+    <div class="card-header">История</div>
+    <div class="list-group list-group-flush">
+        {% for h in history %}
+        <div class="list-group-item small">
+            <strong>{{ h.action }}</strong> {% if h.user %} — {{ h.user.full_name }}{% endif %}
+            <span class="text-muted float-end">{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% if h.comment %}<br><span class="text-muted">{{ h.comment }}</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('cmk.rupd_reject', id=rupd.id) }}">
+                <div class="modal-header"><h5 class="modal-title">На доработку</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <textarea name="comment" class="form-control" rows="3" required placeholder="Укажите причину..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Отправить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

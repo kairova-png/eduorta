@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}GitHub Pages - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('google_sheets_simple.index') }}">Google Sheets</a></li>
+        <li class="breadcrumb-item active">GitHub Pages</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Генерация и синхронизация -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-github"></i> GitHub Pages Синхронизация
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Информация о генерации -->
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Информация:</strong> JSON файлы содержат все данные расписания за весь год для всех групп
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="row mb-4">
+                    <!-- Основные функции -->
+                    <div class="col-md-8">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">Основные функции</h6>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-primary btn-lg" onclick="updateJsonOnly()">
+                                        <i class="bi bi-arrow-repeat"></i> Обновить файлы (JSON)
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-lg" onclick="fullGenerateAndPush()">
+                                        <i class="bi bi-plus-square"></i> Создать страницу + пуш в GitHub
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Дополнительные действия -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">Дополнительные действия</h6>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="syncOnly()">
+                                        <i class="bi bi-github"></i> Только git push
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="generateOnly()">
+                                        <i class="bi bi-folder-plus"></i> Только генерация
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Результат операций -->
+                <div id="operationResult" class="mt-3" style="display: none;"></div>
+                
+                <!-- Прогресс -->
+                <div id="progressContainer" class="mt-3" style="display: none;">
+                    <div class="progress mb-2">
+                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="progressText" class="text-center small"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика и информация -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Статистика</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary">{{ groups|length }}</h4>
+                                <small class="text-muted">Групп</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success">{{ teachers|length }}</h4>
+                                <small class="text-muted">Преподавателей</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-clock-history"></i> Последняя синхронизация</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="lastSyncInfo" class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="mt-2 mb-0 small">Проверка статуса...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Информационная панель -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Информация</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>GitHub Pages</strong> — это сервис для публикации веб-сайтов прямо из GitHub репозитория.</p>
+                
+                <hr>
+                
+                <p><strong>Что происходит при синхронизации:</strong></p>
+                <ul class="small mb-3">
+                    <li>Генерируются HTML файлы с расписанием</li>
+                    <li>Создается JSON API для расписания</li>
+                    <li>Файлы отправляются в GitHub репозиторий</li>
+                    <li>Сайт автоматически обновляется</li>
+                </ul>
+                
+                <div class="alert alert-info small">
+                    <i class="bi bi-lightbulb"></i> 
+                    <strong>Совет:</strong> Используйте автосинхронизацию для автоматического обновления сайта после генерации.
+                </div>
+            </div>
+        </div>
+
+        <!-- Ссылки -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-link-45deg"></i> Ссылки</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="https://azamat313.github.io/apec_schedule/" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-box-arrow-up-right"></i> Открыть сайт
+                    </a>
+                    <a href="https://github.com/Azamat313/apec_schedule" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-github"></i> Репозиторий GitHub
+                    </a>
+                    <a href="{{ url_for('schedule.index') }}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-calendar3"></i> Просмотр расписания
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Быстрые действия</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('schedule.generate_smart') }}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-magic"></i> Умная генерация расписания
+                    </a>
+                    <a href="{{ url_for('google_sheets_simple.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Назад к Google Sheets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let isProcessing = false;
+
+// Обновить только JSON файлы
+function updateJsonOnly() {
+    if (isProcessing) return;
+
+    showProgress('Обновляем JSON файлы...', 20);
+    setProcessing(true);
+
+    fetch('/google-sheets/api/update-json-only', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        setProcessing(false);
+        hideProgress();
+
+        console.log('Update JSON result:', data);
+
+        if (data.success) {
+            let syncDetails = '';
+            if (data.sync) {
+                syncDetails = `<br><small><strong>Git:</strong> ${data.sync.message || (data.sync.success ? '✅ Push успешно' : '⚠️ ' + (data.sync.error || 'Ошибка'))}</small>`;
+            }
+            if (data.sync_error) {
+                syncDetails = `<br><small><strong>Git ошибка:</strong> ${data.sync_error}</small>`;
+            }
+            showResult('success', `
+                <strong>✅ JSON файлы обновлены!</strong><br>
+                <small>Файлы: ${data.updated_files ? data.updated_files.join(', ') : '-'}</small><br>
+                <small>Время: ${data.timestamp}</small>
+                ${syncDetails}
+            `);
+        } else {
+            showResult('error', `
+                <strong>❌ Ошибка обновления JSON:</strong><br>
+                <small>${data.error || JSON.stringify(data)}</small>
+            `);
+        }
+    })
+    .catch(error => {
+        setProcessing(false);
+        hideProgress();
+        showResult('error', `
+            <strong>❌ Ошибка сети:</strong><br>
+            <small>${error.message}</small>
+        `);
+    });
+}
+
+// Полная генерация страницы + git push
+function fullGenerateAndPush() {
+    if (isProcessing) return;
+
+    showProgress('Создаем страницу и загружаем в GitHub...', 10);
+    setProcessing(true);
+
+    fetch('/google-sheets/api/full-generate-and-push', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        setProcessing(false);
+        hideProgress();
+
+        console.log('Full generate and push result:', data);
+
+        if (data.success) {
+            let details = '';
+            if (data.git_push) {
+                details += `<br><small><strong>Git Push:</strong> ${data.git_push.auto_pushed ? '✅ Успешно' : '⚠️ Не выполнен'}</small>`;
+                if (data.git_push.commit_message) {
+                    details += `<br><small><strong>Коммит:</strong> ${data.git_push.commit_message}</small>`;
+                }
+                if (data.git_push.push_error) {
+                    details += `<br><small><strong>Ошибка push:</strong> ${data.git_push.push_error}</small>`;
+                }
+                if (data.git_push.message) {
+                    details += `<br><small><strong>Сообщение:</strong> ${data.git_push.message}</small>`;
+                }
+            }
+            showResult('success', `
+                <strong>✅ Страница создана!</strong><br>
+                <small>${data.message}</small>
+                ${details}
+            `);
+            updateLastSyncInfo();
+        } else {
+            showResult('error', `
+                <strong>❌ Ошибка создания страницы:</strong><br>
+                <small>${data.error || JSON.stringify(data)}</small>
+            `);
+        }
+    })
+    .catch(error => {
+        setProcessing(false);
+        hideProgress();
+        showResult('error', `
+            <strong>❌ Ошибка сети:</strong><br>
+            <small>${error.message}</small>
+        `);
+    });
+}
+
+// Генерация и синхронизация (старая функция, оставлена для совместимости)
+function generateAndSync() {
+    if (isProcessing) return;
+    
+    const week = document.getElementById('weekSelect').value;
+    const autoSync = document.getElementById('autoSync').checked;
+    
+    showProgress('Начинаем генерацию и синхронизацию...', 10);
+    setProcessing(true);
+    
+    fetch('/google-sheets/sites/api/generate-and-sync', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            week: parseInt(week),
+            auto_sync: autoSync
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        setProcessing(false);
+        hideProgress();
+        
+        if (data.success) {
+            showResult('success', `
+                <strong>✅ Синхронизация завершена успешно!</strong><br>
+                <small>Расписание сгенерировано и загружено в GitHub Pages</small>
+            `);
+            updateLastSyncInfo();
+        } else {
+            showResult('error', `
+                <strong>❌ Ошибка при синхронизации:</strong><br>
+                <small>${data.error || data.message}</small>
+            `);
+        }
+    })
+    .catch(error => {
+        setProcessing(false);
+        hideProgress();
+        showResult('error', `
+            <strong>❌ Ошибка сети:</strong><br>
+            <small>${error.message}</small>
+        `);
+    });
+}
+
+// Только генерация
+function generateOnly() {
+    if (isProcessing) return;
+    
+    const week = document.getElementById('weekSelect').value;
+    
+    showProgress('Генерируем файлы...', 30);
+    setProcessing(true);
+    
+    fetch('/google-sheets/api/generate-github-package', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            week: parseInt(week)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        setProcessing(false);
+        hideProgress();
+        
+        if (data.success) {
+            showResult('success', `
+                <strong>✅ Файлы сгенерированы успешно!</strong><br>
+                <small>GitHub Pages пакет готов к загрузке</small>
+            `);
+        } else {
+            showResult('error', `
+                <strong>❌ Ошибка генерации:</strong><br>
+                <small>${data.error}</small>
+            `);
+        }
+    })
+    .catch(error => {
+        setProcessing(false);
+        hideProgress();
+        showResult('error', `
+            <strong>❌ Ошибка сети:</strong><br>
+            <small>${error.message}</small>
+        `);
+    });
+}
+
+// Только синхронизация
+function syncOnly() {
+    if (isProcessing) return;
+    
+    showProgress('Синхронизируем с GitHub...', 50);
+    setProcessing(true);
+    
+    fetch('/google-sheets/api/sync-to-github', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            auto_push: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        setProcessing(false);
+        hideProgress();
+        
+        if (data.success) {
+            showResult('success', `
+                <strong>✅ Синхронизация с GitHub завершена!</strong><br>
+                <small>Изменения загружены в репозиторий</small>
+            `);
+            updateLastSyncInfo();
+        } else {
+            showResult('error', `
+                <strong>❌ Ошибка синхронизации:</strong><br>
+                <small>${data.error}</small>
+            `);
+        }
+    })
+    .catch(error => {
+        setProcessing(false);
+        hideProgress();
+        showResult('error', `
+            <strong>❌ Ошибка сети:</strong><br>
+            <small>${error.message}</small>
+        `);
+    });
+}
+
+// Показать результат
+function showResult(type, message) {
+    const resultDiv = document.getElementById('operationResult');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    
+    resultDiv.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+}
+
+// Показать/скрыть прогресс
+function showProgress(text, percent) {
+    const container = document.getElementById('progressContainer');
+    const bar = document.getElementById('progressBar');
+    const textElement = document.getElementById('progressText');
+    
+    textElement.textContent = text;
+    bar.style.width = percent + '%';
+    container.style.display = 'block';
+    
+    // Анимация прогресса
+    if (percent < 100) {
+        setTimeout(() => {
+            if (percent < 90) {
+                showProgress(text, percent + 20);
+            }
+        }, 1000);
+    }
+}
+
+function hideProgress() {
+    const container = document.getElementById('progressContainer');
+    container.style.display = 'none';
+}
+
+// Блокировка/разблокировка кнопок
+function setProcessing(processing) {
+    isProcessing = processing;
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+        if (processing) {
+            btn.disabled = true;
+            if (btn.onclick) {
+                btn.classList.add('disabled');
+            }
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    });
+}
+
+// Обновить информацию о последней синхронизации
+function updateLastSyncInfo() {
+    fetch('/google-sheets/api/auto-sync-status')
+        .then(response => response.json())
+        .then(data => {
+            const infoDiv = document.getElementById('lastSyncInfo');
+            
+            if (data.success) {
+                const lastSync = new Date(data.last_sync);
+                infoDiv.innerHTML = `
+                    <div class="text-success">
+                        <i class="bi bi-check-circle"></i>
+                        <p class="mb-0 small mt-1">
+                            ${lastSync.toLocaleDateString()} 
+                            ${lastSync.toLocaleTimeString()}
+                        </p>
+                    </div>
+                `;
+            } else {
+                infoDiv.innerHTML = `
+                    <div class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p class="mb-0 small mt-1">Нет данных</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            const infoDiv = document.getElementById('lastSyncInfo');
+            infoDiv.innerHTML = `
+                <div class="text-danger">
+                    <i class="bi bi-x-circle"></i>
+                    <p class="mb-0 small mt-1">Ошибка подключения</p>
+                </div>
+            `;
+        });
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    updateLastSyncInfo();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Умная генерация расписания - APEC Petrotechnic{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Стили для выпадающего меню нагрузок */
+#workloadDropdownMenu {
+    min-width: 350px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#workloadDropdownMenu .form-check {
+    transition: background-color 0.15s;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+#workloadDropdownMenu .form-check:hover {
+    background-color: #f8f9fa;
+}
+
+#workloadDropdownMenu .form-check-input:checked + .form-check-label {
+    background-color: #e8f4fd;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+}
+
+#workloadDropdownMenu .dropdown-header {
+    font-weight: 600;
+    color: #495057;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    margin: 4px 0;
+    border-radius: 4px;
+}
+
+#workloadDropdown {
+    min-height: 38px;
+}
+
+#workloadDropdown:hover {
+    border-color: #86b7fe;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('schedule.index') }}">Расписание</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('schedule.generate') }}">Генерация</a></li>
+        <li class="breadcrumb-item active">Умная генерация</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-cpu-fill text-primary"></i> Умная генерация расписания</h2>
+    <span class="badge bg-primary fs-6">AI-Powered v2.0</span>
+</div>
+
+<div class="alert alert-primary border-0 shadow-sm">
+    <div class="d-flex align-items-start">
+        <i class="bi bi-robot text-primary fs-1 me-3"></i>
+        <div>
+            <h5 class="mb-2"><i class="bi bi-magic"></i> Интеллектуальная система планирования</h5>
+            <p class="mb-3">Автоматическое создание расписания на основе шаблонов нагрузки с учетом всех ограничений и предпочтений.</p>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-check text-success me-2"></i>
+                        <small><strong>Шаблонное планирование</strong> - точно следует созданным шаблонам</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-building text-info me-2"></i>
+                        <small><strong>Умный выбор аудиторий</strong> - учитывает предпочтения по дисциплинам</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-check text-warning me-2"></i>
+                        <small><strong>Контроль конфликтов</strong> - проверяет занятость преподавателей</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-graph-up text-success me-2"></i>
+                        <small><strong>Оценка качества</strong> - анализирует результат (0-100 баллов)</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 p-3 bg-light rounded">
+                <i class="bi bi-lightbulb-fill text-warning me-2"></i>
+                <strong>Рекомендация:</strong> 
+                <span class="text-muted">
+                    Создайте шаблоны нагрузки в разделе 
+                    <a href="{{ url_for('workload_templates.editor') }}" class="alert-link fw-bold">Шаблоны нагрузки</a>
+                    и настройте предпочтения аудиторий в 
+                    <a href="{{ url_for('schedule_wizard.index') }}" class="alert-link fw-bold">мастере генерации</a>
+                    для получения оптимального результата.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(45deg, #007bff, #0056b3);">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-sliders me-2"></i>
+                    <h5 class="mb-0">Настройки генерации</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Группа *</label>
+                                <select name="group_id" id="groupSelect" class="form-select" onchange="loadWorkloadTemplates()" required>
+                                    <option value="">-- Выберите группу --</option>
+                                    {% for group in groups %}
+                                    <option value="{{ group.id }}">{{ group.name }} ({{ group.course }} курс)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Семестр *</label>
+                                <select name="semester" id="semesterSelect" class="form-select" onchange="loadWorkloadTemplates()" required>
+                                    <option value="">-- Выберите семестр --</option>
+                                    <option value="1">1 семестр</option>
+                                    <option value="2">2 семестр</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Нагрузка с шаблонами</label>
+                                <div class="dropdown w-100">
+                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center"
+                                            type="button" id="workloadDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                        <span id="workloadDropdownLabel">-- Сначала выберите группу --</span>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 p-2" aria-labelledby="workloadDropdown" style="max-height: 400px; overflow-y: auto;" id="workloadDropdownMenu">
+                                        <li class="text-muted text-center py-2">Сначала выберите группу и семестр</li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" name="workload_ids" id="selectedWorkloads" value="">
+                                <div class="form-text">Нажмите чтобы выбрать нагрузки</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg shadow-sm" style="background: linear-gradient(45deg, #28a745, #20c997); border: none;">
+                            <i class="bi bi-robot me-2"></i>
+                            <span class="fw-bold">Запустить ИИ-генерацию</span>
+                            <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-gear text-primary me-2"></i>
+                    <h6 class="mb-0">Алгоритм работы</h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item d-flex mb-3">
+                        <div class="timeline-marker bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">
+                            <small>1</small>
+                        </div>
+                        <div>
+                            <small class="fw-bold">Загрузка шаблонов</small>
+                            <div class="text-muted small">Анализ созданных шаблонов нагрузки</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item d-flex mb-3">
+                        <div class="timeline-marker bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">
+                            <small>2</small>
+                        </div>
+                        <div>
+                            <small class="fw-bold">Планирование недель</small>
+                            <div class="text-muted small">Размещение пар точно по шаблону</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item d-flex mb-3">
+                        <div class="timeline-marker bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">
+                            <small>3</small>
+                        </div>
+                        <div>
+                            <small class="fw-bold">Выбор аудиторий</small>
+                            <div class="text-muted small">Умный подбор по предпочтениям</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item d-flex">
+                        <div class="timeline-marker bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 30px; height: 30px;">
+                            <small>4</small>
+                        </div>
+                        <div>
+                            <small class="fw-bold">Проверка качества</small>
+                            <div class="text-muted small">Анализ и оценка результата</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3 shadow-sm border-0">
+            <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-tools text-secondary me-2"></i>
+                    <h6 class="mb-0">Альтернативы</h6>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('schedule.generate') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Обычная генерация
+                    </a>
+                    <a href="{{ url_for('workload_templates.editor') }}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-file-earmark-text me-1"></i> Шаблоны нагрузки
+                    </a>
+                    <a href="{{ url_for('schedule_wizard.index') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-magic me-1"></i> Мастер генерации
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Хранилище выбранных нагрузок
+let selectedWorkloadIds = new Set();
+
+// Загрузка нагрузок с шаблонами при выборе группы и семестра
+async function loadWorkloadTemplates() {
+    const groupSelect = document.getElementById('groupSelect');
+    const semesterSelect = document.getElementById('semesterSelect');
+    const dropdownMenu = document.getElementById('workloadDropdownMenu');
+    const dropdownLabel = document.getElementById('workloadDropdownLabel');
+
+    const groupId = groupSelect.value;
+    const semester = semesterSelect.value;
+
+    // Очищаем выбор
+    selectedWorkloadIds.clear();
+    updateSelectedWorkloads();
+
+    // Показываем загрузку
+    dropdownMenu.innerHTML = '<li class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка...</li>';
+    dropdownLabel.textContent = '-- Загрузка... --';
+
+    if (!groupId || !semester) {
+        dropdownMenu.innerHTML = '<li class="text-muted text-center py-2">Сначала выберите группу и семестр</li>';
+        dropdownLabel.textContent = '-- Сначала выберите группу --';
+        return;
+    }
+
+    try {
+        // Загружаем нагрузки для группы
+        const workloadsResponse = await fetch(`/workload-templates/api/workloads-by-group/${groupId}`);
+        if (!workloadsResponse.ok) {
+            throw new Error('Ошибка загрузки нагрузок');
+        }
+
+        const workloads = await workloadsResponse.json();
+        const semesterWorkloads = workloads.filter(w => w.semester == semester);
+
+        // Загружаем шаблоны для этой группы и семестра
+        const templatesResponse = await fetch(`/workload-templates/api/?group_id=${groupId}&semester=${semester}`);
+        const templates = templatesResponse.ok ? await templatesResponse.json() : [];
+
+        if (semesterWorkloads.length === 0) {
+            dropdownMenu.innerHTML = '<li class="text-muted text-center py-2">Нет нагрузок для этого семестра</li>';
+            dropdownLabel.textContent = '-- Нет нагрузок --';
+            return;
+        }
+
+        // Группируем шаблоны по workload_id
+        const templatesByWorkload = {};
+        templates.forEach(template => {
+            if (!templatesByWorkload[template.workload_id]) {
+                templatesByWorkload[template.workload_id] = [];
+            }
+            templatesByWorkload[template.workload_id].push(template);
+        });
+
+        // Строим меню
+        let html = '';
+
+        // Быстрые действия
+        html += `
+            <li class="mb-2">
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1" onclick="selectAllWorkloads()">
+                        <i class="bi bi-check-all"></i> Все
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success flex-grow-1" onclick="selectWithTemplates()">
+                        <i class="bi bi-magic"></i> С шаблонами
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1" onclick="clearSelection()">
+                        <i class="bi bi-x"></i> Сброс
+                    </button>
+                </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>`;
+
+        // Нагрузки с шаблонами
+        const workloadsWithTemplates = semesterWorkloads.filter(w => templatesByWorkload[w.id]);
+        if (workloadsWithTemplates.length > 0) {
+            html += `<li class="dropdown-header"><i class="bi bi-magic text-success"></i> С шаблонами (${workloadsWithTemplates.length})</li>`;
+
+            workloadsWithTemplates.forEach(workload => {
+                const wTemplates = templatesByWorkload[workload.id];
+                const templateInfo = wTemplates.map(t => t.name).join(', ');
+                html += `
+                    <li>
+                        <div class="form-check px-3 py-1">
+                            <input class="form-check-input workload-checkbox" type="checkbox"
+                                   value="${workload.id}" id="workload_${workload.id}"
+                                   data-has-template="true" onchange="toggleWorkload(${workload.id})">
+                            <label class="form-check-label w-100" for="workload_${workload.id}">
+                                <span class="fw-bold text-success">${workload.discipline}</span>
+                                <br><small class="text-muted">${templateInfo}</small>
+                            </label>
+                        </div>
+                    </li>`;
+            });
+
+            html += '<li><hr class="dropdown-divider"></li>';
+        }
+
+        // Нагрузки без шаблонов
+        const workloadsWithoutTemplates = semesterWorkloads.filter(w => !templatesByWorkload[w.id]);
+        if (workloadsWithoutTemplates.length > 0) {
+            html += `<li class="dropdown-header"><i class="bi bi-file-earmark text-secondary"></i> Без шаблонов (${workloadsWithoutTemplates.length})</li>`;
+
+            workloadsWithoutTemplates.forEach(workload => {
+                html += `
+                    <li>
+                        <div class="form-check px-3 py-1">
+                            <input class="form-check-input workload-checkbox" type="checkbox"
+                                   value="${workload.id}" id="workload_${workload.id}"
+                                   data-has-template="false" onchange="toggleWorkload(${workload.id})">
+                            <label class="form-check-label" for="workload_${workload.id}">
+                                ${workload.discipline}
+                            </label>
+                        </div>
+                    </li>`;
+            });
+        }
+
+        dropdownMenu.innerHTML = html;
+        dropdownLabel.textContent = '-- Выберите нагрузки --';
+
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        dropdownMenu.innerHTML = '<li class="text-danger text-center py-2">Ошибка загрузки</li>';
+        dropdownLabel.textContent = '-- Ошибка --';
+    }
+}
+
+// Переключение выбора нагрузки
+function toggleWorkload(workloadId) {
+    if (selectedWorkloadIds.has(workloadId)) {
+        selectedWorkloadIds.delete(workloadId);
+    } else {
+        selectedWorkloadIds.add(workloadId);
+    }
+    updateSelectedWorkloads();
+}
+
+// Выбрать все нагрузки
+function selectAllWorkloads() {
+    document.querySelectorAll('.workload-checkbox').forEach(cb => {
+        cb.checked = true;
+        selectedWorkloadIds.add(parseInt(cb.value));
+    });
+    updateSelectedWorkloads();
+}
+
+// Выбрать только с шаблонами
+function selectWithTemplates() {
+    selectedWorkloadIds.clear();
+    document.querySelectorAll('.workload-checkbox').forEach(cb => {
+        if (cb.dataset.hasTemplate === 'true') {
+            cb.checked = true;
+            selectedWorkloadIds.add(parseInt(cb.value));
+        } else {
+            cb.checked = false;
+        }
+    });
+    updateSelectedWorkloads();
+}
+
+// Очистить выбор
+function clearSelection() {
+    selectedWorkloadIds.clear();
+    document.querySelectorAll('.workload-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    updateSelectedWorkloads();
+}
+
+// Обновить скрытое поле и лейбл
+function updateSelectedWorkloads() {
+    const hiddenInput = document.getElementById('selectedWorkloads');
+    const dropdownLabel = document.getElementById('workloadDropdownLabel');
+
+    const ids = Array.from(selectedWorkloadIds);
+    hiddenInput.value = ids.join(',');
+
+    if (ids.length === 0) {
+        dropdownLabel.innerHTML = '<span class="text-muted">-- Выберите нагрузки --</span>';
+    } else {
+        const withTemplates = document.querySelectorAll('.workload-checkbox[data-has-template="true"]:checked').length;
+        const total = ids.length;
+
+        if (withTemplates === total && total > 0) {
+            dropdownLabel.innerHTML = `<span class="text-success"><i class="bi bi-magic"></i> ${total} нагрузок с шаблонами</span>`;
+        } else if (withTemplates > 0) {
+            dropdownLabel.innerHTML = `<span class="text-primary">${total} нагрузок (${withTemplates} с шаблонами)</span>`;
+        } else {
+            dropdownLabel.innerHTML = `<span>${total} нагрузок</span>`;
+        }
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadWorkloadTemplates();
+});
+</script>
+{% endblock %}

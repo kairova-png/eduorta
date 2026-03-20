@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+
+{% block title %}Шаблоны распределения нагрузки{% endblock %}
+
+{% block extra_css %}
+<style>
+.week-block {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 150px;
+    text-align: center;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.week-block:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.week-block.selected {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.week-block .week-number {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.week-block .week-dates {
+    font-size: 0.8em;
+    margin-bottom: 5px;
+}
+
+.week-block .activity-info {
+    font-size: 0.75em;
+    margin-top: 5px;
+}
+
+.weeks-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    background: white;
+}
+
+.workload-filter {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.schedule-editor {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    display: none;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.schedule-table th,
+.schedule-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+}
+
+.schedule-cell {
+    width: 120px;
+    height: 80px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.schedule-cell.selected {
+    background-color: #28a745 !important;
+    color: white;
+}
+
+.schedule-cell.preferred {
+    background-color: #ffc107 !important;
+    color: black;
+}
+
+.schedule-cell.avoid {
+    background-color: #dc3545 !important;
+    color: white;
+}
+
+.time-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    width: 100px;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #333;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="bi bi-calendar-range"></i> Редактор шаблонов распределения нагрузки</h2>
+    
+    <!-- Фильтр нагрузки -->
+    <div class="workload-filter">
+        <h4>Моя нагрузка</h4>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="workloadSelect" class="form-label">Выберите дисциплину:</label>
+                <select class="form-select" id="workloadSelect">
+                    <option value="">Загружается...</option>
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div id="workloadInfo" class="text-muted">
+                    <small>Выберите дисциплину для просмотра деталей</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блоки недель семестра -->
+    <div id="weekSelection" class="d-none">
+        <h4>Недели семестра из ГУП</h4>
+        <div class="weeks-container" id="weeksContainer">
+            <!-- Недели будут загружены динамически -->
+        </div>
+    </div>
+
+    <!-- Редактор расписания для выбранной недели -->
+    <div class="schedule-editor" id="scheduleEditor">
+        <h4>Редактор шаблона для недели <span id="currentWeekInfo"></span></h4>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #28a745;"></div>
+                <small>Предпочитаемое время</small>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffc107;"></div>
+                <small>Возможное время</small>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #dc3545;"></div>
+                <small>Избегать</small>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered schedule-table" id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th class="time-header">Время</th>
+                        <th>Понедельник</th>
+                        <th>Вторник</th>
+                        <th>Среда</th>
+                        <th>Четверг</th>
+                        <th>Пятница</th>
+                        <th>Суббота</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="time-header">8:00-9:30</td>
+                        <td class="schedule-cell" data-day="1" data-period="1"></td>
+                        <td class="schedule-cell" data-day="2" data-period="1"></td>
+                        <td class="schedule-cell" data-day="3" data-period="1"></td>
+                        <td class="schedule-cell" data-day="4" data-period="1"></td>
+                        <td class="schedule-cell" data-day="5" data-period="1"></td>
+                        <td class="schedule-cell" data-day="6" data-period="1"></td>
+                    </tr>
+                    <tr>
+                        <td class="time-header">9:40-11:10</td>
+                        <td class="schedule-cell" data-day="1" data-period="2"></td>
+                        <td class="schedule-cell" data-day="2" data-period="2"></td>
+                        <td class="schedule-cell" data-day="3" data-period="2"></td>
+                        <td class="schedule-cell" data-day="4" data-period="2"></td>
+                        <td class="schedule-cell" data-day="5" data-period="2"></td>
+                        <td class="schedule-cell" data-day="6" data-period="2"></td>
+                    </tr>
+                    <tr>
+                        <td class="time-header">11:20-12:50</td>
+                        <td class="schedule-cell" data-day="1" data-period="3"></td>
+                        <td class="schedule-cell" data-day="2" data-period="3"></td>
+                        <td class="schedule-cell" data-day="3" data-period="3"></td>
+                        <td class="schedule-cell" data-day="4" data-period="3"></td>
+                        <td class="schedule-cell" data-day="5" data-period="3"></td>
+                        <td class="schedule-cell" data-day="6" data-period="3"></td>
+                    </tr>
+                    <tr>
+                        <td class="time-header">13:30-15:00</td>
+                        <td class="schedule-cell" data-day="1" data-period="4"></td>
+                        <td class="schedule-cell" data-day="2" data-period="4"></td>
+                        <td class="schedule-cell" data-day="3" data-period="4"></td>
+                        <td class="schedule-cell" data-day="4" data-period="4"></td>
+                        <td class="schedule-cell" data-day="5" data-period="4"></td>
+                        <td class="schedule-cell" data-day="6" data-period="4"></td>
+                    </tr>
+                    <tr>
+                        <td class="time-header">15:10-16:40</td>
+                        <td class="schedule-cell" data-day="1" data-period="5"></td>
+                        <td class="schedule-cell" data-day="2" data-period="5"></td>
+                        <td class="schedule-cell" data-day="3" data-period="5"></td>
+                        <td class="schedule-cell" data-day="4" data-period="5"></td>
+                        <td class="schedule-cell" data-day="5" data-period="5"></td>
+                        <td class="schedule-cell" data-day="6" data-period="5"></td>
+                    </tr>
+                    <tr>
+                        <td class="time-header">16:50-18:20</td>
+                        <td class="schedule-cell" data-day="1" data-period="6"></td>
+                        <td class="schedule-cell" data-day="2" data-period="6"></td>
+                        <td class="schedule-cell" data-day="3" data-period="6"></td>
+                        <td class="schedule-cell" data-day="4" data-period="6"></td>
+                        <td class="schedule-cell" data-day="5" data-period="6"></td>
+                        <td class="schedule-cell" data-day="6" data-period="6"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-success" id="saveTemplate">
+                <i class="bi bi-save"></i> Сохранить шаблон
+            </button>
+            <button type="button" class="btn btn-secondary" id="clearAll">
+                <i class="bi bi-arrow-clockwise"></i> Очистить
+            </button>
+            <button type="button" class="btn btn-info" id="autoFill">
+                <i class="bi bi-magic"></i> Автозаполнение
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для подтверждения сохранения -->
+<div class="modal fade" id="saveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Сохранить шаблон</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="templateName" class="form-label">Название шаблона:</label>
+                    <input type="text" class="form-control" id="templateName" placeholder="Введите название...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmSave">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentWorkload = null;
+let currentWeek = null;
+let selectedSlots = new Set();
+
+// Загрузка списка нагрузки при инициализации
+document.addEventListener('DOMContentLoaded', function() {
+    loadMyWorkload();
+    initScheduleEditor();
+});
+
+// Загрузка списка нагрузки текущего пользователя
+async function loadMyWorkload() {
+    try {
+        const response = await fetch('/workload-templates/api/my-workload');
+        const workloads = await response.json();
+        
+        const select = document.getElementById('workloadSelect');
+        select.innerHTML = '<option value="">Выберите дисциплину...</option>';
+        
+        workloads.forEach(workload => {
+            const option = document.createElement('option');
+            option.value = workload.id;
+            const typeLabels = {'theory': 'Т', 'practice': 'П', 'consultation': 'К', 'exam': 'Э'};
+            const typeLabel = typeLabels[workload.lesson_type] || 'Т';
+            option.textContent = `[${typeLabel}] ${workload.discipline} (${workload.group_name}, сем. ${workload.semester})`;
+            option.dataset.workload = JSON.stringify(workload);
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки нагрузки:', error);
+        showAlert('Ошибка загрузки списка нагрузки', 'error');
+    }
+}
+
+// Обработчик изменения выбора нагрузки
+document.getElementById('workloadSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        currentWorkload = JSON.parse(selectedOption.dataset.workload);
+        updateWorkloadInfo();
+        loadSemesterWeeks();
+    } else {
+        hideWeekSelection();
+    }
+});
+
+// Обновление информации о нагрузке
+function updateWorkloadInfo() {
+    const info = document.getElementById('workloadInfo');
+    if (currentWorkload) {
+        info.innerHTML = `
+            <strong>Преподаватель:</strong> ${currentWorkload.teacher_name}<br>
+            <strong>Группа:</strong> ${currentWorkload.group_name}<br>
+            <strong>Семестр:</strong> ${currentWorkload.semester}<br>
+            <strong>Часов:</strong> ${currentWorkload.total_hours} (${currentWorkload.hours_per_week || 'не указано'} в неделю)
+        `;
+    }
+}
+
+// Загрузка недель семестра из ГУП
+async function loadSemesterWeeks() {
+    try {
+        const response = await fetch(`/workload-templates/api/semester-weeks/${currentWorkload.id}`);
+        const weeks = await response.json();
+        
+        const container = document.getElementById('weeksContainer');
+        container.innerHTML = '';
+        
+        weeks.forEach(week => {
+            const weekBlock = createWeekBlock(week);
+            container.appendChild(weekBlock);
+        });
+        
+        document.getElementById('weekSelection').classList.remove('d-none');
+    } catch (error) {
+        console.error('Ошибка загрузки недель:', error);
+        showAlert('Ошибка загрузки недель семестра', 'error');
+    }
+}
+
+// Создание блока недели
+function createWeekBlock(week) {
+    const block = document.createElement('div');
+    block.className = 'week-block';
+    block.dataset.weekId = week.id;
+    block.dataset.week = JSON.stringify(week);
+    
+    const startDate = week.start_date ? new Date(week.start_date).toLocaleDateString('ru-RU') : '';
+    const endDate = week.end_date ? new Date(week.end_date).toLocaleDateString('ru-RU') : '';
+    
+    block.innerHTML = `
+        <div class="week-number">Неделя ${week.week_number}</div>
+        <div class="week-dates">${startDate} - ${endDate}</div>
+        <div class="activity-info">
+            <strong>${week.activity_code || ''}</strong><br>
+            <small>${week.activity_name || 'Теоретическое обучение'}</small>
+        </div>
+        ${week.needs_schedule ? '<div class="text-success"><i class="bi bi-check-circle"></i> Нужно расписание</div>' : '<div class="text-muted">Без расписания</div>'}
+    `;
+    
+    block.addEventListener('click', function() {
+        selectWeek(week);
+    });
+    
+    return block;
+}
+
+// Выбор недели для редактирования
+function selectWeek(week) {
+    // Убрать выделение с предыдущих блоков
+    document.querySelectorAll('.week-block').forEach(block => {
+        block.classList.remove('selected');
+    });
+    
+    // Выделить выбранный блок
+    event.currentTarget.classList.add('selected');
+    
+    currentWeek = week;
+    document.getElementById('currentWeekInfo').textContent = `${week.week_number} (${week.start_date ? new Date(week.start_date).toLocaleDateString('ru-RU') : ''})`;
+    
+    document.getElementById('scheduleEditor').style.display = 'block';
+    clearScheduleEditor();
+    
+    // Здесь можно загрузить существующий шаблон если он есть
+    loadExistingTemplate();
+}
+
+// Скрытие выбора недель
+function hideWeekSelection() {
+    document.getElementById('weekSelection').classList.add('d-none');
+    document.getElementById('scheduleEditor').style.display = 'none';
+    currentWorkload = null;
+    currentWeek = null;
+}
+
+// Инициализация редактора расписания
+function initScheduleEditor() {
+    const cells = document.querySelectorAll('.schedule-cell');
+    let currentMode = 'selected'; // selected, preferred, avoid
+    
+    cells.forEach(cell => {
+        cell.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleCellState(this);
+        });
+        
+        cell.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            cycleCellState(this);
+        });
+    });
+    
+    // Обработчики кнопок
+    document.getElementById('saveTemplate').addEventListener('click', saveTemplate);
+    document.getElementById('clearAll').addEventListener('click', clearScheduleEditor);
+    document.getElementById('autoFill').addEventListener('click', autoFillTemplate);
+    document.getElementById('confirmSave').addEventListener('click', confirmSaveTemplate);
+}
+
+// Переключение состояния ячейки
+function toggleCellState(cell) {
+    const key = `${cell.dataset.day}-${cell.dataset.period}`;
+    
+    if (cell.classList.contains('selected')) {
+        cell.classList.remove('selected');
+        cell.classList.add('preferred');
+    } else if (cell.classList.contains('preferred')) {
+        cell.classList.remove('preferred');
+        cell.classList.add('avoid');
+    } else if (cell.classList.contains('avoid')) {
+        cell.classList.remove('avoid');
+    } else {
+        cell.classList.add('selected');
+    }
+}
+
+// Циклическое переключение состояния ячейки (правый клик)
+function cycleCellState(cell) {
+    if (cell.classList.contains('selected')) {
+        cell.classList.remove('selected');
+        cell.classList.add('preferred');
+    } else if (cell.classList.contains('preferred')) {
+        cell.classList.remove('preferred');
+        cell.classList.add('avoid');
+    } else if (cell.classList.contains('avoid')) {
+        cell.classList.remove('avoid');
+    } else {
+        cell.classList.add('selected');
+    }
+}
+
+// Очистка редактора
+function clearScheduleEditor() {
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.classList.remove('selected', 'preferred', 'avoid');
+    });
+}
+
+// Автозаполнение шаблона
+function autoFillTemplate() {
+    if (!currentWorkload) return;
+    
+    const pairsNeeded = Math.ceil(currentWorkload.hours_per_week / 2) || 2;
+    const cells = Array.from(document.querySelectorAll('.schedule-cell'));
+    
+    // Очистка
+    clearScheduleEditor();
+    
+    // Предпочитаемые слоты (2-4 пары, будни)
+    const preferredSlots = cells.filter(cell => {
+        const day = parseInt(cell.dataset.day);
+        const period = parseInt(cell.dataset.period);
+        return day <= 5 && period >= 2 && period <= 4;
+    });
+    
+    // Автозаполнение предпочитаемыми слотами
+    for (let i = 0; i < Math.min(pairsNeeded, preferredSlots.length); i++) {
+        preferredSlots[i].classList.add('selected');
+    }
+    
+    // Возможные слоты (остальные будни)
+    const possibleSlots = cells.filter(cell => {
+        const day = parseInt(cell.dataset.day);
+        return day <= 5 && !cell.classList.contains('selected');
+    });
+    
+    possibleSlots.forEach(cell => {
+        cell.classList.add('preferred');
+    });
+    
+    // Избегаемые слоты (суббота, поздние часы)
+    const avoidSlots = cells.filter(cell => {
+        const day = parseInt(cell.dataset.day);
+        const period = parseInt(cell.dataset.period);
+        return day === 6 || period === 6;
+    });
+    
+    avoidSlots.forEach(cell => {
+        cell.classList.add('avoid');
+    });
+}
+
+// Загрузка существующего шаблона
+async function loadExistingTemplate() {
+    if (!currentWorkload || !currentWeek) return;
+    
+    try {
+        // Здесь можно загрузить существующий шаблон по workload_id и week
+        // Пока оставляем заглушку
+    } catch (error) {
+        console.error('Ошибка загрузки шаблона:', error);
+    }
+}
+
+// Сохранение шаблона
+function saveTemplate() {
+    if (!currentWorkload || !currentWeek) {
+        showAlert('Выберите нагрузку и неделю', 'warning');
+        return;
+    }
+    
+    const preferences = getSchedulePreferences();
+    if (preferences.selected.length === 0 && preferences.preferred.length === 0) {
+        showAlert('Укажите хотя бы одно предпочитаемое время', 'warning');
+        return;
+    }
+    
+    // Автоматическое название
+    document.getElementById('templateName').value = `${currentWorkload.discipline} - неделя ${currentWeek.week_number}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('saveModal'));
+    modal.show();
+}
+
+// Получение предпочтений расписания
+function getSchedulePreferences() {
+    const selected = [];
+    const preferred = [];
+    const avoid = [];
+    
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        const slot = {
+            day: parseInt(cell.dataset.day),
+            period: parseInt(cell.dataset.period)
+        };
+        
+        if (cell.classList.contains('selected')) {
+            selected.push(slot);
+        } else if (cell.classList.contains('preferred')) {
+            preferred.push(slot);
+        } else if (cell.classList.contains('avoid')) {
+            avoid.push(slot);
+        }
+    });
+    
+    return { selected, preferred, avoid };
+}
+
+// Подтверждение сохранения шаблона
+async function confirmSaveTemplate() {
+    const templateName = document.getElementById('templateName').value.trim();
+    if (!templateName) {
+        showAlert('Введите название шаблона', 'warning');
+        return;
+    }
+    
+    const preferences = getSchedulePreferences();
+    const templateData = {
+        name: templateName,
+        workload_id: currentWorkload.id,
+        group_id: currentWorkload.group_id,
+        semester: currentWorkload.semester,
+        total_hours: currentWorkload.total_hours,
+        weeks: [{
+            week: currentWeek.week_number,
+            week_id: currentWeek.id,
+            preferences: preferences
+        }]
+    };
+    
+    try {
+        const response = await fetch('/workload-templates/api/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(templateData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showAlert('Шаблон успешно сохранен', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('saveModal'));
+            modal.hide();
+        } else {
+            throw new Error(result.error || 'Ошибка сохранения');
+        }
+    } catch (error) {
+        console.error('Ошибка сохранения:', error);
+        showAlert(error.message, 'error');
+    }
+}
+
+// Показ уведомлений
+function showAlert(message, type = 'info') {
+    // Создание Bootstrap alert
+    const alertContainer = document.querySelector('.container-fluid');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertContainer.insertBefore(alert, alertContainer.firstChild);
+    
+    // Автоматическое скрытие через 5 секунд
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

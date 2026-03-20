@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Детальный анализ ошибок - {{ group.name }} семестр {{ semester }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-bug"></i> Анализ ошибок генерации</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('schedule.generate') }}">Генерация</a></li>
+            <li class="breadcrumb-item active">Анализ ошибок</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Общая информация -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Информация о группе
+            </div>
+            <div class="card-body">
+                <h5>{{ group.name }} • {{ semester }} семестр</h5>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <strong>Курс:</strong> {{ group.course }}<br>
+                        <strong>Всего дисциплин:</strong> {{ placement_summary.total_disciplines }}
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>Общий объем:</strong> {{ placement_summary.total_hours }} часов<br>
+                        <strong>Размещено:</strong> {{ placement_summary.placed_hours }} часов ({{ placement_summary.placement_percentage }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Статистика размещения
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-2">
+                    <span class="badge bg-success fs-6">{{ placement_summary.fully_placed }}</span> 
+                    полностью размещены
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-warning fs-6">{{ placement_summary.partially_placed }}</span> 
+                    частично размещены
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-danger fs-6">{{ placement_summary.not_placed }}</span> 
+                    не размещены
+                </div>
+                
+                {% if placement_summary.remaining_hours > 0 %}
+                <hr>
+                <div class="text-danger">
+                    <strong>{{ placement_summary.remaining_hours }} часов</strong><br>
+                    <small>не размещено в семестре</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Прогресс-бар общего размещения -->
+{% if placement_summary.total_hours > 0 %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span><strong>Общий прогресс размещения</strong></span>
+            <span><strong>{{ placement_summary.placement_percentage }}%</strong></span>
+        </div>
+        <div class="progress mb-2" style="height: 25px;">
+            <div class="progress-bar bg-success" style="width: {{ (placement_summary.placed_hours / placement_summary.total_hours * 100) }}%">
+                {{ placement_summary.placed_hours }}ч
+            </div>
+        </div>
+        <small class="text-muted">{{ placement_summary.remaining_hours }} часов требуют размещения</small>
+    </div>
+</div>
+{% endif %}
+
+<!-- Детальный анализ проблемных дисциплин -->
+{% if detailed_errors %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-exclamation-triangle"></i> Проблемные дисциплины ({{ detailed_errors|length }})
+    </div>
+    <div class="card-body">
+        {% for error in detailed_errors %}
+        <div class="card mb-3 border-start border-{% if error.placement_status == 'none' %}danger{% elif error.placement_status == 'partial' %}warning{% else %}success{% endif %} border-3">
+            <div class="card-body">
+                <!-- Заголовок дисциплины -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <h5 class="card-title mb-1">{{ error.discipline }}</h5>
+                        <small class="text-muted">Преподаватель: {{ error.teacher_name }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge {% if error.placement_status == 'none' %}bg-danger{% elif error.placement_status == 'partial' %}bg-warning{% else %}bg-success{% endif %} fs-6">
+                            {{ error.remaining_hours }}ч не размещено ({{ error.percentage_unplaced }}%)
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Прогресс дисциплины -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Прогресс размещения:</span>
+                        <span>{{ error.total_hours - error.remaining_hours }}ч / {{ error.total_hours }}ч</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ (error.completed_hours / error.total_hours * 100) if error.total_hours > 0 else 0 }}%"></div>
+                        <div class="progress-bar bg-info" style="width: {{ (error.planned_hours / error.total_hours * 100) if error.total_hours > 0 else 0 }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">
+                            <span class="badge bg-success">{{ error.completed_hours }}ч выполнено</span>
+                            <span class="badge bg-info">{{ error.planned_hours }}ч запланировано</span>
+                        </small>
+                        <small class="text-muted">{{ error.hours_per_week }}ч/неделю</small>
+                    </div>
+                </div>
+                
+                <!-- Выявленные проблемы -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-bug"></i> Выявленные проблемы:</h6>
+                        {% for problem in error.problems %}
+                        <div class="alert alert-{% if problem.severity == 'critical' %}danger{% elif problem.severity == 'error' %}warning{% elif problem.severity == 'warning' %}info{% else %}secondary{% endif %} py-2 mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-{% if problem.severity == 'critical' %}exclamation-triangle-fill{% elif problem.severity == 'error' %}exclamation-circle{% elif problem.severity == 'warning' %}info-circle{% else %}question-circle{% endif %} me-2 mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <strong>{{ problem.title }}</strong><br>
+                                    <small>{{ problem.description }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-lightbulb"></i> Рекомендации:</h6>
+                        {% for rec in error.recommendations %}
+                        <div class="alert alert-{% if rec.priority == 'high' %}warning{% elif rec.priority == 'medium' %}info{% else %}light{% endif %} py-2 mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-{% if rec.priority == 'high' %}arrow-up-circle{% elif rec.priority == 'medium' %}arrow-right-circle{% else %}arrow-down-circle{% endif %} me-2 mt-1 flex-shrink-0"></i>
+                                <div class="flex-grow-1">
+                                    <strong>{{ rec.title }}</strong><br>
+                                    <small>{{ rec.description }}</small>
+                                    {% if rec.action_url %}
+                                    <div class="mt-2">
+                                        <a href="{{ rec.action_url }}" class="btn btn-sm btn-outline-{% if rec.priority == 'high' %}danger{% elif rec.priority == 'medium' %}warning{% else %}secondary{% endif %}">
+                                            <i class="bi bi-arrow-right"></i> Выполнить
+                                        </a>
+                                    </div>
+                                    {% else %}
+                                    <div class="mt-2">
+                                        <span class="badge bg-{% if rec.priority == 'high' %}danger{% elif rec.priority == 'medium' %}warning{% else %}secondary{% endif %}">
+                                            <i class="bi bi-info-circle"></i> Требует ручного вмешательства
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Общие рекомендации -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-clipboard-check"></i> Общие рекомендации
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Для устранения проблем:</h6>
+                <ol>
+                    <li>Назначьте преподавателей для всех дисциплин без них</li>
+                    <li>Увеличьте количество пар в неделю для перегруженных дисциплин</li>
+                    <li>Добавьте дополнительные учебные недели в ГУП при необходимости</li>
+                    <li>Рассмотрите возможность разделения больших дисциплин между преподавателями</li>
+                </ol>
+            </div>
+            <div class="col-md-6">
+                <h6>Режимы генерации:</h6>
+                <ul>
+                    <li><strong>Безопасная генерация:</strong> добавляет только новые занятия</li>
+                    <li><strong>Полное перепланирование:</strong> удаляет незавершенные и перепланирует</li>
+                    <li><strong>Принудительный сброс:</strong> полный пересчет (осторожно!)</li>
+                </ul>
+                
+                <div class="mt-3">
+                    <a href="{{ url_for('schedule.generate') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Вернуться к генерации
+                    </a>
+                    <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar3"></i> Посмотреть расписание
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Нет ошибок -->
+<div class="card">
+    <div class="card-body text-center py-5">
+        <div class="text-success mb-3">
+            <i class="bi bi-check-circle-fill" style="font-size: 3rem;"></i>
+        </div>
+        <h4>Отличная работа!</h4>
+        <p class="text-muted">Все дисциплины для группы {{ group.name }} (семестр {{ semester }}) успешно размещены в расписании.</p>
+        <a href="{{ url_for('schedule.generate') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Вернуться к генерации
+        </a>
+        <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar3"></i> Посмотреть расписание
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Справочная информация -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-question-circle"></i> Справочная информация
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6>Типы проблем:</h6>
+                <div class="mb-2"><span class="badge bg-danger">Критичная</span> - блокирует генерацию</div>
+                <div class="mb-2"><span class="badge bg-warning">Ошибка</span> - сильно влияет на результат</div>
+                <div class="mb-2"><span class="badge bg-info">Предупреждение</span> - требует внимания</div>
+                <div class="mb-2"><span class="badge bg-secondary">Информация</span> - общие сведения</div>
+            </div>
+            <div class="col-md-4">
+                <h6>Приоритет рекомендаций:</h6>
+                <div class="mb-2"><i class="bi bi-arrow-up-circle text-danger"></i> Высокий - срочно</div>
+                <div class="mb-2"><i class="bi bi-arrow-right-circle text-warning"></i> Средний - желательно</div>
+                <div class="mb-2"><i class="bi bi-arrow-down-circle text-muted"></i> Низкий - при возможности</div>
+            </div>
+            <div class="col-md-4">
+                <h6>Полезные действия:</h6>
+                <div class="mb-2"><a href="{{ url_for('workload.index') }}" class="btn btn-sm btn-outline-primary">Управление нагрузками</a></div>
+                <div class="mb-2"><a href="{{ url_for('gup.index') }}" class="btn btn-sm btn-outline-info">Настройки ГУП</a></div>
+                <div class="mb-2"><a href="{{ url_for('teachers.index') }}" class="btn btn-sm btn-outline-success">Преподаватели</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+.card.border-start {
+    border-left-width: 4px !important;
+}
+
+.alert {
+    border: 1px solid;
+}
+</style>
+{% endblock %}

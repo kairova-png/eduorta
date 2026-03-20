@@ -1,0 +1,1060 @@
+{
+  "metadata": {
+    "college": "APEC Petrotechnic Higher College",
+    "college_kz": "APEC Petrotechnic жоғары колледжі",
+    "extracted_from": "Расписание 2024-2025 учебный год",
+    "total_groups": 62,
+    "total_teachers": 76,
+    "total_rooms": 53,
+    "total_specialties": 8,
+    "total_departments": 4
+  },
+  "departments": [
+    {
+      "name_ru": "Нефтегазовое дело",
+      "name_kz": "Мұнай-газ ісі",
+      "specialty_codes": [
+        "БНГС",
+        "ТДНГ",
+        "ЭНГМ"
+      ]
+    },
+    {
+      "name_ru": "Электротехника и автоматизация",
+      "name_kz": "Электротехника және автоматтандыру",
+      "specialty_codes": [
+        "ЭС",
+        "АиУ"
+      ]
+    },
+    {
+      "name_ru": "Химическая технология",
+      "name_kz": "Химиялық технология",
+      "specialty_codes": [
+        "ХТП"
+      ]
+    },
+    {
+      "name_ru": "Информационные технологии",
+      "name_kz": "Ақпараттық технологиялар",
+      "specialty_codes": [
+        "ПО",
+        "МЕХ"
+      ]
+    }
+  ],
+  "specialties": [
+    {
+      "code": "АиУ",
+      "name_ru": "Автоматизация и управление",
+      "name_kz": "Автоматтандыру және басқару",
+      "department": "Электротехника и автоматизация",
+      "group_count": 13
+    },
+    {
+      "code": "БНГС",
+      "name_ru": "Бурение нефтяных и газовых скважин",
+      "name_kz": "Мұнай және газ ұңғымаларын бұрғылау",
+      "department": "Нефтегазовое дело",
+      "group_count": 4
+    },
+    {
+      "code": "МЕХ",
+      "name_ru": "Мехатроника",
+      "name_kz": "Мехатроника",
+      "department": "Информационные технологии",
+      "group_count": 4
+    },
+    {
+      "code": "ПО",
+      "name_ru": "Программное обеспечение",
+      "name_kz": "Бағдарламалық қамтамасыз ету",
+      "department": "Информационные технологии",
+      "group_count": 11
+    },
+    {
+      "code": "ТДНГ",
+      "name_ru": "Технология добычи нефти и газа",
+      "name_kz": "Мұнай мен газды өндіру технологиясы",
+      "department": "Нефтегазовое дело",
+      "group_count": 4
+    },
+    {
+      "code": "ХТП",
+      "name_ru": "Химическая технология переработки",
+      "name_kz": "Химиялық өңдеу технологиясы",
+      "department": "Химическая технология",
+      "group_count": 12
+    },
+    {
+      "code": "ЭНГМ",
+      "name_ru": "Эксплуатация нефтегазовых месторождений",
+      "name_kz": "Мұнай-газ кен орындарын пайдалану",
+      "department": "Нефтегазовое дело",
+      "group_count": 5
+    },
+    {
+      "code": "ЭС",
+      "name_ru": "Электроснабжение",
+      "name_kz": "Электрмен жабдықтау",
+      "department": "Электротехника и автоматизация",
+      "group_count": 9
+    }
+  ],
+  "groups": [
+    {
+      "name": "АиУ 1-22",
+      "specialty_code": "АиУ",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "АиУ 1-23",
+      "specialty_code": "АиУ",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "АиУ 1-24",
+      "specialty_code": "АиУ",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "АиУ 1-25",
+      "specialty_code": "АиУ",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "АиУ 2-22",
+      "specialty_code": "АиУ",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "АиУ 2-23",
+      "specialty_code": "АиУ",
+      "group_number": 2,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "АиУ 2-24",
+      "specialty_code": "АиУ",
+      "group_number": 2,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "АиУ 2-25",
+      "specialty_code": "АиУ",
+      "group_number": 2,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "АиУ 3-23",
+      "specialty_code": "АиУ",
+      "group_number": 3,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "АиУ 3-24",
+      "specialty_code": "АиУ",
+      "group_number": 3,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "АиУ 3-25",
+      "specialty_code": "АиУ",
+      "group_number": 3,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "АиУ 4-25",
+      "specialty_code": "АиУ",
+      "group_number": 4,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "АиУ 5-25",
+      "specialty_code": "АиУ",
+      "group_number": 5,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "БНГС 1-22",
+      "specialty_code": "БНГС",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "БНГС 1-23",
+      "specialty_code": "БНГС",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "БНГС 1-24",
+      "specialty_code": "БНГС",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "БНГС 1-25",
+      "specialty_code": "БНГС",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "МЕХ 1-22",
+      "specialty_code": "МЕХ",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "МЕХ 1-23",
+      "specialty_code": "МЕХ",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "МЕХ 2-22",
+      "specialty_code": "МЕХ",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "МЕХ 2-23",
+      "specialty_code": "МЕХ",
+      "group_number": 2,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ПО 1-22",
+      "specialty_code": "ПО",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ПО 1-23",
+      "specialty_code": "ПО",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ПО 1-24",
+      "specialty_code": "ПО",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ПО 1-25",
+      "specialty_code": "ПО",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ПО 2-22",
+      "specialty_code": "ПО",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ПО 2-23",
+      "specialty_code": "ПО",
+      "group_number": 2,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ПО 2-24",
+      "specialty_code": "ПО",
+      "group_number": 2,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ПО 2-25",
+      "specialty_code": "ПО",
+      "group_number": 2,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ПО 3-22",
+      "specialty_code": "ПО",
+      "group_number": 3,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ПО 3-23",
+      "specialty_code": "ПО",
+      "group_number": 3,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ПО 4-23",
+      "specialty_code": "ПО",
+      "group_number": 4,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ТДНГ 1-22",
+      "specialty_code": "ТДНГ",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ТДНГ 1-23",
+      "specialty_code": "ТДНГ",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ТДНГ 1-24",
+      "specialty_code": "ТДНГ",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ТДНГ 1-25",
+      "specialty_code": "ТДНГ",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ХТП 1-22",
+      "specialty_code": "ХТП",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ХТП 1-23",
+      "specialty_code": "ХТП",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ХТП 1-24",
+      "specialty_code": "ХТП",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ХТП 1-25",
+      "specialty_code": "ХТП",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ХТП 2-22",
+      "specialty_code": "ХТП",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ХТП 2-23",
+      "specialty_code": "ХТП",
+      "group_number": 2,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ХТП 2-24",
+      "specialty_code": "ХТП",
+      "group_number": 2,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ХТП 2-25",
+      "specialty_code": "ХТП",
+      "group_number": 2,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ХТП 3-22",
+      "specialty_code": "ХТП",
+      "group_number": 3,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ХТП 3-23",
+      "specialty_code": "ХТП",
+      "group_number": 3,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ХТП 3-24",
+      "specialty_code": "ХТП",
+      "group_number": 3,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ХТП 3-25",
+      "specialty_code": "ХТП",
+      "group_number": 3,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ЭНГМ 1-22",
+      "specialty_code": "ЭНГМ",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ЭНГМ 1-23",
+      "specialty_code": "ЭНГМ",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ЭНГМ 1-24",
+      "specialty_code": "ЭНГМ",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ЭНГМ 1-25",
+      "specialty_code": "ЭНГМ",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ЭНГМ 2-22",
+      "specialty_code": "ЭНГМ",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ЭС 1-22",
+      "specialty_code": "ЭС",
+      "group_number": 1,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ЭС 1-23",
+      "specialty_code": "ЭС",
+      "group_number": 1,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ЭС 1-24",
+      "specialty_code": "ЭС",
+      "group_number": 1,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ЭС 1-25",
+      "specialty_code": "ЭС",
+      "group_number": 1,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ЭС 2-22",
+      "specialty_code": "ЭС",
+      "group_number": 2,
+      "enrollment_year": 2022,
+      "course": 4
+    },
+    {
+      "name": "ЭС 2-23",
+      "specialty_code": "ЭС",
+      "group_number": 2,
+      "enrollment_year": 2023,
+      "course": 3
+    },
+    {
+      "name": "ЭС 2-24",
+      "specialty_code": "ЭС",
+      "group_number": 2,
+      "enrollment_year": 2024,
+      "course": 2
+    },
+    {
+      "name": "ЭС 2-25",
+      "specialty_code": "ЭС",
+      "group_number": 2,
+      "enrollment_year": 2025,
+      "course": 1
+    },
+    {
+      "name": "ЭС 3-25",
+      "specialty_code": "ЭС",
+      "group_number": 3,
+      "enrollment_year": 2025,
+      "course": 1
+    }
+  ],
+  "teachers": [
+    {
+      "id": 1,
+      "full_name": "Абсенова Б."
+    },
+    {
+      "id": 2,
+      "full_name": "Адилова А."
+    },
+    {
+      "id": 3,
+      "full_name": "Ажгалиев М."
+    },
+    {
+      "id": 4,
+      "full_name": "Айбарұлы Г."
+    },
+    {
+      "id": 5,
+      "full_name": "Акшолаков Е."
+    },
+    {
+      "id": 6,
+      "full_name": "Амангалиева Г."
+    },
+    {
+      "id": 7,
+      "full_name": "Амангалиева М."
+    },
+    {
+      "id": 8,
+      "full_name": "Аристанов А."
+    },
+    {
+      "id": 9,
+      "full_name": "Ахпанбетова А."
+    },
+    {
+      "id": 10,
+      "full_name": "Аяпбергенова О."
+    },
+    {
+      "id": 11,
+      "full_name": "Багиткалиев А."
+    },
+    {
+      "id": 12,
+      "full_name": "Багытова А."
+    },
+    {
+      "id": 13,
+      "full_name": "Базарбаева А."
+    },
+    {
+      "id": 14,
+      "full_name": "Байгужиева М."
+    },
+    {
+      "id": 15,
+      "full_name": "Бекет А."
+    },
+    {
+      "id": 16,
+      "full_name": "Бексултан А."
+    },
+    {
+      "id": 17,
+      "full_name": "Бижанова С."
+    },
+    {
+      "id": 18,
+      "full_name": "Бимурзаев А."
+    },
+    {
+      "id": 19,
+      "full_name": "Даулетбаева Г."
+    },
+    {
+      "id": 20,
+      "full_name": "Даулетова Э."
+    },
+    {
+      "id": 21,
+      "full_name": "Даурешова Э."
+    },
+    {
+      "id": 22,
+      "full_name": "Дауылбай А."
+    },
+    {
+      "id": 23,
+      "full_name": "Елеусинов Е."
+    },
+    {
+      "id": 24,
+      "full_name": "Ермеков Д."
+    },
+    {
+      "id": 25,
+      "full_name": "Жолдаскалиева А."
+    },
+    {
+      "id": 26,
+      "full_name": "Жолдыбаева А."
+    },
+    {
+      "id": 27,
+      "full_name": "Жумагалиев Н."
+    },
+    {
+      "id": 28,
+      "full_name": "Изимова С."
+    },
+    {
+      "id": 29,
+      "full_name": "Измуканова А."
+    },
+    {
+      "id": 30,
+      "full_name": "Измуханова А."
+    },
+    {
+      "id": 31,
+      "full_name": "Иманалиева Г."
+    },
+    {
+      "id": 32,
+      "full_name": "Ихсанова Г."
+    },
+    {
+      "id": 33,
+      "full_name": "Кабдолла А."
+    },
+    {
+      "id": 34,
+      "full_name": "Кабиден К."
+    },
+    {
+      "id": 35,
+      "full_name": "Кабиденова Г."
+    },
+    {
+      "id": 36,
+      "full_name": "Кабиров Х."
+    },
+    {
+      "id": 37,
+      "full_name": "Кадргалиева А."
+    },
+    {
+      "id": 38,
+      "full_name": "Казангапова В."
+    },
+    {
+      "id": 39,
+      "full_name": "Кайыров А."
+    },
+    {
+      "id": 40,
+      "full_name": "Каламгали Т."
+    },
+    {
+      "id": 41,
+      "full_name": "Калмен С."
+    },
+    {
+      "id": 42,
+      "full_name": "Куанышева А."
+    },
+    {
+      "id": 43,
+      "full_name": "Лян А."
+    },
+    {
+      "id": 44,
+      "full_name": "Махмутов Т."
+    },
+    {
+      "id": 45,
+      "full_name": "Махсотов Д."
+    },
+    {
+      "id": 46,
+      "full_name": "Мурынов Б."
+    },
+    {
+      "id": 47,
+      "full_name": "Мырзагалиева А."
+    },
+    {
+      "id": 48,
+      "full_name": "Ниязбаева А."
+    },
+    {
+      "id": 49,
+      "full_name": "Нұрланұлы С."
+    },
+    {
+      "id": 50,
+      "full_name": "Омурсинова А."
+    },
+    {
+      "id": 51,
+      "full_name": "Рахметтуллаев С."
+    },
+    {
+      "id": 52,
+      "full_name": "Рахметуллаев Б."
+    },
+    {
+      "id": 53,
+      "full_name": "Рахым К."
+    },
+    {
+      "id": 54,
+      "full_name": "Романов Б."
+    },
+    {
+      "id": 55,
+      "full_name": "Сагындыкова Д."
+    },
+    {
+      "id": 56,
+      "full_name": "Саматова А."
+    },
+    {
+      "id": 57,
+      "full_name": "Саржанова Э."
+    },
+    {
+      "id": 58,
+      "full_name": "Сейталиева А."
+    },
+    {
+      "id": 59,
+      "full_name": "Сериккалиев А."
+    },
+    {
+      "id": 60,
+      "full_name": "Сулеймен Ж."
+    },
+    {
+      "id": 61,
+      "full_name": "Султангалиева А."
+    },
+    {
+      "id": 62,
+      "full_name": "Султанов Е."
+    },
+    {
+      "id": 63,
+      "full_name": "Сырымбетова А."
+    },
+    {
+      "id": 64,
+      "full_name": "Сырымбетұлы Ш."
+    },
+    {
+      "id": 65,
+      "full_name": "Тастанбеков С."
+    },
+    {
+      "id": 66,
+      "full_name": "Темирханова Г."
+    },
+    {
+      "id": 67,
+      "full_name": "Тугелбаева А."
+    },
+    {
+      "id": 68,
+      "full_name": "Тулегенова К."
+    },
+    {
+      "id": 69,
+      "full_name": "Убигалиева А."
+    },
+    {
+      "id": 70,
+      "full_name": "Умарова Б."
+    },
+    {
+      "id": 71,
+      "full_name": "Утеш М."
+    },
+    {
+      "id": 72,
+      "full_name": "Хаббасов Ж."
+    },
+    {
+      "id": 73,
+      "full_name": "Хайрушева Ж."
+    },
+    {
+      "id": 74,
+      "full_name": "Шакенова А."
+    },
+    {
+      "id": 75,
+      "full_name": "Шалмаганбетова М."
+    },
+    {
+      "id": 76,
+      "full_name": "Өтеуов Д."
+    }
+  ],
+  "rooms": [
+    {
+      "number": "5",
+      "type": "учебная"
+    },
+    {
+      "number": "17",
+      "type": "учебная"
+    },
+    {
+      "number": "18",
+      "type": "учебная"
+    },
+    {
+      "number": "20",
+      "type": "учебная"
+    },
+    {
+      "number": "21",
+      "type": "учебная"
+    },
+    {
+      "number": "22",
+      "type": "учебная"
+    },
+    {
+      "number": "23",
+      "type": "учебная"
+    },
+    {
+      "number": "24",
+      "type": "учебная"
+    },
+    {
+      "number": "25",
+      "type": "учебная"
+    },
+    {
+      "number": "26",
+      "type": "учебная"
+    },
+    {
+      "number": "28",
+      "type": "учебная"
+    },
+    {
+      "number": "30",
+      "type": "учебная"
+    },
+    {
+      "number": "34",
+      "type": "учебная"
+    },
+    {
+      "number": "101",
+      "type": "учебная"
+    },
+    {
+      "number": "104",
+      "type": "учебная"
+    },
+    {
+      "number": "105",
+      "type": "учебная"
+    },
+    {
+      "number": "108",
+      "type": "учебная"
+    },
+    {
+      "number": "109",
+      "type": "учебная"
+    },
+    {
+      "number": "110",
+      "type": "учебная"
+    },
+    {
+      "number": "111",
+      "type": "учебная"
+    },
+    {
+      "number": "201",
+      "type": "учебная"
+    },
+    {
+      "number": "202",
+      "type": "учебная"
+    },
+    {
+      "number": "203",
+      "type": "учебная"
+    },
+    {
+      "number": "204",
+      "type": "учебная"
+    },
+    {
+      "number": "205",
+      "type": "учебная"
+    },
+    {
+      "number": "206",
+      "type": "учебная"
+    },
+    {
+      "number": "207",
+      "type": "учебная"
+    },
+    {
+      "number": "208",
+      "type": "учебная"
+    },
+    {
+      "number": "209",
+      "type": "учебная"
+    },
+    {
+      "number": "210",
+      "type": "учебная"
+    },
+    {
+      "number": "211",
+      "type": "учебная"
+    },
+    {
+      "number": "212",
+      "type": "учебная"
+    },
+    {
+      "number": "213",
+      "type": "учебная"
+    },
+    {
+      "number": "214",
+      "type": "учебная"
+    },
+    {
+      "number": "215",
+      "type": "учебная"
+    },
+    {
+      "number": "216",
+      "type": "учебная"
+    },
+    {
+      "number": "301",
+      "type": "учебная"
+    },
+    {
+      "number": "304",
+      "type": "учебная"
+    },
+    {
+      "number": "305",
+      "type": "учебная"
+    },
+    {
+      "number": "306",
+      "type": "учебная"
+    },
+    {
+      "number": "307",
+      "type": "учебная"
+    },
+    {
+      "number": "308",
+      "type": "учебная"
+    },
+    {
+      "number": "309",
+      "type": "учебная"
+    },
+    {
+      "number": "310",
+      "type": "учебная"
+    },
+    {
+      "number": "311",
+      "type": "учебная"
+    },
+    {
+      "number": "312",
+      "type": "учебная"
+    },
+    {
+      "number": "313",
+      "type": "учебная"
+    },
+    {
+      "number": "314",
+      "type": "учебная"
+    },
+    {
+      "number": "315",
+      "type": "учебная"
+    },
+    {
+      "number": "Библиотека",
+      "type": "библиотека"
+    },
+    {
+      "number": "Конф. зал",
+      "type": "конференц-зал"
+    },
+    {
+      "number": "Спортзал",
+      "type": "спортзал"
+    },
+    {
+      "number": "Мастерская",
+      "type": "мастерская"
+    }
+  ]
+}

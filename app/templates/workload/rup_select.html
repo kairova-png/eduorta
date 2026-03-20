@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}РУП - Выбор группы{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-journal-text"></i> РУП (Рабочий учебный план)</h2>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Выберите группу для просмотра рабочего учебного плана (списка дисциплин с часами)
+</div>
+
+{% for spec_name, spec_groups in groups_by_specialty.items() %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-mortarboard"></i> {{ spec_name }}
+        <span class="badge bg-secondary">{{ spec_groups|length }} групп</span>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for group in spec_groups %}
+            <div class="col-md-3 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ group.name }}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-primary">{{ group.course }} курс</span>
+                            <span class="badge {% if group.shift == 1 %}bg-info{% else %}bg-warning{% endif %}">{{ group.shift }} смена</span>
+                        </p>
+                        {% set wl_count = group.workloads.count() %}
+                        <p class="text-muted mb-2">
+                            {% if wl_count > 0 %}
+                            {{ wl_count }} дисциплин
+                            {% else %}
+                            <span class="text-danger">Нет нагрузок</span>
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('workload.rup', group_id=group.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Открыть РУП
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Нет групп в системе. <a href="{{ url_for('groups.create') }}">Добавить группу</a>
+</div>
+{% endfor %}
+{% endblock %}

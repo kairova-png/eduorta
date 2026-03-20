@@ -1,0 +1,113 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-speedometer2"></i> Дашборд ЦМК</h4>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="display-6 text-primary">{{ stats.total_rup }}</div>
+            <div class="text-muted small">РУП</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="display-6 text-info">{{ stats.total_rupd }}</div>
+            <div class="text-muted small">РУПД</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="display-6 text-warning">{{ stats.pending_review }}</div>
+            <div class="text-muted small">На рассмотрении</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="display-6 text-success">{{ stats.approved }}</div>
+            <div class="text-muted small">Утверждено</div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Chain -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-diagram-3"></i> Цепочка документов</div>
+    <div class="card-body">
+        <div class="doc-chain justify-content-center py-3">
+            <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-primary">
+                <i class="bi bi-journal-bookmark"></i> РУП <span class="badge bg-primary">{{ stats.total_rup }}</span>
+            </a>
+            <i class="bi bi-arrow-right arrow"></i>
+            <a href="{{ url_for('cmk.rupd_list') }}" class="btn btn-outline-info">
+                <i class="bi bi-journal-text"></i> РУПД <span class="badge bg-info">{{ stats.total_rupd }}</span>
+            </a>
+            <i class="bi bi-arrow-right arrow"></i>
+            <a href="{{ url_for('cmk.umk_list') }}" class="btn btn-outline-success">
+                <i class="bi bi-collection"></i> УМК <span class="badge bg-success">{{ stats.total_umk }}</span>
+            </a>
+            <i class="bi bi-arrow-right arrow"></i>
+            <a href="{{ url_for('cmk.umkd_list') }}" class="btn btn-outline-warning">
+                <i class="bi bi-file-earmark-richtext"></i> УМКД <span class="badge bg-warning text-dark">{{ stats.total_umkd }}</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Commissions -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people"></i> Комиссии</span>
+                {% if cmk_user.is_chair %}
+                <a href="{{ url_for('cmk.commissions_create') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+                {% endif %}
+            </div>
+            <div class="list-group list-group-flush">
+                {% for c in commissions %}
+                <a href="{{ url_for('cmk.commissions_view', id=c.id) }}" class="list-group-item list-group-item-action">
+                    <div class="fw-bold">{{ c.name }}</div>
+                    <small class="text-muted">
+                        {% if c.chair %}Председатель: {{ c.chair.full_name }}{% endif %}
+                        | {{ c.members|length }} членов
+                    </small>
+                </a>
+                {% else %}
+                <div class="list-group-item text-muted">Нет комиссий</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- My Documents (for teachers) -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-person"></i> Мои документы</div>
+            <div class="list-group list-group-flush">
+                {% for doc in my_docs %}
+                <a href="{{ url_for('cmk.rupd_view', id=doc.id) }}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between">
+                        <span>{{ doc.discipline }}</span>
+                        <span class="badge bg-{{ doc.status_color }}">{{ doc.status_name }}</span>
+                    </div>
+                    <small class="text-muted">РУПД | {{ doc.teacher.full_name if doc.teacher else '' }}</small>
+                </a>
+                {% else %}
+                <div class="list-group-item text-muted">
+                    {% if cmk_user.teacher_id %}
+                    Нет документов. <a href="{{ url_for('cmk.rupd_create') }}">Создать РУПД</a>
+                    {% else %}
+                    Привяжите преподавателя к аккаунту для работы с документами
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}ГУП группы {{ group.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('gup.index') }}">ГУП</a></li>
+        <li class="breadcrumb-item active">{{ group.name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar3"></i> ГУП группы {{ group.name }}</h2>
+    <div>
+        <a href="{{ url_for('groups.view', id=group.id) }}" class="btn btn-outline-primary">
+            <i class="bi bi-people"></i> Профиль группы
+        </a>
+        <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-success">
+            <i class="bi bi-calendar3"></i> Расписание
+        </a>
+    </div>
+</div>
+
+<!-- Group info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Группа:</strong> {{ group.name }}
+            </div>
+            <div class="col-md-3">
+                <strong>Специальность:</strong> {{ group.specialty.code if group.specialty else '-' }}
+            </div>
+            <div class="col-md-2">
+                <strong>Курс:</strong> <span class="badge bg-primary">{{ group.course }}</span>
+            </div>
+            <div class="col-md-2">
+                <strong>Смена:</strong> <span class="badge {% if group.shift == 1 %}bg-info{% else %}bg-warning{% endif %}">{{ group.shift }} смена</span>
+            </div>
+            <div class="col-md-2">
+                <strong>Год поступления:</strong> {{ group.enrollment_year }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Year selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Учебный год</label>
+                <select name="year_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите год --</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if selected_year and selected_year.id == year.id %}selected{% endif %}>
+                        {{ year.name }} {% if year.is_current %}(текущий){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_year %}
+<!-- Legend -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-palette"></i> Легенда / Шартты белгілер
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% set shown_codes = [] %}
+            {% for code, info in activity_types.items() %}
+            {% if code not in shown_codes and info.name not in shown_codes %}
+            <div class="col-md-4 col-lg-3 mb-2">
+                <div class="d-flex align-items-center">
+                    <span class="badge me-2" style="background-color: {{ info.color }}; color: {{ info.text }}; min-width: 35px; font-size: 0.8rem;">
+                        {% if info.name %}{{ info.name }}{% else %}&nbsp;{% endif %}
+                    </span>
+                    <div>
+                        <div style="font-size: 0.85rem;">{{ info.full_name }}</div>
+                        <small class="text-muted">{{ info.full_name_kz }}</small>
+                    </div>
+                </div>
+            </div>
+            {% set _ = shown_codes.append(info.name) %}
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- GUP Details -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul"></i> ГУП на {{ selected_year.name }}
+        <span class="badge bg-secondary ms-2">{{ gup_entries|length }} недель</span>
+    </div>
+    <div class="card-body">
+        {% if gup_entries %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Неделя</th>
+                        <th style="width: 120px;">Начало</th>
+                        <th style="width: 120px;">Конец</th>
+                        <th style="width: 80px;">Код</th>
+                        <th>Тип занятий</th>
+                        <th style="width: 100px;">Расписание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in gup_entries %}
+                    {% set activity = activity_types.get(entry.activity_code or '', activity_types['']) %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">{{ entry.week_number }}</span>
+                        </td>
+                        <td>{{ entry.start_date.strftime('%d.%m.%Y') if entry.start_date else '-' }}</td>
+                        <td>{{ entry.end_date.strftime('%d.%m.%Y') if entry.end_date else '-' }}</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ activity.color }}; color: {{ activity.text }};">
+                                {{ activity.name }}
+                            </span>
+                        </td>
+                        <td>{{ activity.full_name }}</td>
+                        <td>
+                            {% if entry.needs_schedule %}
+                            <span class="badge bg-success"><i class="bi bi-check"></i> Да</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Нет</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="mt-4">
+            <h6>Сводка:</h6>
+            <div class="row">
+                {% set counts = {} %}
+                {% for entry in gup_entries %}
+                    {% set code = entry.activity_code or '' %}
+                    {% if code in counts %}
+                        {% set _ = counts.update({code: counts[code] + 1}) %}
+                    {% else %}
+                        {% set _ = counts.update({code: 1}) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% for code, count in counts.items() %}
+                {% set activity = activity_types.get(code, activity_types['']) %}
+                <div class="col-md-3 mb-2">
+                    <div class="d-flex align-items-center">
+                        <span class="badge me-2" style="background-color: {{ activity.color }}; color: {{ activity.text }};">
+                            {{ count }}
+                        </span>
+                        {{ activity.full_name }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle"></i>
+            Нет данных ГУП для этой группы в выбранном учебном году.
+            <a href="{{ url_for('settings.import_data') }}">Импортировать ГУП</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Выберите учебный год для просмотра ГУП
+</div>
+{% endif %}
+{% endblock %}

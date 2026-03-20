@@ -1,0 +1,114 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}РУП: {{ rup.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4><i class="bi bi-journal-bookmark"></i> {{ rup.title }}</h4>
+        <span class="badge bg-{{ rup.status_color }} status-badge">{{ rup.status_name }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if rup.status != 'approved' or cmk_user.is_admin %}
+        <a href="{{ url_for('cmk.rup_edit', id=rup.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil"></i> Редактировать
+        </a>
+        {% endif %}
+        {% if rup.status == 'draft' or rup.status == 'revision' %}
+        <form method="POST" action="{{ url_for('cmk.rup_submit', id=rup.id) }}">
+            <button class="btn btn-warning btn-sm"><i class="bi bi-send"></i> На рассмотрение</button>
+        </form>
+        {% endif %}
+        {% if rup.status == 'under_review' and cmk_user.is_chair %}
+        <form method="POST" action="{{ url_for('cmk.rup_approve', id=rup.id) }}">
+            <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Утвердить</button>
+        </form>
+        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
+            <i class="bi bi-x-lg"></i> На доработку
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4"><strong>Специальность:</strong> {{ rup.specialty.code if rup.specialty else '—' }} - {{ rup.specialty.name_ru if rup.specialty else '' }}</div>
+            <div class="col-md-4"><strong>ЦМК:</strong> {{ rup.commission.name if rup.commission else '—' }}</div>
+            <div class="col-md-4"><strong>Учебный год:</strong> {{ rup.academic_year.name if rup.academic_year else '—' }}</div>
+        </div>
+        {% if rup.approved_by %}
+        <div class="mt-2 text-success"><i class="bi bi-check-circle"></i> Утверждён: {{ rup.approved_by.full_name }} ({{ rup.approved_at.strftime('%d.%m.%Y') if rup.approved_at else '' }})</div>
+        {% endif %}
+        {% if rup.review_comment %}
+        <div class="alert alert-warning mt-2 mb-0"><strong>Комментарий:</strong> {{ rup.review_comment }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Content -->
+<div class="card mb-3">
+    <div class="card-header">Содержание</div>
+    <div class="card-body">
+        {% if rup.content %}
+        {{ rup.content|safe }}
+        {% else %}
+        <p class="text-muted">Содержание не заполнено</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Linked RUPD -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Связанные РУПД ({{ rup.rupd_documents|length }})</span>
+        <a href="{{ url_for('cmk.rupd_create', rup_id=rup.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Создать РУПД</a>
+    </div>
+    <div class="list-group list-group-flush">
+        {% for rupd in rup.rupd_documents %}
+        <a href="{{ url_for('cmk.rupd_view', id=rupd.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+            <span>{{ rupd.discipline }} — {{ rupd.teacher.full_name if rupd.teacher else '' }}</span>
+            <span class="badge bg-{{ rupd.status_color }}">{{ rupd.status_name }}</span>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted">Нет РУПД</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- History -->
+<div class="card">
+    <div class="card-header">История</div>
+    <div class="list-group list-group-flush">
+        {% for h in history %}
+        <div class="list-group-item small">
+            <strong>{{ h.action }}</strong>
+            {% if h.user %} — {{ h.user.full_name }}{% endif %}
+            <span class="text-muted float-end">{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% if h.comment %}<br><span class="text-muted">{{ h.comment }}</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('cmk.rup_reject', id=rup.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Отправить на доработку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Комментарий</label>
+                    <textarea name="comment" class="form-control" rows="3" required placeholder="Укажите причину..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Отправить на доработку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ teacher.full_name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('teachers.index') }}">Преподаватели</a></li>
+        <li class="breadcrumb-item active">{{ teacher.full_name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-person-badge"></i> {{ teacher.full_name }}</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('schedule.index', teacher_id=teacher.id) }}" class="btn btn-primary">
+            <i class="bi bi-calendar3"></i> Расписание
+        </a>
+        <a href="{{ url_for('reports.teacher', teacher_id=teacher.id) }}" class="btn btn-info">
+            <i class="bi bi-file-earmark-text"></i> Табель
+        </a>
+        <a href="{{ url_for('teachers.edit', id=teacher.id) }}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Редактировать
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">Информация</div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>ФИО:</th>
+                        <td>{{ teacher.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Кафедра:</th>
+                        <td>{{ teacher.department.name_ru if teacher.department else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Нагрузок:</th>
+                        <td>{{ teacher.workloads.count() }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> Сводка по часам
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <th class="text-muted">Всего нагрузки:</th>
+                        <td class="text-end"><strong>{{ teacher.get_total_workload_hours() }}</strong> ч</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Проведено (своих):</th>
+                        <td class="text-end text-success"><strong>{{ teacher.get_conducted_hours() }}</strong> ч</td>
+                    </tr>
+                    <tr class="{% if teacher.get_substitution_hours() > 0 %}table-warning{% endif %}">
+                        <th class="text-muted">
+                            <i class="bi bi-arrow-right-circle"></i> Часы замен:
+                        </th>
+                        <td class="text-end">
+                            <strong class="{% if teacher.get_substitution_hours() > 0 %}text-warning{% endif %}">
+                                +{{ teacher.get_substitution_hours() }}
+                            </strong> ч
+                        </td>
+                    </tr>
+                    <tr class="{% if teacher.get_vacant_hours() > 0 %}table-danger{% endif %}">
+                        <th class="text-muted">
+                            <i class="bi bi-arrow-left-circle"></i> Вакантные часы:
+                        </th>
+                        <td class="text-end">
+                            <strong class="{% if teacher.get_vacant_hours() > 0 %}text-danger{% endif %}">
+                                -{{ teacher.get_vacant_hours() }}
+                            </strong> ч
+                        </td>
+                    </tr>
+                    <tr class="border-top">
+                        <th class="text-primary">Эффективно выполнено:</th>
+                        <td class="text-end">
+                            <strong class="text-primary">
+                                {{ teacher.get_conducted_hours() + teacher.get_substitution_hours() }}
+                            </strong> ч
+                        </td>
+                    </tr>
+                </table>
+                
+                {% if teacher.get_substitution_hours() > 0 or teacher.get_vacant_hours() > 0 %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        {% if teacher.get_substitution_hours() > 0 %}
+                            Получено {{ teacher.get_substitution_hours() }} ч за замены.
+                        {% endif %}
+                        {% if teacher.get_vacant_hours() > 0 %}
+                            {{ teacher.get_vacant_hours() }} ч списано как вакант.
+                        {% endif %}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Нагрузки</div>
+            <div class="card-body">
+                {% if teacher.workloads.count() > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Группа</th>
+                                <th>Дисциплина</th>
+                                <th>Тип</th>
+                                <th>Часов</th>
+                                <th>Выполнено</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wl in teacher.workloads.all() %}
+                            <tr>
+                                <td>{{ wl.group.name if wl.group else '-' }}</td>
+                                <td>{{ wl.discipline }}</td>
+                                <td>
+                                    {% if wl.lesson_type == 'theory' %}
+                                        <span class="badge bg-primary">Т</span>
+                                    {% elif wl.lesson_type == 'practice' %}
+                                        <span class="badge bg-success">П</span>
+                                    {% elif wl.lesson_type == 'consultation' %}
+                                        <span class="badge bg-info">К</span>
+                                    {% elif wl.lesson_type == 'exam' %}
+                                        <span class="badge bg-danger">Э</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">?</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ wl.total_hours }}</td>
+                                <td>
+                                    <div class="progress progress-bar-hours">
+                                        <div class="progress-bar" style="width: {{ wl.progress_percent }}%">
+                                            {{ wl.hours_completed }}/{{ wl.total_hours }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Нагрузки не назначены</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

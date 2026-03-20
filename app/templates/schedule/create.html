@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить пару - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-plus-circle"></i> Добавить пару в расписание</h2>
+    <a href="{{ url_for('schedule.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-plus"></i> Новая пара из нагрузки
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <!-- Фильтр по группе -->
+                    <div class="mb-3">
+                        <label class="form-label">Группа</label>
+                        <select id="group_filter" class="form-select" onchange="loadWorkloads()">
+                            <option value="">-- Выберите группу --</option>
+                            {% for group in groups %}
+                            <option value="{{ group.id }}" {% if selected_group == group.id %}selected{% endif %}>
+                                {{ group.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Выбор нагрузки -->
+                    <div class="mb-3">
+                        <label class="form-label">Дисциплина (нагрузка) <span class="text-danger">*</span></label>
+                        <select name="workload_id" id="workload_select" class="form-select" required>
+                            <option value="">-- Сначала выберите группу --</option>
+                            {% for item in workloads %}
+                            <option value="{{ item.workload.id }}"
+                                    {% if selected_workload and selected_workload.id == item.workload.id %}selected{% endif %}
+                                    data-remaining="{{ item.remaining }}">
+                                {{ item.workload.discipline[:50] }}{% if item.workload.discipline|length > 50 %}...{% endif %}
+                                | {{ item.workload.teacher.full_name }}
+                                | Осталось: {{ item.remaining }}ч ({{ item.remaining_pairs }} пар)
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Показаны только нагрузки с остаточными часами</div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Дата -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Дата <span class="text-danger">*</span></label>
+                            <input type="date" name="date" class="form-control" required
+                                   value="{{ today if today else '' }}" id="date_input">
+                        </div>
+
+                        <!-- Номер пары -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Пара <span class="text-danger">*</span></label>
+                            <select name="pair_number" class="form-select" required id="pair_select">
+                                {% for num, times in pair_times.items() %}
+                                <option value="{{ num }}">
+                                    {{ num }} пара ({{ times.start }}-{{ times.end }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <!-- Предупреждение о конфликтах -->
+                            <div id="schedule_conflict_warning" class="alert alert-warning mt-2" style="display: none;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Конфликт расписания!</strong>
+                                <div id="conflict_details"></div>
+                            </div>
+                        </div>
+
+                        <!-- Аудитория -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Аудитория</label>
+                            <select name="room_id" class="form-select" id="room_select">
+                                <option value="">-- Не указана --</option>
+                                {% for room in rooms %}
+                                <option value="{{ room.id }}">{{ room.number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Статус -->
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select name="status" class="form-select">
+                            <option value="planned">Запланирована</option>
+                            <option value="done">Проведена</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> Добавить пару
+                        </button>
+                        <button type="submit" name="add_another" value="1" class="btn btn-outline-primary">
+                            <i class="bi bi-plus"></i> Добавить и создать ещё
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информация справа -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Подсказка
+            </div>
+            <div class="card-body">
+                <p class="mb-2">Эта форма позволяет <strong>вручную</strong> добавить пару в расписание из существующей нагрузки.</p>
+                <hr>
+                <p class="mb-2"><strong>Остаточные часы</strong> — разница между планом и проведёнными часами.</p>
+                <p class="mb-0">1 пара = 2 академических часа</p>
+            </div>
+        </div>
+
+        {% if selected_workload %}
+        <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-book"></i> Выбранная нагрузка
+            </div>
+            <div class="card-body">
+                <p><strong>{{ selected_workload.discipline[:100] }}</strong></p>
+                <p class="mb-1">Группа: {{ selected_workload.group.name }}</p>
+                <p class="mb-1">Преподаватель: {{ selected_workload.teacher.full_name }}</p>
+                <hr>
+                <p class="mb-1">План: {{ selected_workload.total_hours }} часов</p>
+                <p class="mb-1">Проведено: {{ selected_workload.hours_completed }} часов</p>
+                <p class="mb-0 fw-bold text-primary">
+                    Осталось: {{ selected_workload.total_hours - selected_workload.hours_completed }} часов
+                    ({{ (selected_workload.total_hours - selected_workload.hours_completed) // 2 }} пар)
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function loadWorkloads() {
+    const groupId = document.getElementById('group_filter').value;
+    const workloadSelect = document.getElementById('workload_select');
+
+    if (!groupId) {
+        workloadSelect.innerHTML = '<option value="">-- Сначала выберите группу --</option>';
+        hideConflictWarning();
+        return;
+    }
+
+    fetch(`/schedule/api/workloads?group_id=${groupId}`)
+        .then(response => response.json())
+        .then(data => {
+            let options = '<option value="">-- Выберите дисциплину --</option>';
+            data.forEach(wl => {
+                options += `<option value="${wl.id}" data-remaining="${wl.remaining}">
+                    ${wl.discipline} | ${wl.teacher} | Осталось: ${wl.remaining}ч (${wl.remaining_pairs} пар)
+                </option>`;
+            });
+            workloadSelect.innerHTML = options;
+            
+            // Проверяем конфликты после загрузки нагрузок
+            checkScheduleConflicts();
+        });
+}
+
+// Load available rooms when date/pair changes
+function loadAvailableRooms() {
+    const date = document.getElementById('date_input').value;
+    const pair = document.getElementById('pair_select').value;
+    const roomSelect = document.getElementById('room_select');
+
+    if (!date || !pair) return;
+
+    fetch(`/schedule/api/available-rooms?date=${date}&pair=${pair}`)
+        .then(response => response.json())
+        .then(data => {
+            let options = '<option value="">-- Не указана --</option>';
+            data.forEach(room => {
+                options += `<option value="${room.id}">${room.number}</option>`;
+            });
+            roomSelect.innerHTML = options;
+        });
+}
+
+// Проверка конфликтов расписания
+function checkScheduleConflicts() {
+    const groupId = document.getElementById('group_filter').value;
+    const workloadId = document.getElementById('workload_select').value;
+    const date = document.getElementById('date_input').value;
+    const pairNumber = document.getElementById('pair_select').value;
+
+    // Сбрасываем предупреждения
+    hideConflictWarning();
+
+    // Если не все поля заполнены, не проверяем
+    if (!groupId || !date || !pairNumber) {
+        return;
+    }
+
+    // Проверяем конфликты группы
+    fetch(`/schedule/api/group-schedule-conflicts?group_id=${groupId}&date=${date}&pair_number=${pairNumber}&exclude_workload_id=${workloadId || ''}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_conflict) {
+                showConflictWarning('группы', data.conflict_info);
+            } else if (workloadId) {
+                // Если у группы нет конфликтов, проверяем преподавателя
+                checkTeacherConflicts(workloadId, date, pairNumber);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка проверки конфликтов группы:', error);
+        });
+}
+
+// Проверка конфликтов преподавателя
+function checkTeacherConflicts(workloadId, date, pairNumber) {
+    // Сначала получаем информацию о нагрузке, чтобы узнать ID преподавателя
+    const workloadSelect = document.getElementById('workload_select');
+    const selectedOption = workloadSelect.querySelector(`option[value="${workloadId}"]`);
+    
+    if (!selectedOption) return;
+
+    // Делаем запрос для получения teacher_id из workload
+    fetch(`/schedule/api/workloads?group_id=${document.getElementById('group_filter').value}`)
+        .then(response => response.json())
+        .then(workloads => {
+            const workload = workloads.find(wl => wl.id == workloadId);
+            if (!workload || !workload.teacher_id) return;
+
+            // Проверяем конфликты преподавателя
+            fetch(`/schedule/api/teacher-schedule-conflicts?teacher_id=${workload.teacher_id}&date=${date}&pair_number=${pairNumber}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_conflict) {
+                        showConflictWarning('преподавателя', data.conflict_info);
+                    }
+                });
+        });
+}
+
+// Показать предупреждение о конфликте
+function showConflictWarning(conflictType, conflictInfo) {
+    const warningDiv = document.getElementById('schedule_conflict_warning');
+    const detailsDiv = document.getElementById('conflict_details');
+    
+    let details = `В это время у ${conflictType} уже есть занятие:<br>`;
+    details += `<strong>${conflictInfo.discipline}</strong><br>`;
+    
+    if (conflictType === 'группы') {
+        details += `Преподаватель: ${conflictInfo.teacher}<br>`;
+    } else {
+        details += `Группа: ${conflictInfo.group}<br>`;
+    }
+    
+    details += `Аудитория: ${conflictInfo.room}<br>`;
+    details += `<span class="badge bg-secondary">${getStatusText(conflictInfo.status)}</span>`;
+    
+    detailsDiv.innerHTML = details;
+    warningDiv.style.display = 'block';
+    
+    // Блокируем кнопку отправки
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Исправьте конфликты';
+}
+
+// Скрыть предупреждение о конфликте
+function hideConflictWarning() {
+    const warningDiv = document.getElementById('schedule_conflict_warning');
+    warningDiv.style.display = 'none';
+    
+    // Разблокируем кнопку отправки
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="bi bi-check"></i> Добавить пару';
+}
+
+// Преобразование статуса в читаемый текст
+function getStatusText(status) {
+    const statusTexts = {
+        'planned': 'Запланирована',
+        'done': 'Проведена',
+        'cancelled': 'Отменена',
+        'substitution': 'Замена'
+    };
+    return statusTexts[status] || status;
+}
+
+// Обработчики событий
+document.getElementById('date_input').addEventListener('change', function() {
+    loadAvailableRooms();
+    checkScheduleConflicts();
+});
+
+document.getElementById('pair_select').addEventListener('change', function() {
+    loadAvailableRooms();
+    checkScheduleConflicts();
+});
+
+document.getElementById('workload_select').addEventListener('change', function() {
+    checkScheduleConflicts();
+});
+
+document.getElementById('group_filter').addEventListener('change', function() {
+    loadWorkloads();
+});
+
+// Проверка конфликтов при отправке формы
+document.querySelector('form').addEventListener('submit', function(e) {
+    const warningDiv = document.getElementById('schedule_conflict_warning');
+    if (warningDiv.style.display !== 'none') {
+        e.preventDefault();
+        alert('Невозможно создать пару из-за конфликта расписания. Выберите другое время или дату.');
+    }
+});
+
+// Initial load if group is selected
+{% if selected_group %}
+loadWorkloads();
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}GitHub Pages Интеграция - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="bi bi-github"></i> GitHub Pages интеграция
+            </h1>
+            <p class="lead text-muted">Управление расписанием для Google Sites</p>
+        </div>
+    </div>
+
+    <!-- Основные действия -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            
+            <!-- Создание шаблона -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-file-code-fill text-primary" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 mb-3">Создать HTML шаблон</h4>
+                    <p class="text-muted mb-4">Создает полный пакет для Google Sites с JSON данными</p>
+                    
+                    <button id="createTemplateBtn" class="btn btn-primary btn-lg px-5 py-3">
+                        <i class="bi bi-plus-circle"></i> Создать шаблон
+                    </button>
+                    
+                    <!-- Статус под кнопкой -->
+                    <div id="createTemplateStatus" class="mt-4" style="display: none;">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <div class="spinner-border text-primary me-3" role="status"></div>
+                            <div>
+                                <div class="fw-bold" id="createTemplateTitle">Создание шаблона...</div>
+                                <div class="small text-muted" id="createTemplateMessage">Подготовка данных</div>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div id="createTemplateProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="createTemplateSteps" class="small text-start"></div>
+                    </div>
+                    
+                    <!-- Результат -->
+                    <div id="createTemplateResult" class="mt-4" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Обновление данных -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-arrow-repeat text-success" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 mb-3">Обновить данные</h4>
+                    <p class="text-muted mb-4">Синхронизирует актуальное расписание с GitHub</p>
+                    
+                    <button id="updateDataBtn" class="btn btn-success btn-lg px-5 py-3">
+                        <i class="bi bi-upload"></i> Обновить данные
+                    </button>
+                    
+                    <!-- Статус под кнопкой -->
+                    <div id="updateDataStatus" class="mt-4" style="display: none;">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <div class="spinner-border text-success me-3" role="status"></div>
+                            <div>
+                                <div class="fw-bold" id="updateDataTitle">Обновление данных...</div>
+                                <div class="small text-muted" id="updateDataMessage">Извлечение расписания</div>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div id="updateDataProgress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="updateDataSteps" class="small text-start"></div>
+                    </div>
+                    
+                    <!-- Результат -->
+                    <div id="updateDataResult" class="mt-4" style="display: none;"></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Ссылка на GitHub Pages -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8 text-center">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-link-45deg"></i> Ссылка для Google Sites
+                    </h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control text-center" id="githubUrl" 
+                               value="https://azamat313.github.io/apec_schedule/docs/template.html" readonly>
+                        <button class="btn btn-outline-primary" onclick="copyToClipboard('githubUrl')">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">Используйте эту ссылку в Google Sites</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.btn-lg {
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: scale(1.05);
+}
+
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+</style>
+
+<script>
+class SimpleOperationManager {
+    constructor(type) {
+        this.type = type;
+        this.statusEl = document.getElementById(`${type}Status`);
+        this.titleEl = document.getElementById(`${type}Title`);
+        this.messageEl = document.getElementById(`${type}Message`);
+        this.progressEl = document.getElementById(`${type}Progress`);
+        this.stepsEl = document.getElementById(`${type}Steps`);
+        this.resultEl = document.getElementById(`${type}Result`);
+        this.btnEl = document.getElementById(`${type}Btn`);
+        
+        this.steps = [];
+        this.currentStep = 0;
+    }
+    
+    start(title, message, steps = []) {
+        this.steps = steps;
+        this.currentStep = 0;
+        
+        this.titleEl.textContent = title;
+        this.messageEl.textContent = message;
+        this.progressEl.style.width = '0%';
+        
+        this.statusEl.style.display = 'block';
+        this.statusEl.className = 'mt-4 fade-in';
+        this.resultEl.style.display = 'none';
+        
+        this.btnEl.disabled = true;
+        
+        if (steps.length > 0) {
+            this.setupSteps();
+        }
+        
+        // Плавная прокрутка к статусу
+        this.statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    setupSteps() {
+        let stepsHtml = '<ul class="list-unstyled">';
+        this.steps.forEach((step, index) => {
+            const icon = index === 0 ? 'bi-hourglass-split text-warning' : 'bi-circle text-muted';
+            stepsHtml += `
+                <li id="${this.type}-step-${index}" class="small mb-1">
+                    <i class="bi ${icon} me-2"></i>
+                    ${step}
+                </li>
+            `;
+        });
+        stepsHtml += '</ul>';
+        this.stepsEl.innerHTML = stepsHtml;
+    }
+    
+    nextStep(message = null) {
+        if (this.currentStep < this.steps.length) {
+            // Отметить текущий шаг как выполненный
+            const currentStepEl = document.getElementById(`${this.type}-step-${this.currentStep}`);
+            if (currentStepEl) {
+                currentStepEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i>${this.steps[this.currentStep]}`;
+            }
+            
+            this.currentStep++;
+            
+            // Обновить прогресс
+            const progress = (this.currentStep / this.steps.length) * 100;
+            this.progressEl.style.width = progress + '%';
+            
+            // Выделить следующий шаг
+            if (this.currentStep < this.steps.length) {
+                const nextStepEl = document.getElementById(`${this.type}-step-${this.currentStep}`);
+                if (nextStepEl) {
+                    nextStepEl.innerHTML = `<i class="bi bi-hourglass-split text-warning me-2"></i>${this.steps[this.currentStep]}`;
+                }
+            }
+            
+            if (message) {
+                this.messageEl.textContent = message;
+            }
+        }
+    }
+    
+    complete(success, title, message, resultHtml = '') {
+        this.progressEl.style.width = '100%';
+        this.progressEl.className = success ? 
+            'progress-bar bg-success' : 
+            'progress-bar bg-danger';
+            
+        this.titleEl.innerHTML = success ? 
+            `<i class="bi bi-check-circle-fill text-success"></i> ${title}` :
+            `<i class="bi bi-x-circle-fill text-danger"></i> ${title}`;
+            
+        this.messageEl.textContent = message;
+        
+        // Скрыть спиннер
+        this.statusEl.querySelector('.spinner-border').style.display = 'none';
+        
+        if (resultHtml) {
+            this.resultEl.innerHTML = resultHtml;
+            this.resultEl.style.display = 'block';
+            this.resultEl.className = 'mt-4 fade-in';
+        }
+        
+        this.btnEl.disabled = false;
+        
+        // Автоскрытие через 30 секунд
+        setTimeout(() => {
+            this.statusEl.style.display = 'none';
+        }, 30000);
+    }
+    
+    error(title, message, errorDetails = '') {
+        this.complete(false, title, message, errorDetails ? `
+            <div class="alert alert-danger">
+                <h6><i class="bi bi-exclamation-triangle"></i> Детали ошибки:</h6>
+                <pre class="small mb-0">${errorDetails}</pre>
+            </div>
+        ` : '');
+    }
+}
+
+// Инициализация менеджеров
+const createTemplateManager = new SimpleOperationManager('createTemplate');
+const updateDataManager = new SimpleOperationManager('updateData');
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Создание шаблона
+    document.getElementById('createTemplateBtn').addEventListener('click', function() {
+        const steps = [
+            'Подготовка параметров',
+            'Создание JSON файлов',
+            'Генерация HTML шаблона',
+            'Клонирование репозитория',
+            'Копирование файлов',
+            'Создание коммита',
+            'Отправка в GitHub',
+            'Проверка GitHub Pages'
+        ];
+        
+        createTemplateManager.start('Создание HTML шаблона', 'Генерация пакета для GitHub Pages...', steps);
+        
+        // Симуляция прогресса
+        setTimeout(() => createTemplateManager.nextStep('Формирование данных...'), 500);
+        setTimeout(() => createTemplateManager.nextStep('Создание шаблона...'), 1000);
+        setTimeout(() => createTemplateManager.nextStep('Подготовка Git...'), 1500);
+        
+        const requestData = {
+            view: 'week',
+            week: 0,
+            month: 0,
+            auto_push: true,
+            repo_url: 'https://github.com/Azamat313/apec_schedule.git',
+            create_html_template: true
+        };
+        
+        fetch('/google-sheets/sites/api/generate-and-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Завершить оставшиеся шаги
+                createTemplateManager.nextStep('Копирование...');
+                createTemplateManager.nextStep('Git commit...');
+                createTemplateManager.nextStep('Push в GitHub...');
+                createTemplateManager.nextStep('Готово!');
+                
+                const resultHtml = `
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle"></i> Шаблон создан успешно!</h5>
+                        <p class="mb-0">GitHub Pages обновится через 1-2 минуты</p>
+                    </div>
+                `;
+                
+                createTemplateManager.complete(true, 'Готово!', 'HTML шаблон создан и отправлен в GitHub', resultHtml);
+            } else {
+                createTemplateManager.error('Ошибка', data.error || 'Неизвестная ошибка');
+            }
+        })
+        .catch(error => {
+            createTemplateManager.error('Ошибка сети', 'Не удалось связаться с сервером', error.message);
+        });
+    });
+    
+    // Обновление данных
+    document.getElementById('updateDataBtn').addEventListener('click', function() {
+        const steps = [
+            'Подключение к базе данных',
+            'Извлечение расписания',
+            'Создание JSON файлов',
+            'Синхронизация с GitHub',
+            'Создание коммита',
+            'Отправка данных'
+        ];
+        
+        updateDataManager.start('Обновление данных', 'Синхронизация с GitHub...', steps);
+        
+        // Симуляция прогресса  
+        setTimeout(() => updateDataManager.nextStep('Получение данных...'), 300);
+        setTimeout(() => updateDataManager.nextStep('Формирование JSON...'), 800);
+        
+        const requestData = {
+            view: 'week',
+            week: 0,
+            month: 0,
+            auto_push: true,
+            repo_url: 'https://github.com/Azamat313/apec_schedule.git',
+            create_html_template: false
+        };
+        
+        fetch('/google-sheets/sites/api/generate-and-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Завершить оставшиеся шаги
+                updateDataManager.nextStep('Синхронизация...');
+                updateDataManager.nextStep('Commit...');
+                updateDataManager.nextStep('Готово!');
+                
+                const generation = data.generation || {};
+                const resultHtml = `
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle"></i> Данные обновлены!</h5>
+                        <p class="small">Групп: ${generation.groups_count || 0} • Преподавателей: ${generation.teachers_count || 0} • Записей: ${generation.schedules_count || 0}</p>
+                        <p class="mb-0 small">Изменения видны через 1-2 минуты</p>
+                    </div>
+                `;
+                
+                updateDataManager.complete(true, 'Готово!', 'Расписание синхронизировано с GitHub', resultHtml);
+            } else {
+                updateDataManager.error('Ошибка', data.error || 'Неизвестная ошибка');
+            }
+        })
+        .catch(error => {
+            updateDataManager.error('Ошибка сети', 'Не удалось подключиться к серверу', error.message);
+        });
+    });
+});
+
+// Функция копирования в буфер обмена
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        
+        const button = element.nextElementSibling;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i>';
+        button.classList.add('btn-success');
+        button.classList.remove('btn-outline-primary');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+        
+    } catch (err) {
+        alert('Не удалось скопировать. Скопируйте вручную.');
+    }
+}
+</script>
+{% endblock %}

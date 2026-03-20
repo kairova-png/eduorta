@@ -1,0 +1,109 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}{{ commission.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-people"></i> {{ commission.name }}</h4>
+    {% if cmk_user.is_chair %}
+    <a href="{{ url_for('cmk.commissions_edit', id=commission.id) }}" class="btn btn-outline-primary">
+        <i class="bi bi-pencil"></i> Редактировать
+    </a>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    <!-- Info -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Информация</div>
+            <div class="card-body">
+                {% if commission.department %}
+                <p><strong>Отделение:</strong> {{ commission.department.name_ru }}</p>
+                {% endif %}
+                {% if commission.chair %}
+                <p><strong>Председатель:</strong> {{ commission.chair.full_name }}</p>
+                {% endif %}
+                {% if commission.academic_year %}
+                <p><strong>Учебный год:</strong> {{ commission.academic_year.name }}</p>
+                {% endif %}
+                {% if commission.description %}
+                <p class="text-muted">{{ commission.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Members -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Члены комиссии ({{ commission.members|length }})</span>
+            </div>
+            <div class="card-body">
+                {% if cmk_user.is_chair %}
+                <form method="POST" action="{{ url_for('cmk.commissions_add_member', id=commission.id) }}" class="mb-3">
+                    <div class="input-group">
+                        <select name="user_id" class="form-select" required>
+                            <option value="">Выберите пользователя...</option>
+                            {% for u in cmk_user.query.filter_by(is_active=True).all() %}
+                            <option value="{{ u.id }}">{{ u.full_name }} ({{ u.role }})</option>
+                            {% endfor %}
+                        </select>
+                        <select name="role_in_commission" class="form-select" style="max-width: 150px;">
+                            <option value="member">Член</option>
+                            <option value="secretary">Секретарь</option>
+                        </select>
+                        <button class="btn btn-primary"><i class="bi bi-plus"></i> Добавить</button>
+                    </div>
+                </form>
+                {% endif %}
+
+                <div class="list-group">
+                    {% for m in commission.members %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-person"></i> {{ m.user.full_name }}
+                            {% if m.role_in_commission == 'chair' %}
+                            <span class="badge bg-primary ms-1">Председатель</span>
+                            {% elif m.role_in_commission == 'secretary' %}
+                            <span class="badge bg-info ms-1">Секретарь</span>
+                            {% endif %}
+                        </div>
+                        {% if cmk_user.is_chair %}
+                        <form method="POST" action="{{ url_for('cmk.commissions_remove_member', id=commission.id, member_id=m.id) }}"
+                              onsubmit="return confirm('Удалить?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-muted">Нет членов комиссии</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Documents -->
+<div class="card mt-3">
+    <div class="card-header">Документы комиссии</div>
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-primary w-100">
+                    РУП <span class="badge bg-primary">{{ commission.rup_documents|length }}</span>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('cmk.rupd_list') }}" class="btn btn-outline-info w-100">РУПД</a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('cmk.umk_list') }}" class="btn btn-outline-success w-100">УМК</a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ url_for('cmk.umkd_list') }}" class="btn btn-outline-warning w-100">УМКД</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

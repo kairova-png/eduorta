@@ -1,0 +1,48 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-person-gear"></i> Пользователи</h4>
+    <a href="{{ url_for('cmk.users_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Добавить</a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ФИО</th>
+                    <th>Логин</th>
+                    <th>Роль</th>
+                    <th>Преподаватель</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.full_name }}</td>
+                    <td><code>{{ u.username }}</code></td>
+                    <td>
+                        {% if u.role == 'admin' %}<span class="badge bg-danger">Админ</span>
+                        {% elif u.role == 'cmk_chair' %}<span class="badge bg-primary">Председатель ЦМК</span>
+                        {% else %}<span class="badge bg-secondary">Преподаватель</span>{% endif %}
+                    </td>
+                    <td>{{ u.teacher.full_name if u.teacher else '—' }}</td>
+                    <td>
+                        {% if u.is_active %}<span class="badge bg-success">Активен</span>
+                        {% else %}<span class="badge bg-secondary">Отключён</span>{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('cmk.users_edit', id=u.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

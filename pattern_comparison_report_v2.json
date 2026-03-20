@@ -1,0 +1,102 @@
+{
+  "by_group": {
+    "БНГС 1-25": {
+      "correct": 399,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ТДНГ 1-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ЭНГМ 1-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ЭС 1-25": {
+      "correct": 388,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ЭС 2-25": {
+      "correct": 388,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ХТП 2-25": {
+      "correct": 388,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ХТП 3-25": {
+      "correct": 420,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "АиУ 1-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "АиУ 2-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "АиУ 3-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "АиУ 4-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "АиУ 5-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ПО 1-25": {
+      "correct": 378,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ПО 2-25": {
+      "correct": 388,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ЭС 3-25": {
+      "correct": 399,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    },
+    "ХТП 1-25": {
+      "correct": 389,
+      "incorrect": 0,
+      "missing": 0,
+      "details": []
+    }
+  },
+  "incorrect_to_delete": [],
+  "missing_to_create": []
+}

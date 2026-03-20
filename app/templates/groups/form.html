@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{% if group %}Редактировать{% else %}Создать{% endif %} группу - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('groups.index') }}">Группы</a></li>
+        <li class="breadcrumb-item active">{% if group %}Редактировать{% else %}Создать{% endif %}</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-people"></i> {% if group %}Редактировать группу{% else %}Новая группа{% endif %}</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 600px;">
+            <div class="mb-3">
+                <label class="form-label">Название группы *</label>
+                <input type="text" name="name" class="form-control" required
+                       value="{{ group.name if group else '' }}" placeholder="ПО 1-25">
+                <div class="form-text">Формат: КОД НОМЕР-ГОД (например: ПО 1-25)</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Специальность</label>
+                <select name="specialty_id" class="form-select">
+                    <option value="">-- Выберите --</option>
+                    {% for spec in specialties %}
+                    <option value="{{ spec.id }}" {% if group and group.specialty_id == spec.id %}selected{% endif %}>
+                        {{ spec.code }} - {{ spec.name_ru }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Номер группы</label>
+                        <input type="number" name="group_number" class="form-control" min="1" max="10"
+                               value="{{ group.group_number if group else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Год поступления *</label>
+                        <input type="number" name="enrollment_year" class="form-control" required
+                               min="2020" max="2030" value="{{ group.enrollment_year if group else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Время обучения *</label>
+                        <select name="shift" class="form-select" required>
+                            <option value="1" {% if not group or group.shift == 1 %}selected{% endif %}>
+                                1 смена (утро: 8:30-15:30, пары 1-4)
+                            </option>
+                            <option value="2" {% if group and group.shift == 2 %}selected{% endif %}>
+                                2 смена (день: 15:45-20:45, пары 5-8)
+                            </option>
+                            <option value="3" {% if group and group.shift == 3 %}selected{% endif %}>
+                                Смешанная (утро + вечер: 8:30-20:45, пары 1-8)
+                            </option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Смешанная смена</strong> позволяет ставить пары как утром, так и вечером
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Максимум пар подряд</label>
+                <select name="max_consecutive_pairs" class="form-select">
+                    <option value="1" {% if group and group.max_consecutive_pairs == 1 %}selected{% endif %}>1 пара (не более 1 пары подряд)</option>
+                    <option value="2" {% if not group or group.max_consecutive_pairs == 2 %}selected{% endif %}>2 пары (не более 2 пар подряд)</option>
+                    <option value="3" {% if group and group.max_consecutive_pairs == 3 %}selected{% endif %}>3 пары (не более 3 пар подряд)</option>
+                    <option value="4" {% if group and group.max_consecutive_pairs == 4 %}selected{% endif %}>4 пары (не более 4 пар подряд)</option>
+                    <option value="7" {% if group and group.max_consecutive_pairs == 7 %}selected{% endif %}>Без ограничений (до 7 пар)</option>
+                </select>
+                <div class="form-text">
+                    Ограничивает количество пар подряд для группы в один день. <strong>Рекомендуется: 2 пары</strong>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Сохранить
+                </button>
+                <a href="{{ url_for('groups.index') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

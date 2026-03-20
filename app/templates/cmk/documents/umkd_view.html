@@ -1,0 +1,79 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}УМКД: {{ umkd.discipline }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4><i class="bi bi-file-earmark-richtext"></i> {{ umkd.discipline }}</h4>
+        <span class="badge bg-{{ umkd.status_color }}">{{ umkd.status_name }}</span>
+        <span class="text-muted ms-2">{{ umkd.teacher.full_name if umkd.teacher else '' }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if umkd.status != 'approved' or cmk_user.is_admin %}
+        <a href="{{ url_for('cmk.umkd_edit', id=umkd.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Редактировать</a>
+        {% endif %}
+        {% if umkd.status in ('draft', 'revision') %}
+        <form method="POST" action="{{ url_for('cmk.umkd_submit', id=umkd.id) }}"><button class="btn btn-warning btn-sm"><i class="bi bi-send"></i> На рассмотрение</button></form>
+        {% endif %}
+        {% if umkd.status == 'under_review' and cmk_user.is_chair %}
+        <form method="POST" action="{{ url_for('cmk.umkd_approve', id=umkd.id) }}"><button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Утвердить</button></form>
+        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal"><i class="bi bi-x-lg"></i> На доработку</button>
+        {% endif %}
+    </div>
+</div>
+
+{% if umkd.review_comment %}
+<div class="alert alert-warning"><strong>Комментарий:</strong> {{ umkd.review_comment }}</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <strong>УМК:</strong> <a href="{{ url_for('cmk.umk_view', id=umkd.umk_id) }}">{{ umkd.umk.title if umkd.umk else '—' }}</a>
+        {% if umkd.rupd %} | <strong>РУПД:</strong> <a href="{{ url_for('cmk.rupd_view', id=umkd.rupd_id) }}">{{ umkd.rupd.discipline }}</a>{% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#v-syl">Силлабус</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-lec">Лекции</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-pra">Практика</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-self">СРС</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-test">Контроль</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#v-ext">Доп.</a></li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="v-syl">{{ umkd.syllabus|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-lec">{{ umkd.lecture_notes|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-pra">{{ umkd.practice_tasks|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-self">{{ umkd.self_study_tasks|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-test">{{ umkd.test_materials|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+            <div class="tab-pane fade" id="v-ext">{{ umkd.extra_content|default('<p class="text-muted">Не заполнено</p>', true)|safe }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">История</div>
+    <div class="list-group list-group-flush">
+        {% for h in history %}
+        <div class="list-group-item small">
+            <strong>{{ h.action }}</strong> {% if h.user %} — {{ h.user.full_name }}{% endif %}
+            <span class="text-muted float-end">{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form method="POST" action="{{ url_for('cmk.umkd_reject', id=umkd.id) }}">
+            <div class="modal-header"><h5 class="modal-title">На доработку</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><textarea name="comment" class="form-control" rows="3" required></textarea></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button><button type="submit" class="btn btn-danger">Отправить</button></div>
+        </form>
+    </div></div>
+</div>
+{% endblock %}

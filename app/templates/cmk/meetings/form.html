@@ -1,0 +1,78 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}{{ 'Редактировать' if meeting else 'Создать' }} заседание{% endblock %}
+{% block extra_css %}<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">{% endblock %}
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-calendar-event"></i> {{ 'Редактировать' if meeting else 'Создать' }} заседание</h4>
+<form method="POST" id="meeting-form">
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">ЦМК</label>
+                    <select name="commission_id" class="form-select" required>
+                        <option value="">Выберите...</option>
+                        {% for c in commissions %}
+                        <option value="{{ c.id }}" {{ 'selected' if meeting and meeting.commission_id == c.id }}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Номер</label>
+                    <input type="number" name="meeting_number" class="form-control" min="1" value="{{ meeting.meeting_number if meeting else 1 }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Дата</label>
+                    <input type="date" name="meeting_date" class="form-control" required value="{{ meeting.meeting_date.strftime('%Y-%m-%d') if meeting else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Тема</label>
+                    <input type="text" name="title" class="form-control" required value="{{ meeting.title if meeting else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#t-agenda">Повестка дня</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#t-protocol">Протокол</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#t-decisions">Решения</a></li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="t-agenda"><textarea name="agenda" class="rich-editor">{{ meeting.agenda|default('', true) }}</textarea></div>
+                <div class="tab-pane fade" id="t-protocol"><textarea name="protocol" class="rich-editor">{{ meeting.protocol|default('', true) }}</textarea></div>
+                <div class="tab-pane fade" id="t-decisions"><textarea name="decisions" class="rich-editor">{{ meeting.decisions|default('', true) }}</textarea></div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Сохранить</button>
+        <a href="{{ url_for('cmk.meetings_list') }}" class="btn btn-outline-secondary">Отмена</a>
+    </div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editors = [];
+    document.querySelectorAll('.rich-editor').forEach(function(textarea) {
+        const div = document.createElement('div');
+        div.innerHTML = textarea.value;
+        div.style.minHeight = '200px';
+        textarea.style.display = 'none';
+        textarea.parentNode.insertBefore(div, textarea);
+        const quill = new Quill(div, {
+            theme: 'snow',
+            modules: { toolbar: [[{header:[1,2,3,false]}],['bold','italic','underline'],[{list:'ordered'},{list:'bullet'}],['link'],['clean']] }
+        });
+        editors.push({ quill, textarea });
+    });
+    document.getElementById('meeting-form').addEventListener('submit', function() {
+        editors.forEach(function(e) { e.textarea.value = e.quill.root.innerHTML; });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}Заседания{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-calendar-event"></i> Заседания ЦМК</h4>
+    {% if cmk_user.is_chair %}
+    <a href="{{ url_for('cmk.meetings_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
+    {% endif %}
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>#</th><th>Дата</th><th>Тема</th><th>ЦМК</th><th>Статус</th></tr>
+            </thead>
+            <tbody>
+                {% for m in meetings %}
+                <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.meetings_view', id=m.id) }}'">
+                    <td>{{ m.meeting_number }}</td>
+                    <td>{{ m.meeting_date.strftime('%d.%m.%Y') }}</td>
+                    <td><strong>{{ m.title }}</strong></td>
+                    <td>{{ m.commission.name if m.commission else '—' }}</td>
+                    <td><span class="badge bg-{{ 'success' if m.status == 'finalized' else 'secondary' }}">{{ 'Финализирован' if m.status == 'finalized' else 'Черновик' }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Нет заседаний</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

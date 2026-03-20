@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Импорт данных - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('settings.index') }}">Настройки</a></li>
+        <li class="breadcrumb-item active">Импорт</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-cloud-upload"></i> Импорт данных</h2>
+
+<!-- Текущее состояние базы -->
+<div class="card mb-4 mt-4">
+    <div class="card-header bg-info text-white">
+        <i class="bi bi-database-check"></i> Текущее состояние базы данных
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="text-primary">{{ stats.groups }}</h3>
+                    <small class="text-muted">Групп</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="text-success">{{ stats.teachers }}</h3>
+                    <small class="text-muted">Преподавателей</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="text-warning">{{ stats.rooms }}</h3>
+                    <small class="text-muted">Аудиторий</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3">
+                    <h3 class="text-danger">{{ stats.gup }}</h3>
+                    <small class="text-muted">Записей ГУП</small>
+                </div>
+            </div>
+        </div>
+        {% if stats.gup > 0 %}
+        <div class="alert alert-warning mt-3 mb-0">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Внимание!</strong> В базе уже есть {{ stats.gup }} записей ГУП.
+            Новые записи не будут дублироваться. Чтобы перезагрузить ГУП, сначала очистите старые данные.
+            <form method="post" class="d-inline ms-2">
+                <input type="hidden" name="import_type" value="clear_gup">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить все записи ГУП? Это действие нельзя отменить.')">
+                    <i class="bi bi-trash"></i> Очистить ГУП
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Справочники -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-database"></i> Справочники
+            </div>
+            <div class="card-body">
+                <p>Импортирует:</p>
+                <ul>
+                    <li>Кафедры</li>
+                    <li>Специальности</li>
+                    <li>Группы</li>
+                    <li>Преподаватели</li>
+                    <li>Аудитории</li>
+                </ul>
+
+                <hr>
+
+                <a href="{{ url_for('settings.download_template', template_type='college') }}" class="btn btn-outline-primary mb-3 w-100">
+                    <i class="bi bi-download"></i> Скачать шаблон
+                </a>
+
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="import_type" value="college">
+                    <div class="mb-3">
+                        <label class="form-label">Выберите JSON файл:</label>
+                        <input type="file" name="file" class="form-control" accept=".json" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-upload"></i> Импортировать справочники
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ГУП -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-calendar-week"></i> ГУП (График учебного процесса)
+            </div>
+            <div class="card-body">
+                <p>Импортирует:</p>
+                <ul>
+                    <li>Учебный год</li>
+                    <li>52 недели с датами</li>
+                    <li>Типы недель для каждой группы</li>
+                </ul>
+
+                <hr>
+
+                <a href="{{ url_for('settings.download_template', template_type='gup') }}" class="btn btn-outline-success mb-3 w-100">
+                    <i class="bi bi-download"></i> Скачать шаблон
+                </a>
+
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="import_type" value="gup">
+                    <div class="mb-3">
+                        <label class="form-label">Выберите JSON файл:</label>
+                        <input type="file" name="file" class="form-control" accept=".json" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-upload"></i> Импортировать ГУП
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Инструкция -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-info-circle"></i> Инструкция
+    </div>
+    <div class="card-body">
+        <h6>Порядок импорта:</h6>
+        <ol>
+            <li><strong>Скачайте шаблон</strong> — нажмите "Скачать шаблон" для нужного типа данных</li>
+            <li><strong>Заполните данные</strong> — откройте JSON в текстовом редакторе и добавьте свои данные по образцу</li>
+            <li><strong>Сначала справочники</strong> — импортируйте справочники (создаёт группы, преподавателей и т.д.)</li>
+            <li><strong>Затем ГУП</strong> — импортируйте ГУП (привязывает недели к группам)</li>
+        </ol>
+
+        <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Важно!</strong>
+            <ul class="mb-0">
+                <li>Файлы должны быть в формате JSON (кодировка UTF-8)</li>
+                <li>Названия групп в ГУП должны точно совпадать с названиями в справочниках</li>
+                <li>Существующие записи не дублируются (проверка по имени/коду)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

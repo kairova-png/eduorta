@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Учебный год - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('settings.index') }}">Настройки</a></li>
+        <li class="breadcrumb-item active">Учебный год</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-calendar-range"></i> {% if year %}Редактировать{% else %}Новый{% endif %} учебный год</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 500px;">
+            <div class="mb-3">
+                <label class="form-label">Название *</label>
+                <input type="text" name="name" class="form-control" required
+                       value="{{ year.name if year else '' }}" placeholder="2025-2026">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Начало *</label>
+                        <input type="date" name="start_date" class="form-control" required
+                               value="{{ year.start_date.strftime('%Y-%m-%d') if year else '2025-09-01' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Окончание *</label>
+                        <input type="date" name="end_date" class="form-control" required
+                               value="{{ year.end_date.strftime('%Y-%m-%d') if year else '2026-08-31' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="is_current" class="form-check-input" id="isCurrent"
+                       {% if year and year.is_current %}checked{% endif %}>
+                <label class="form-check-label" for="isCurrent">Текущий учебный год</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Сохранить
+                </button>
+                <a href="{{ url_for('settings.index') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

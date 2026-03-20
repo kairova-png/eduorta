@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование пары - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('schedule.index') }}">Расписание</a></li>
+        <li class="breadcrumb-item active">Редактирование</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-pencil"></i> Редактирование пары</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 600px;">
+            <!-- Info (read-only) -->
+            <div class="mb-3">
+                <label class="form-label">Дата</label>
+                <input type="text" class="form-control" readonly value="{{ schedule.date.strftime('%d.%m.%Y') }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Группа</label>
+                <input type="text" class="form-control" readonly
+                       value="{{ schedule.workload.group.name if schedule.workload.group else '-' }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Дисциплина</label>
+                <input type="text" class="form-control" readonly value="{{ schedule.workload.discipline }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Преподаватель</label>
+                <input type="text" class="form-control" readonly
+                       value="{{ schedule.workload.teacher.full_name if schedule.workload.teacher else '-' }}">
+            </div>
+
+            <hr>
+
+            <!-- Editable fields -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Номер пары</label>
+                        <select name="pair_number" class="form-select">
+                            {% for p in range(1, 8) %}
+                            <option value="{{ p }}" {% if schedule.pair_number == p %}selected{% endif %}>
+                                {{ p }} ({{ pair_times[p]['start'] }} - {{ pair_times[p]['end'] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Аудитория</label>
+                        <select name="room_id" class="form-select">
+                            <option value="">-- Не указана --</option>
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}" {% if schedule.room_id == room.id %}selected{% endif %}>
+                                {{ room.number }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select" id="statusSelect">
+                    {% for status_code, status_info in statuses.items() %}
+                    <option value="{{ status_code }}" {% if schedule.status == status_code %}selected{% endif %}>
+                        {{ status_info.name_ru }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3" id="substituteField" style="display: {% if schedule.status == 'substitution' %}block{% else %}none{% endif %};">
+                <label class="form-label">Заменяющий преподаватель</label>
+                <select name="substitute_teacher_id" class="form-select">
+                    <option value="">-- Выберите --</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if schedule.substitute_teacher_id == teacher.id %}selected{% endif %}>
+                        {{ teacher.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Примечание</label>
+                <textarea name="notes" class="form-control" rows="2">{{ schedule.notes or '' }}</textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Сохранить
+                </button>
+                <a href="{{ url_for('schedule.index', group_id=schedule.workload.group_id) }}" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+                <form action="{{ url_for('schedule.delete', id=schedule.id) }}" method="post" class="ms-auto"
+                      onsubmit="return confirm('Удалить эту пару?')">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
+                </form>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('statusSelect').addEventListener('change', function() {
+    document.getElementById('substituteField').style.display =
+        this.value === 'substitution' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

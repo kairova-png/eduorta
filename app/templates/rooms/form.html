@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{% if room %}Редактировать{% else %}Добавить{% endif %} аудиторию - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('rooms.index') }}">Аудитории</a></li>
+        <li class="breadcrumb-item active">{% if room %}Редактировать{% else %}Добавить{% endif %}</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-door-open"></i> {% if room %}Редактировать аудиторию{% else %}Новая аудитория{% endif %}</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 400px;">
+            <div class="mb-3">
+                <label class="form-label">Номер/Название *</label>
+                <input type="text" name="number" class="form-control" required
+                       value="{{ room.number if room else '' }}" placeholder="301">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Тип</label>
+                <select name="room_type" class="form-select">
+                    <option value="учебная" {% if room and room.room_type == 'учебная' %}selected{% endif %}>учебная</option>
+                    <option value="лаборатория" {% if room and room.room_type == 'лаборатория' %}selected{% endif %}>лаборатория</option>
+                    <option value="спортзал" {% if room and room.room_type == 'спортзал' %}selected{% endif %}>спортзал</option>
+                    <option value="библиотека" {% if room and room.room_type == 'библиотека' %}selected{% endif %}>библиотека</option>
+                    <option value="конференц-зал" {% if room and room.room_type == 'конференц-зал' %}selected{% endif %}>конференц-зал</option>
+                    <option value="мастерская" {% if room and room.room_type == 'мастерская' %}selected{% endif %}>мастерская</option>
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Сохранить
+                </button>
+                <a href="{{ url_for('rooms.index') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

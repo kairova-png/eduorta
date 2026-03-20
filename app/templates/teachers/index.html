@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Преподаватели - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-person-badge"></i> Преподаватели</h2>
+    <a href="{{ url_for('teachers.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus"></i> Добавить преподавателя
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Кафедра</label>
+                <select name="department_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все кафедры</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if selected_department == dept.id %}selected{% endif %}>
+                        {{ dept.name_ru }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Поиск</label>
+                <input type="text" name="search" class="form-control" placeholder="ФИО..." value="{{ search }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-outline-primary">Найти</button>
+                <a href="{{ url_for('teachers.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Teachers Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Кафедра</th>
+                        <th>Нагрузок</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('teachers.view', id=teacher.id) }}">{{ teacher.full_name }}</a>
+                        </td>
+                        <td>{{ teacher.department.name_ru if teacher.department else '-' }}</td>
+                        <td>{{ teacher.workloads.count() }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('schedule.index', teacher_id=teacher.id) }}" class="btn btn-outline-primary" title="Расписание">
+                                    <i class="bi bi-calendar3"></i>
+                                </a>
+                                <a href="{{ url_for('reports.teacher', teacher_id=teacher.id) }}" class="btn btn-outline-info" title="Табель">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                </a>
+                                <a href="{{ url_for('teachers.edit', id=teacher.id) }}" class="btn btn-outline-warning" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ url_for('teachers.delete', id=teacher.id) }}" method="post" class="d-inline" onsubmit="return confirm('Удалить преподавателя?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Преподаватели не найдены</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted">Всего: {{ teachers|length }} преподавателей</div>
+    </div>
+</div>
+{% endblock %}

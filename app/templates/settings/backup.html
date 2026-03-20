@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Резервное копирование - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('settings.index') }}">Настройки</a></li>
+        <li class="breadcrumb-item active">Бэкап</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-database"></i> Резервное копирование</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5>Информация о базе данных</h5>
+        <table class="table">
+            <tr>
+                <th>Путь к файлу:</th>
+                <td><code>{{ db_path }}</code></td>
+            </tr>
+            <tr>
+                <th>Файл существует:</th>
+                <td>
+                    {% if db_exists %}
+                    <span class="badge bg-success">Да</span>
+                    {% else %}
+                    <span class="badge bg-danger">Нет</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Размер:</th>
+                <td>{{ (db_size / 1024) | round(2) }} КБ</td>
+            </tr>
+        </table>
+
+        <hr>
+
+        <h5>Резервное копирование</h5>
+        <p>Для создания резервной копии скопируйте файл базы данных:</p>
+
+        <div class="bg-light p-3 rounded">
+            <code>cp {{ db_path }} {{ db_path }}.backup</code>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Важно!</strong> Рекомендуется делать резервные копии регулярно, особенно перед:
+            <ul class="mb-0">
+                <li>Импортом новых данных</li>
+                <li>Генерацией расписания</li>
+                <li>Массовым редактированием</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,370 @@
+<!-- Модальное окно для изменений в расписании -->
+<div class="modal fade" id="scheduleChangeModal" tabindex="-1" aria-labelledby="scheduleChangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleChangeModalLabel">
+                    <i class="bi bi-calendar-event"></i>
+                    Управление занятием
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Информация о занятии -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Информация о занятии
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Дата:</strong> {{ schedule.date.strftime('%d.%m.%Y') }}</p>
+                                <p><strong>Время:</strong> {{ schedule.pair_number }} пара ({{ schedule.time_start }} - {{ schedule.time_end }})</p>
+                                <p><strong>Группа:</strong> {{ schedule.workload.group.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Дисциплина:</strong> {{ schedule.workload.discipline }}</p>
+                                <p><strong>Преподаватель:</strong> {{ schedule.workload.teacher.full_name }}</p>
+                                <p><strong>Аудитория:</strong> {{ schedule.room.number if schedule.room else 'Не назначена' }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <p><strong>Статус:</strong> 
+                                    <span class="badge" 
+                                          style="background-color: {{ config.SCHEDULE_STATUS.get(schedule.status, {}).get('color', '#6c757d') }}; color: {{ 'black' if schedule.status in ['planned'] else 'white' }};">
+                                        {{ config.SCHEDULE_STATUS.get(schedule.status, {}).get('name_ru', schedule.status) }}
+                                    </span>
+                                </p>
+                                {% if schedule.substitute_teacher %}
+                                <p><strong>Замена:</strong> {{ schedule.substitute_teacher.full_name }}</p>
+                                {% endif %}
+                                {% if schedule.change_reason %}
+                                <p><strong>Причина изменения:</strong> {{ schedule.change_reason }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Вкладки действий -->
+                <ul class="nav nav-tabs" id="changeActionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="substitute-tab" data-bs-toggle="tab" data-bs-target="#substitute" type="button" role="tab">
+                            <i class="bi bi-person-plus"></i> Замена
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reschedule-tab" data-bs-toggle="tab" data-bs-target="#reschedule" type="button" role="tab">
+                            <i class="bi bi-arrow-right"></i> Перенос
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cancel-tab" data-bs-toggle="tab" data-bs-target="#cancel" type="button" role="tab">
+                            <i class="bi bi-x-circle"></i> Отмена
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="complete-tab" data-bs-toggle="tab" data-bs-target="#complete" type="button" role="tab">
+                            <i class="bi bi-check-circle"></i> Завершить
+                        </button>
+                    </li>
+                    {% if schedule.status in ['cancelled', 'rescheduled'] %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="restore-tab" data-bs-toggle="tab" data-bs-target="#restore" type="button" role="tab">
+                            <i class="bi bi-arrow-clockwise"></i> Восстановить
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% if schedule.status == 'substitution' %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-warning" id="cancel-substitution-tab" data-bs-toggle="tab" data-bs-target="#cancel-substitution" type="button" role="tab">
+                            <i class="bi bi-person-x"></i> Отменить замену
+                        </button>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-danger" id="delete-tab" data-bs-toggle="tab" data-bs-target="#delete" type="button" role="tab">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-3" id="changeActionTabsContent">
+                    <!-- Замена -->
+                    <div class="tab-pane fade show active" id="substitute" role="tabpanel" aria-labelledby="substitute-tab">
+                        <form id="substituteForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                            
+                            <div class="mb-3">
+                                <label for="substitute_teacher_id" class="form-label">
+                                    Преподаватель-заменитель 
+                                    <small class="text-muted">(доступно {{ available_teachers|length }} из {{ available_teachers|length + 1 }} преподавателей)</small>
+                                </label>
+                                <select class="form-select" name="substitute_teacher_id" required>
+                                    {% if available_teachers %}
+                                        <option value="">Выберите преподавателя</option>
+                                        {% for teacher in available_teachers %}
+                                        <option value="{{ teacher.id }}">{{ teacher.full_name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="">Нет свободных преподавателей в это время</option>
+                                    {% endif %}
+                                </select>
+                                {% if not available_teachers %}
+                                <div class="form-text text-warning">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Все преподаватели заняты в {{ schedule.date.strftime('%d.%m.%Y') }} в {{ schedule.pair_number }} паре
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="sub_reason" class="form-label">Причина замены</label>
+                                <input type="text" class="form-control" name="reason" placeholder="Болезнь, командировка и т.д." required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="sub_notes" class="form-label">Примечания</label>
+                                <textarea class="form-control" name="notes" rows="2"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-warning" {% if not available_teachers %}disabled{% endif %}>
+                                <i class="bi bi-person-plus"></i> 
+                                {% if available_teachers %}Назначить замену{% else %}Нет доступных преподавателей{% endif %}
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Перенос -->
+                    <div class="tab-pane fade" id="reschedule" role="tabpanel" aria-labelledby="reschedule-tab">
+                        <form id="rescheduleForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="new_date" class="form-label">Новая дата</label>
+                                        <input type="date" class="form-control" name="new_date" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="new_pair_number" class="form-label">Новая пара</label>
+                                        <select class="form-select" name="new_pair_number" required>
+                                            <option value="">Выберите пару</option>
+                                            {% for pair_num, times in pair_times.items() %}
+                                            <option value="{{ pair_num }}">{{ pair_num }} пара ({{ times.start }} - {{ times.end }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_room_id" class="form-label">Новая аудитория (необязательно)</label>
+                                <select class="form-select" name="new_room_id">
+                                    <option value="">Оставить текущую ({{ schedule.room.number if schedule.room else 'Не назначена' }})</option>
+                                    {% for room in available_rooms %}
+                                    <option value="{{ room.id }}">{{ room.number }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="resc_reason" class="form-label">Причина переноса</label>
+                                <input type="text" class="form-control" name="reason" placeholder="Конфликт расписания, перенос мероприятия и т.д." required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="resc_notes" class="form-label">Примечания</label>
+                                <textarea class="form-control" name="notes" rows="2"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-arrow-right"></i> Перенести занятие
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Отмена -->
+                    <div class="tab-pane fade" id="cancel" role="tabpanel" aria-labelledby="cancel-tab">
+                        <form id="cancelForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+
+                            <!-- Тип отмены -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Тип отмены</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="free_slot" value="false" id="cancel_visible" checked>
+                                    <label class="form-check-label" for="cancel_visible">
+                                        <i class="bi bi-eye text-danger"></i> <strong>Отмена (видимая)</strong>
+                                    </label>
+                                    <small class="form-text text-muted d-block ms-4">
+                                        Карточка остаётся на месте с пометкой «отменена» — студенты видят отмену.
+                                    </small>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="free_slot" value="true" id="cancel_free_slot">
+                                    <label class="form-check-label" for="cancel_free_slot">
+                                        <i class="bi bi-calendar-plus text-primary"></i> <strong>Отмена и освободить слот</strong>
+                                    </label>
+                                    <small class="form-text text-muted d-block ms-4">
+                                        Карточка удаляется, слот освобождается для другой пары. История сохраняется.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cancel_reason" class="form-label">Причина отмены</label>
+                                <input type="text" class="form-control" name="reason" placeholder="Болезнь студентов, отмена мероприятия и т.д." required>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="return_to_workload" checked id="return_to_workload">
+                                    <label class="form-check-label" for="return_to_workload">
+                                        Вернуть часы в нагрузку преподавателя
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Если отмечено, часы будут возвращены и потребуется отработка. Если не отмечено, часы будут считаться проведенными.
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cancel_notes" class="form-label">Примечания</label>
+                                <textarea class="form-control" name="notes" rows="2"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-x-circle"></i> Отменить занятие
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Завершение -->
+                    <div class="tab-pane fade" id="complete" role="tabpanel" aria-labelledby="complete-tab">
+                        <form id="completeForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Отметить занятие как "Последняя пара" означает, что это финальное занятие по данной дисциплине для группы.
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="complete_notes" class="form-label">Примечания к завершению</label>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="Экзамен, зачёт, завершение курса и т.д."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
+                                <i class="bi bi-check-circle"></i> Отметить как последнюю пару
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Восстановление -->
+                    {% if schedule.status in ['cancelled', 'rescheduled'] %}
+                    <div class="tab-pane fade" id="restore" role="tabpanel" aria-labelledby="restore-tab">
+                        <form id="restoreForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Восстановление вернет занятие в статус "Запланирована" и отменит все связанные изменения.
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="restore_notes" class="form-label">Примечания к восстановлению</label>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="Причина восстановления"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-arrow-clockwise"></i> Восстановить занятие
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    {% if schedule.status == 'substitution' %}
+                    <div class="tab-pane fade" id="cancel-substitution" role="tabpanel" aria-labelledby="cancel-substitution-tab">
+                        <form id="cancelSubstitutionForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Отмена замены</strong> вернёт занятие к основному преподавателю
+                                <strong>{{ schedule.workload.teacher.full_name }}</strong>.
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>Текущий заменяющий:</strong> {{ schedule.substitute_teacher.full_name if schedule.substitute_teacher else 'Не указан' }}</p>
+                                    <p class="mb-1"><strong>Основной преподаватель:</strong> {{ schedule.workload.teacher.full_name }}</p>
+                                    <p class="mb-0"><strong>Причина замены:</strong> {{ schedule.change_reason or 'Не указана' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cancel_sub_notes" class="form-label">Примечания</label>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="Причина отмены замены"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-person-x"></i> Отменить замену
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Удаление -->
+                    <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+                        <form id="deleteForm">
+                            <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Внимание!</strong> Удаление пары нельзя отменить. Пара будет полностью удалена из расписания.
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>Дисциплина:</strong> {{ schedule.workload.discipline }}</p>
+                                    <p class="mb-1"><strong>Дата:</strong> {{ schedule.date.strftime('%d.%m.%Y') }}</p>
+                                    <p class="mb-0"><strong>Пара:</strong> {{ schedule.pair_number }}</p>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Удалить пару
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- История изменений -->
+                <div class="mt-4">
+                    <h6>
+                        <i class="bi bi-clock-history"></i>
+                        История изменений
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadScheduleHistory({{ schedule.id }})">
+                            <i class="bi bi-arrow-clockwise"></i> Обновить
+                        </button>
+                    </h6>
+                    <div id="scheduleHistory">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

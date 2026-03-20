@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Создать ГУП - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('gup.index') }}">ГУП</a></li>
+        <li class="breadcrumb-item active">Создать</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-plus-circle"></i> Создать новый ГУП</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 500px;">
+            <div class="mb-3">
+                <label class="form-label">Группа *</label>
+                <select name="group_id" class="form-select" required>
+                    <option value="">-- Выберите группу --</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if selected_group_id == group.id %}selected{% endif %}>
+                        {{ group.name }} ({{ group.course }} курс, {{ group.specialty.code if group.specialty else 'без специальности' }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Выберите группу для создания графика учебного процесса</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Учебный год *</label>
+                <select name="academic_year_id" class="form-select" required>
+                    <option value="">-- Выберите учебный год --</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if (selected_year_id == year.id) or (not selected_year_id and year.is_current) %}selected{% endif %}>
+                        {{ year.name }} {% if year.is_current %}(текущий){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Учебный год для которого создается ГУП</div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Будет создан базовый ГУП:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>52 недели учебного года</li>
+                    <li>По умолчанию - теоретическое обучение</li>
+                    <li>Можно будет отредактировать после создания</li>
+                </ul>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Создать ГУП
+                </button>
+                <a href="{{ url_for('gup.index') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

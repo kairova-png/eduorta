@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ЦМК{% endblock %} - APEC Petrotechnic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root { --sidebar-width: 260px; }
+        body { min-height: 100vh; }
+        .sidebar {
+            width: var(--sidebar-width); position: fixed; top: 0; left: 0;
+            height: 100vh; background: #1a252f; padding-top: 1rem; overflow-y: auto; z-index: 100;
+        }
+        .sidebar .nav-link { color: rgba(255,255,255,0.7); padding: 0.6rem 1rem; font-size: 0.9rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .sidebar .nav-link.active { color: #fff; background: #3498db; }
+        .sidebar .nav-link i { margin-right: 0.5rem; width: 20px; text-align: center; }
+        .sidebar-header { color: #fff; padding: 1rem; font-size: 1rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 0.5rem; }
+        .sidebar-section { color: rgba(255,255,255,0.4); font-size: 0.7rem; text-transform: uppercase; padding: 0.8rem 1rem 0.3rem; margin-top: 0.3rem; letter-spacing: 1px; }
+        .main-content { margin-left: var(--sidebar-width); padding: 1.5rem; min-height: 100vh; background: #f8f9fa; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .status-badge { font-size: 0.8rem; }
+        .doc-chain { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .doc-chain .arrow { color: #6c757d; }
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; position: relative; height: auto; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="sidebar d-none d-md-block">
+        <div class="sidebar-header">
+            <i class="bi bi-mortarboard"></i> ЦМК
+            <div class="small text-white-50">{{ cmk_user.full_name if cmk_user else '' }}</div>
+        </div>
+
+        <div class="sidebar-section">Главная</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'cmk.dashboard' %}active{% endif %}" href="{{ url_for('cmk.dashboard') }}">
+                    <i class="bi bi-speedometer2"></i> Дашборд
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-section">Документы</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if 'rup_' in (request.endpoint or '') and 'rupd' not in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.rup_list') }}">
+                    <i class="bi bi-journal-bookmark"></i> РУП
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'rupd' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.rupd_list') }}">
+                    <i class="bi bi-journal-text"></i> РУПД
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'umk_' in (request.endpoint or '') and 'umkd' not in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.umk_list') }}">
+                    <i class="bi bi-collection"></i> УМК
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'umkd' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.umkd_list') }}">
+                    <i class="bi bi-file-earmark-richtext"></i> УМКД
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-section">ЦМК</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if 'commissions' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.commissions_list') }}">
+                    <i class="bi bi-people"></i> Комиссии
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if 'meetings' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.meetings_list') }}">
+                    <i class="bi bi-calendar-event"></i> Заседания
+                </a>
+            </li>
+        </ul>
+
+        {% if cmk_user and cmk_user.is_admin %}
+        <div class="sidebar-section">Администрирование</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if 'users' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('cmk.users_list') }}">
+                    <i class="bi bi-person-gear"></i> Пользователи
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+        <div class="sidebar-section mt-3"></div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.index') }}">
+                    <i class="bi bi-arrow-left"></i> Расписание
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="{{ url_for('cmk.logout') }}">
+                    <i class="bi bi-box-arrow-right"></i> Выход
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Mobile nav -->
+    <nav class="navbar navbar-dark d-md-none" style="background:#1a252f;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('cmk.dashboard') }}"><i class="bi bi-mortarboard"></i> ЦМК</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}Комиссии ЦМК{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-people"></i> Цикловые методические комиссии</h4>
+    {% if cmk_user.is_chair %}
+    <a href="{{ url_for('cmk.commissions_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    {% for c in commissions %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ c.name }}</h5>
+                <p class="text-muted small mb-2">
+                    {% if c.department %}{{ c.department.name_ru }}{% endif %}
+                    {% if c.academic_year %} | {{ c.academic_year.name }}{% endif %}
+                </p>
+                {% if c.chair %}
+                <p class="mb-1"><i class="bi bi-person-check"></i> Председатель: <strong>{{ c.chair.full_name }}</strong></p>
+                {% endif %}
+                <p class="mb-2"><i class="bi bi-people"></i> Членов: {{ c.members|length }}</p>
+                {% if c.description %}
+                <p class="small text-muted">{{ c.description[:100] }}{{ '...' if c.description|length > 100 }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('cmk.commissions_view', id=c.id) }}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                {% if cmk_user.is_chair %}
+                <a href="{{ url_for('cmk.commissions_edit', id=c.id) }}" class="btn btn-sm btn-outline-secondary">Редактировать</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center text-muted py-5">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p class="mt-2">Нет комиссий</p>
+                {% if cmk_user.is_chair %}
+                <a href="{{ url_for('cmk.commissions_create') }}" class="btn btn-primary">Создать первую ЦМК</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

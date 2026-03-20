@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Неделя {{ week_number }} - {{ selected_year.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('periods.index', year_id=selected_year.id) }}">Периоды</a></li>
+        <li class="breadcrumb-item active">Неделя {{ week_number }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-week"></i> Неделя {{ week_number }}</h2>
+    <div>
+        {% if period and period.status == 'closed' %}
+        <form method="post" action="{{ url_for('periods.open_week', week_number=week_number) }}" style="display: inline;">
+            <input type="hidden" name="year_id" value="{{ selected_year.id }}">
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Открыть неделю для редактирования?')">
+                <i class="bi bi-unlock"></i> Открыть неделю
+            </button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('periods.close_week', week_number=week_number) }}" style="display: inline;">
+            <input type="hidden" name="year_id" value="{{ selected_year.id }}">
+            <button type="submit" class="btn btn-success" onclick="return confirm('Закрыть неделю?')">
+                <i class="bi bi-lock"></i> Закрыть неделю
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Week info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Учебный год:</strong> {{ selected_year.name }}
+            </div>
+            <div class="col-md-3">
+                <strong>Период:</strong> {{ gup.start_date.strftime('%d.%m.%Y') }} - {{ gup.end_date.strftime('%d.%m.%Y') }}
+            </div>
+            <div class="col-md-3">
+                <strong>Статус:</strong>
+                {% if period and period.status == 'closed' %}
+                <span class="badge bg-success"><i class="bi bi-lock"></i> Закрыт</span>
+                {% else %}
+                <span class="badge bg-info"><i class="bi bi-unlock"></i> Открыт</span>
+                {% endif %}
+            </div>
+            <div class="col-md-3">
+                {% if period and period.closed_at %}
+                <strong>Закрыт:</strong> {{ period.closed_at.strftime('%d.%m.%Y %H:%M') }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h4>{{ teacher_schedules|length }}</h4>
+                <small class="text-muted">Преподавателей</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                {% set total_pairs = teacher_schedules.values()|map(attribute='total_pairs')|sum %}
+                <h4>{{ total_pairs }}</h4>
+                <small>Всего пар</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                {% set done_pairs = teacher_schedules.values()|map(attribute='done_pairs')|sum %}
+                <h4>{{ done_pairs }}</h4>
+                <small>Проведено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ (done_pairs * 2) }}</h4>
+                <small>Часов</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teachers table -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-people"></i> Нагрузка преподавателей за неделю {{ week_number }}
+    </div>
+    <div class="card-body">
+        {% if teacher_schedules %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Преподаватель</th>
+                        <th style="width: 100px;">Всего пар</th>
+                        <th style="width: 100px;">Проведено</th>
+                        <th style="width: 100px;">Часов</th>
+                        <th style="width: 150px;">Выполнение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher_id, data in teacher_schedules.items() %}
+                    <tr>
+                        <td>{{ data.teacher.full_name }}</td>
+                        <td>{{ data.total_pairs }}</td>
+                        <td>{{ data.done_pairs }}</td>
+                        <td>{{ data.done_pairs * 2 }}</td>
+                        <td>
+                            {% set percent = (data.done_pairs / data.total_pairs * 100) if data.total_pairs > 0 else 0 %}
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar {% if percent == 100 %}bg-success{% elif percent > 0 %}bg-info{% else %}bg-secondary{% endif %}"
+                                     role="progressbar"
+                                     style="width: {{ percent|int }}%">
+                                    {{ percent|int }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th>Итого:</th>
+                        <th>{{ teacher_schedules.values()|map(attribute='total_pairs')|sum }}</th>
+                        <th>{{ teacher_schedules.values()|map(attribute='done_pairs')|sum }}</th>
+                        <th>{{ teacher_schedules.values()|map(attribute='done_pairs')|sum * 2 }}</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i>
+            Нет расписания на эту неделю
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Мастер генерации расписания - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-magic"></i> Мастер генерации расписания</h2>
+        <a href="{{ url_for('schedule.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> К расписанию
+        </a>
+    </div>
+
+    <!-- Описание мастера -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="bi bi-info-circle"></i> Умная генерация расписания</h5>
+                <p class="mb-0">
+                    Этот мастер поможет вам настроить и сгенерировать расписание с учетом предпочтений по аудиториям,
+                    с возможностью массового редактирования после генерации.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Выбор группы -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-people"></i> Выберите группу для генерации</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Группа</th>
+                                    <th>Специальность</th>
+                                    <th>Курс</th>
+                                    <th>Смена</th>
+                                    <th>Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for group in groups %}
+                                <tr>
+                                    <td><strong>{{ group.name }}</strong></td>
+                                    <td>{{ group.specialty.code if group.specialty else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ group.course }} курс</span>
+                                    </td>
+                                    <td>
+                                        {% if group.shift == 1 %}
+                                            <span class="badge bg-info">Утро (1-4)</span>
+                                        {% elif group.shift == 2 %}
+                                            <span class="badge bg-warning">День (5-8)</span>
+                                        {% elif group.shift == 3 %}
+                                            <span class="badge bg-success">Смешанная (1-8)</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('schedule_wizard.setup', group_id=group.id) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="bi bi-magic"></i> Настроить генерацию
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрые действия -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-lightning"></i> Быстрая генерация</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Генерация с настройками по умолчанию для всех групп</p>
+                    <button class="btn btn-warning" onclick="quickGenerateAll()">
+                        <i class="bi bi-lightning-charge"></i> Быстрая генерация всех групп
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-gear"></i> Управление аудиториями</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Настройка аудиторий и их характеристик</p>
+                    <a href="{{ url_for('rooms.index') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-door-open"></i> Управление аудиториями
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function quickGenerateAll() {
+    if (confirm('Вы уверены, что хотите сгенерировать расписание для всех групп с настройками по умолчанию?')) {
+        // TODO: Implement quick generation for all groups
+        alert('Функция в разработке');
+    }
+}
+</script>
+{% endblock %}

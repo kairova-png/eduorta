@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Аналитика - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Главная</a></li>
+        <li class="breadcrumb-item active">Аналитика</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-graph-up"></i> Аналитика расписания</h2>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="group_id" class="form-label">Группа:</label>
+                <select name="group_id" id="group_id" class="form-select">
+                    <option value="">Выберите группу</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if selected_group == group.id %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="teacher_id" class="form-label">Преподаватель:</label>
+                <select name="teacher_id" id="teacher_id" class="form-select">
+                    <option value="">Выберите преподавателя</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if selected_teacher == teacher.id %}selected{% endif %}>
+                        {{ teacher.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="month" class="form-label">Месяц:</label>
+                <select name="month" id="month" class="form-select">
+                    {% for m, name in months_ru.items() %}
+                    <option value="{{ m }}" {% if month == m %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="year" class="form-label">Год:</label>
+                <select name="year" id="year" class="form-select">
+                    {% for y in range(2020, 2030) %}
+                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Фильтровать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if analytics_data %}
+<!-- Info Block -->
+<div class="alert alert-info mb-4">
+    <h5><i class="bi bi-info-circle"></i> Пояснения к отчёту</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <strong>Обозначения часов:</strong>
+            <ul class="mb-0">
+                <li><span class="badge bg-primary">2</span> — своя проведённая пара</li>
+                <li><span class="badge bg-success">2</span> — проведено как замена (за другого)</li>
+                <li><span class="badge bg-warning text-dark">2</span> — пару провёл заменяющий</li>
+                <li><span class="badge bg-secondary">2</span> — перенесённая пара</li>
+                <li><span class="badge bg-danger"><s>2</s></span> — отменённая пара</li>
+                <li><span class="text-muted">-</span> — нет пары</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <strong>Подсчёт часов в "Итого":</strong>
+            <ul class="mb-0">
+                <li><span class="badge bg-primary">Свои</span> + <span class="badge bg-secondary">Перенос</span> — только прошедшие даты</li>
+                <li><span class="badge bg-success">Замены</span> — сразу при назначении</li>
+                <li><span class="badge bg-warning text-dark">Отданные</span> + <span class="badge bg-danger">Отмена</span> — <strong>не считаются</strong></li>
+            </ul>
+            <hr class="my-2">
+            <small><span class="badge bg-success">Зелёная строка</span> — дисциплина-замена</small>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>
+                    {% if selected_group %}
+                        {% for group in groups %}
+                            {% if group.id == selected_group %}
+                                Группа: {{ group.name }}
+                            {% endif %}
+                        {% endfor %}
+                    {% elif selected_teacher %}
+                        {% for teacher in teachers %}
+                            {% if teacher.id == selected_teacher %}
+                                Преподаватель: {{ teacher.full_name }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </strong>
+                - {{ months_ru[month] }} {{ year }}
+            </div>
+            <small class="text-muted">
+                Всего записей: {{ analytics_data|length }}
+            </small>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="min-width: 200px;">Дисциплина</th>
+                        <th style="min-width: 150px;">
+                            {% if selected_group %}Преподаватель{% else %}Группа{% endif %}
+                        </th>
+                        <th style="min-width: 80px;">Месяц</th>
+                        {% for day in days_in_month %}
+                        <th class="text-center" style="min-width: 35px;">{{ day }}</th>
+                        {% endfor %}
+                        <th class="text-center bg-light" style="min-width: 60px;">Итого</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in analytics_data %}
+                    <tr {% if data.get('is_substitution_entry') %}class="table-success"{% endif %}>
+                        <td>
+                            <strong>{{ data.discipline }}</strong>
+                            {% if data.workload %}
+                            <br><small class="text-muted">
+                                {% if data.workload.lesson_type == 'theory' %}Теория
+                                {% elif data.workload.lesson_type == 'practice' %}Практика
+                                {% elif data.workload.lesson_type == 'consultation' %}Консультация
+                                {% elif data.workload.lesson_type == 'exam' %}Экзамен/Сессия
+                                {% else %}{{ data.workload.lesson_type }}{% endif %}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>{{ data.teacher }}</td>
+                        <td class="text-center">{{ months_ru[month] }}</td>
+                        {% for day in days_in_month %}
+                        <td class="text-center">
+                            {% set day_data = data.daily_hours.get(day) %}
+                            {% if day_data %}
+                                {% if day_data is mapping %}
+                                    {# Build tooltip content #}
+                                    {% set tooltip_lines = [] %}
+                                    {% if day_data.get('details') %}
+                                        {% for detail in day_data.details %}
+                                            {% set line = "Пара " ~ detail.pair ~ " (" ~ detail.time ~ "): " ~ detail.status_text %}
+                                            {% if detail.reason %}
+                                                {% set line = line ~ " - " ~ detail.reason %}
+                                            {% endif %}
+                                            {% set _ = tooltip_lines.append(line) %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% set tooltip_text = tooltip_lines | join('&#10;') if tooltip_lines else '' %}
+
+                                    {# New format with status info #}
+                                    {% if day_data.get('cancelled') %}
+                                        <span class="badge bg-danger schedule-tooltip" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip_text }}"><s>{{ day_data.hours }}</s></span>
+                                    {% elif day_data.get('rescheduled') %}
+                                        <span class="badge bg-secondary schedule-tooltip" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip_text }}">{{ day_data.hours }}</span>
+                                    {% elif day_data.get('is_substitute_conducting') %}
+                                        <span class="badge bg-success schedule-tooltip" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip_text }}">{{ day_data.hours }}</span>
+                                    {% elif day_data.substituted %}
+                                        <span class="badge bg-warning text-dark schedule-tooltip" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip_text }}">{{ day_data.hours }}</span>
+                                    {% else %}
+                                        <span class="badge bg-primary schedule-tooltip" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip_text }}">{{ day_data.hours }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    {# Old format - just hours #}
+                                    <span class="badge bg-primary">{{ day_data }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="text-center bg-light">
+                            <strong class="text-success">{{ data.total_hours }}</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3"><strong>Итого по всем дисциплинам:</strong></td>
+                        {% for day in days_in_month %}
+                        <td class="text-center">
+                            {% if daily_totals[day] > 0 %}
+                                <strong class="text-primary">{{ daily_totals[day] }}</strong>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="text-center bg-secondary text-white">
+                            <strong>{{ analytics_data|sum(attribute='total_hours') }}</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">{{ analytics_data|length }}</h5>
+                <p class="card-text">Дисциплин</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ analytics_data|sum(attribute='total_hours') }}</h5>
+                <p class="card-text">Всего часов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                {% set active_days_list = [] %}
+                {% for value in daily_totals.values() %}
+                    {% if value > 0 %}
+                        {% set _ = active_days_list.append(value) %}
+                    {% endif %}
+                {% endfor %}
+                {% set active_days = active_days_list|length %}
+                <h5 class="card-title text-info">{{ active_days }}</h5>
+                <p class="card-text">Учебных дней</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                {% set avg_daily = (analytics_data|sum(attribute='total_hours') / days_in_month|length)|round(1) if days_in_month else 0 %}
+                <h5 class="card-title text-warning">{{ avg_daily }}</h5>
+                <p class="card-text">Часов в день (среднее)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="bi bi-info-circle"></i>
+    <h4>Выберите фильтры для просмотра данных</h4>
+    <p>Выберите группу или преподавателя, чтобы увидеть детальную аналитику по расписанию.</p>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Disable one filter when the other is selected
+    const groupSelect = document.getElementById('group_id');
+    const teacherSelect = document.getElementById('teacher_id');
+
+    groupSelect.addEventListener('change', function() {
+        if (this.value) {
+            teacherSelect.value = '';
+        }
+    });
+
+    teacherSelect.addEventListener('change', function() {
+        if (this.value) {
+            groupSelect.value = '';
+        }
+    });
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            html: true,
+            placement: 'top'
+        });
+    });
+});
+</script>
+
+{% endblock %}

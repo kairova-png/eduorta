@@ -1,0 +1,30 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}УМКД{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-file-earmark-richtext"></i> УМКД</h4>
+    <a href="{{ url_for('cmk.umkd_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать УМКД</a>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Дисциплина</th><th>Преподаватель</th><th>УМК</th><th>Статус</th><th>Обновлён</th></tr>
+            </thead>
+            <tbody>
+                {% for umkd in umkds %}
+                <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.umkd_view', id=umkd.id) }}'">
+                    <td><strong>{{ umkd.discipline }}</strong></td>
+                    <td>{{ umkd.teacher.full_name if umkd.teacher else '—' }}</td>
+                    <td>{{ umkd.umk.title[:40] if umkd.umk else '—' }}</td>
+                    <td><span class="badge bg-{{ umkd.status_color }}">{{ umkd.status_name }}</span></td>
+                    <td class="text-muted small">{{ umkd.updated_at.strftime('%d.%m.%Y') if umkd.updated_at else '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Нет документов</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

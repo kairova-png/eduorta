@@ -1,0 +1,46 @@
+# Environment and secrets - NEVER commit!
+.env
+.env.local
+.env.production
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.Python
+
+# Database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Exports
+exports/
+*.xlsx
+*.xls
+
+# Backup
+backup/
+*.bak
+
+# Claude
+.claude/

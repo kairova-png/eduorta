@@ -1,0 +1,101 @@
+Sheets: ['II cем']
+Shape: (82, 35)
+Saved to: C:\Users\tkulz\Downloads\college_schedule_backup_20251212\college_schedule\schedule_analysis.csv
+
+Column 0 (days/pairs):
+  Row 0: nan
+  Row 1: nan
+  Row 2: '                                                                                                                                                        Расписание учебных занятий на    1-семестр    2024-2025 учебного года для студентов 1-курса  '
+  Row 3: nan
+  Row 4: 'Дни недели'
+  Row 5: 'ПОНЕДЕЛЬНИК\n'
+  Row 6: nan
+  Row 7: nan
+  Row 8: nan
+  Row 9: nan
+  Row 10: nan
+  Row 11: nan
+  Row 12: nan
+  Row 13: nan
+  Row 14: nan
+  Row 15: nan
+  Row 16: nan
+  Row 17: nan
+  Row 18: 'ВТОРНИК \n'
+  Row 19: nan
+  Row 20: nan
+  Row 21: nan
+  Row 22: nan
+  Row 23: nan
+  Row 24: nan
+  Row 25: nan
+  Row 26: nan
+  Row 27: nan
+  Row 28: nan
+  Row 29: nan
+
+Row 0 (groups header):
+  Col 0: nan
+  Col 1: nan
+  Col 2: nan
+  Col 3: nan
+  Col 4: nan
+  Col 5: nan
+  Col 6: nan
+  Col 7: nan
+  Col 8: nan
+  Col 9: nan
+  Col 10: nan
+  Col 11: nan
+  Col 12: nan
+  Col 13: nan
+  Col 14: nan
+  Col 15: nan
+  Col 16: nan
+  Col 17: nan
+  Col 18: nan
+  Col 19: nan
+
+Row 1:
+  Col 0: nan
+  Col 1: nan
+  Col 2: nan
+  Col 3: nan
+  Col 4: nan
+  Col 5: nan
+  Col 6: nan
+  Col 7: nan
+  Col 8: nan
+  Col 9: nan
+  Col 10: nan
+  Col 11: nan
+  Col 12: nan
+  Col 13: nan
+  Col 14: nan
+  Col 15: nan
+  Col 16: nan
+  Col 17: nan
+  Col 18: nan
+  Col 19: nan
+
+Row 2:
+  Col 0: '                                                                                                                                                        Расписание учебных занятий на    1-семестр    2024-2025 учебного года для студентов 1-курса  '
+  Col 1: nan
+  Col 2: nan
+  Col 3: nan
+  Col 4: nan
+  Col 5: '                                                                                                                                                        Расписание учебных занятий на  1-семестр    2025-2026 учебного года для студентов 1-курса  '
+  Col 6: nan
+  Col 7: nan
+  Col 8: nan
+  Col 9: nan
+  Col 10: nan
+  Col 11: nan
+  Col 12: nan
+  Col 13: nan
+  Col 14: nan
+  Col 15: nan
+  Col 16: nan
+  Col 17: nan
+  Col 18: nan
+  Col 19: nan

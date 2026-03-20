@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{% if teacher %}Редактировать{% else %}Добавить{% endif %} преподавателя - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('teachers.index') }}">Преподаватели</a></li>
+        <li class="breadcrumb-item active">{% if teacher %}Редактировать{% else %}Добавить{% endif %}</li>
+    </ol>
+</nav>
+
+<h2><i class="bi bi-person-badge"></i> {% if teacher %}Редактировать преподавателя{% else %}Новый преподаватель{% endif %}</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <form method="post" style="max-width: 500px;">
+            <div class="mb-3">
+                <label class="form-label">ФИО *</label>
+                <input type="text" name="full_name" class="form-control" required
+                       value="{{ teacher.full_name if teacher else '' }}" placeholder="Иванов И.И.">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Кафедра</label>
+                <select name="department_id" class="form-select">
+                    <option value="">-- Не указана --</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if teacher and teacher.department_id == dept.id %}selected{% endif %}>
+                        {{ dept.name_ru }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check"></i> Сохранить
+                </button>
+                <a href="{{ url_for('teachers.index') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

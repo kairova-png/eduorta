@@ -1,0 +1,56 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}{{ 'Редактировать' if commission else 'Создать' }} ЦМК{% endblock %}
+{% block content %}
+<h4 class="mb-4">
+    <i class="bi bi-people"></i> {{ 'Редактировать' if commission else 'Создать' }} ЦМК
+</h4>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Название</label>
+                    <input type="text" name="name" class="form-control" required
+                           value="{{ commission.name if commission else '' }}" placeholder="ЦМК информатики и ВТ">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Учебный год</label>
+                    <select name="academic_year_id" class="form-select">
+                        <option value="">—</option>
+                        {% for y in years %}
+                        <option value="{{ y.id }}" {{ 'selected' if commission and commission.academic_year_id == y.id }}>{{ y.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Отделение</label>
+                    <select name="department_id" class="form-select">
+                        <option value="">—</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}" {{ 'selected' if commission and commission.department_id == d.id }}>{{ d.name_ru }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Председатель</label>
+                    <select name="chair_id" class="form-select">
+                        <option value="">—</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}" {{ 'selected' if commission and commission.chair_id == u.id }}>{{ u.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Описание</label>
+                    <textarea name="description" class="form-control" rows="3">{{ commission.description if commission else '' }}</textarea>
+                </div>
+            </div>
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Сохранить</button>
+                <a href="{{ url_for('cmk.commissions_list') }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}РУП {{ group.name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('groups.index') }}">Группы</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('groups.view', id=group.id) }}">{{ group.name }}</a></li>
+        <li class="breadcrumb-item active">РУП</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-journal-text"></i> РУП: {{ group.name }}</h2>
+    <div>
+        <a href="{{ url_for('schedule.index', group_id=group.id) }}" class="btn btn-outline-success">
+            <i class="bi bi-calendar3"></i> Расписание
+        </a>
+        <a href="{{ url_for('workload.create') }}?group_id={{ group.id }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> Добавить дисциплину
+        </a>
+    </div>
+</div>
+
+<!-- Group Info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">
+                <strong>Группа:</strong> {{ group.name }}
+            </div>
+            <div class="col-md-2">
+                <strong>Курс:</strong> <span class="badge bg-primary">{{ group.course }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Специальность:</strong> {{ group.specialty.code if group.specialty else '-' }}
+            </div>
+            <div class="col-md-2">
+                <strong>Смена:</strong> <span class="badge {% if group.shift == 1 %}bg-info{% else %}bg-warning{% endif %}">{{ group.shift }} смена</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Год поступления:</strong> {{ group.enrollment_year }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Учебный год</label>
+                <select name="year_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Выберите год --</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if selected_year and selected_year.id == year.id %}selected{% endif %}>
+                        {{ year.name }} {% if year.is_current %}(текущий){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Семестр</label>
+                <select name="semester" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все полугодия</option>
+                    {% for s in range(1, 9) %}
+                    {% set half_year = "1 полугодие" if s in [1,3,5,7] else "2 полугодие" %}
+                    <option value="{{ s }}" {% if selected_semester == s %}selected{% endif %}>{{ s }} сем. ({{ half_year }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                {% if selected_year %}
+                <a href="{{ url_for('workload.rup', group_id=group.id, year_id=selected_year.id) }}" class="btn btn-outline-secondary">Сбросить фильтр</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_year %}
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card bg-light">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ workloads|length }}</h4>
+                <small class="text-muted">Дисциплин</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_hours }}</h4>
+                <small>Всего часов</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_theory }}</h4>
+                <small>Теория</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_practice }}</h4>
+                <small>Практика</small>
+            </div>
+        </div>
+    </div>
+    {% if total_consultation %}
+    <div class="col">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_consultation }}</h4>
+                <small>Консульт.</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if total_exam %}
+    <div class="col">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_exam }}</h4>
+                <small>Экзамен</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_per_week }}</h4>
+                <small>Ч/неделю</small>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-warning">
+            <div class="card-body text-center py-3">
+                <h4 class="mb-0">{{ total_completed }}</h4>
+                <small>Выполнено</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RUP by Semesters -->
+{% if semesters_data %}
+    {% for sem_num, sem_data in semesters_data|dictsort %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                {% set half_year = "1 полугодие" if sem_num in [1,3,5,7] else "2 полугодие" %}
+                <i class="bi bi-book"></i> <strong>{{ sem_num }} семестр ({{ half_year }})</strong>
+                <span class="badge bg-secondary ms-2">{{ sem_data.workloads|length }} дисциплин</span>
+            </div>
+            <div>
+                <span class="badge bg-primary">{{ sem_data.total_hours }} ч.</span>
+                <span class="badge bg-info">Т: {{ sem_data.theory_hours }}</span>
+                <span class="badge bg-success">П: {{ sem_data.practice_hours }}</span>
+                <span class="badge bg-secondary">{{ sem_data.hours_per_week }} ч/нед</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;">№</th>
+                            <th>Дисциплина</th>
+                            <th style="width: 80px;">Тип</th>
+                            <th>Преподаватель</th>
+                            <th style="width: 80px;" class="text-center">Всего</th>
+                            <th style="width: 80px;" class="text-center">Ч/нед</th>
+                            <th style="width: 100px;" class="text-center">Выполнено</th>
+                            <th style="width: 120px;">Прогресс</th>
+                            <th style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for wl in sem_data.workloads %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td>
+                                <strong>{{ wl.discipline }}</strong>
+                            </td>
+                            <td>
+                                {% if wl.lesson_type == 'theory' %}
+                                    <span class="badge bg-primary">Теория</span>
+                                {% elif wl.lesson_type == 'practice' %}
+                                    <span class="badge bg-success">Практика</span>
+                                {% elif wl.lesson_type == 'consultation' %}
+                                    <span class="badge bg-info">Консульт.</span>
+                                {% elif wl.lesson_type == 'exam' %}
+                                    <span class="badge bg-danger">Экзамен</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">?</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ wl.teacher.full_name if wl.teacher else '<span class="text-danger">Не назначен</span>'|safe }}</td>
+                            <td class="text-center"><strong>{{ wl.total_hours }}</strong></td>
+                            <td class="text-center">{{ wl.hours_per_week or '-' }}</td>
+                            <td class="text-center">
+                                {{ wl.hours_completed }} / {{ wl.total_hours }}
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar {% if wl.progress_percent >= 100 %}bg-success{% elif wl.progress_percent > 50 %}bg-info{% elif wl.progress_percent > 0 %}bg-warning{% else %}bg-secondary{% endif %}"
+                                         style="width: {{ wl.progress_percent }}%">
+                                        {{ wl.progress_percent }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('workload.edit', id=wl.id) }}" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4" class="text-end">Итого по полугодию:</th>
+                            <th class="text-center">{{ sem_data.total_hours }}</th>
+                            <th class="text-center">{{ sem_data.hours_per_week }}</th>
+                            <th class="text-center">{{ sem_data.completed }}</th>
+                            <th colspan="2">
+                                {% set sem_percent = (sem_data.completed / sem_data.total_hours * 100)|int if sem_data.total_hours > 0 else 0 %}
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar {% if sem_percent >= 100 %}bg-success{% else %}bg-primary{% endif %}"
+                                         style="width: {{ sem_percent }}%">
+                                        {{ sem_percent }}%
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Grand Total -->
+    <div class="card bg-light">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col">
+                    <h5>{{ workloads|length }}</h5>
+                    <small class="text-muted">Дисциплин</small>
+                </div>
+                <div class="col">
+                    <h5>{{ total_hours }}</h5>
+                    <small class="text-muted">Часов всего</small>
+                </div>
+                <div class="col">
+                    <h5>{{ total_theory }}</h5>
+                    <small class="text-muted">Теория</small>
+                </div>
+                <div class="col">
+                    <h5>{{ total_practice }}</h5>
+                    <small class="text-muted">Практика</small>
+                </div>
+                <div class="col">
+                    <h5>{{ total_per_week }}</h5>
+                    <small class="text-muted">Часов/неделю</small>
+                </div>
+                <div class="col">
+                    <h5>{{ total_completed }} ({{ ((total_completed / total_hours * 100)|int if total_hours > 0 else 0) }}%)</h5>
+                    <small class="text-muted">Выполнено</small>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        Нет дисциплин для отображения.
+        <a href="{{ url_for('workload.create') }}?group_id={{ group.id }}">Добавить дисциплину</a>
+    </div>
+{% endif %}
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Выберите учебный год для просмотра РУП
+</div>
+{% endif %}
+{% endblock %}

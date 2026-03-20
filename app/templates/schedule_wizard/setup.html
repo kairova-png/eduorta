@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Настройка генерации - {{ group.name }} - APEC Petrotechnic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-magic"></i> Настройка генерации для группы {{ group.name }}</h2>
+        <a href="{{ url_for('schedule_wizard.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> К выбору группы
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Основная панель -->
+        <div class="col-lg-8">
+            <!-- Выбор семестра -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-calendar3"></i> Шаг 1: Выбор семестра</h5>
+                </div>
+                <div class="card-body">
+                    <form id="generation-form" action="{{ url_for('schedule_wizard.generate') }}" method="post">
+                        <input type="hidden" name="group_id" value="{{ group.id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Семестр для генерации</label>
+                                <select name="semester" id="semester-select" class="form-select" required>
+                                    <option value="">Выберите семестр...</option>
+                                    {% for semester, workloads in semesters.items() %}
+                                    {% set half_year = "1 полугодие" if semester in [1,3,5,7] else "2 полугодие" %}
+                                    <option value="{{ semester }}">
+                                        {{ semester }} сем. ({{ half_year }}) - {{ workloads|length }} дисциплин
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Режим генерации</label>
+                                <select name="generation_mode" class="form-select">
+                                    <option value="remaining">Только остатки (безопасно)</option>
+                                    <option value="full_replan">Полное перепланирование</option>
+                                    <option value="force_reset">ОПАСНО: Полный сброс</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-info" onclick="showPreview()">
+                                <i class="bi bi-eye"></i> Предварительный просмотр
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Предварительный просмотр -->
+                    <div id="preview-section" class="mt-4" style="display: none;">
+                        <div class="alert alert-light">
+                            <h6><i class="bi bi-graph-up"></i> Анализ нагрузок</h6>
+                            <div id="preview-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Предпочтения аудиторий -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-door-open"></i> Шаг 2: Предпочтения аудиторий (необязательно)</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Укажите предпочитаемые аудитории для оптимальной генерации расписания</p>
+                    
+                    <div id="room-preferences-section">
+                        <!-- Общие предпочтения для группы -->
+                        <div class="mb-3">
+                            <h6>Общие предпочтения группы</h6>
+                            <div class="row" id="general-preferences">
+                                {% for room in rooms %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="room-general-{{ room.id }}" 
+                                               value="{{ room.id }}" 
+                                               data-discipline="">
+                                        <label class="form-check-label" for="room-general-{{ room.id }}">
+                                            {{ room.number }} ({{ room.room_type }})
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Предпочтения по дисциплинам -->
+                        <div id="discipline-preferences" style="display: none;">
+                            <h6>Предпочтения по дисциплинам</h6>
+                            <div id="discipline-rooms"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="toggleDisciplinePreferences()">
+                            <i class="bi bi-plus"></i> Настроить предпочтения по дисциплинам
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="saveRoomPreferences()">
+                            <i class="bi bi-save"></i> Сохранить предпочтения
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="col-lg-4">
+            <!-- Информация о группе -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="bi bi-info-circle"></i> Информация о группе</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Группа:</strong> {{ group.name }}</p>
+                    <p><strong>Курс:</strong> {{ group.course }}</p>
+                    <p><strong>Смена:</strong> {{ group.shift_name }}</p>
+                    <p><strong>Пары:</strong> {{ group.shift_pairs|join(", ") }}</p>
+                </div>
+            </div>
+
+            <!-- Доступные аудитории -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="bi bi-building"></i> Доступные аудитории</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>Тип</th>
+                                    <th>Вместимость</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms %}
+                                <tr>
+                                    <td>{{ room.number }}</td>
+                                    <td>{{ room.room_type }}</td>
+                                    <td>{{ room.capacity or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Действия -->
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-play"></i> Генерация</h6>
+                </div>
+                <div class="card-body">
+                    <button type="submit" form="generation-form" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-magic"></i> Сгенерировать расписание
+                    </button>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            После генерации вы сможете массово редактировать аудитории
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let disciplinePreferencesVisible = false;
+let currentSemesterWorkloads = {};
+
+function showPreview() {
+    const semester = document.getElementById('semester-select').value;
+    if (!semester) {
+        alert('Выберите семестр');
+        return;
+    }
+    
+    const previewSection = document.getElementById('preview-section');
+    const previewContent = document.getElementById('preview-content');
+    
+    previewContent.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Анализ...';
+    previewSection.style.display = 'block';
+    
+    fetch(`{{ url_for('schedule_wizard.api_preview', group_id=group.id) }}?semester=${semester}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                previewContent.innerHTML = `<span class="text-danger">Ошибка: ${data.error}</span>`;
+                return;
+            }
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Всего часов:</strong> ${data.total_hours_needed}</p>
+                        <p><strong>Выполнено:</strong> ${data.total_hours_completed}</p>
+                        <p><strong>Запланировано:</strong> ${data.total_hours_planned}</p>
+                        <p><strong>Остается:</strong> <span class="text-primary">${data.total_hours_remaining}</span> часов</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Дисциплины:</h6>
+                        <ul class="list-unstyled small">
+            `;
+            
+            data.workloads.forEach(wl => {
+                const status = wl.remaining_hours > 0 ? 'text-warning' : 'text-success';
+                html += `<li class="${status}">• ${wl.discipline} (${wl.remaining_hours}ч остатка)</li>`;
+            });
+            
+            html += '</ul></div></div>';
+            previewContent.innerHTML = html;
+            
+            // Сохраняем данные для настройки предпочтений
+            currentSemesterWorkloads = data.workloads;
+        })
+        .catch(error => {
+            console.error('Ошибка предварительного просмотра:', error);
+            previewContent.innerHTML = '<span class="text-danger">Ошибка загрузки</span>';
+        });
+}
+
+function toggleDisciplinePreferences() {
+    disciplinePreferencesVisible = !disciplinePreferencesVisible;
+    const section = document.getElementById('discipline-preferences');
+    const button = event.target;
+    
+    if (disciplinePreferencesVisible) {
+        section.style.display = 'block';
+        button.innerHTML = '<i class="bi bi-dash"></i> Скрыть предпочтения по дисциплинам';
+        
+        // Генерируем интерфейс для каждой дисциплины
+        let html = '';
+        if (currentSemesterWorkloads.length) {
+            currentSemesterWorkloads.forEach(wl => {
+                html += `
+                    <div class="mb-3">
+                        <h6>${wl.discipline}</h6>
+                        <div class="row">
+                `;
+                
+                {% for room in rooms %}
+                html += `
+                    <div class="col-md-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="room-${wl.discipline}-{{ room.id }}" 
+                                   value="{{ room.id }}" 
+                                   data-discipline="${wl.discipline}">
+                            <label class="form-check-label" for="room-${wl.discipline}-{{ room.id }}">
+                                {{ room.number }} ({{ room.room_type }})
+                            </label>
+                        </div>
+                    </div>
+                `;
+                {% endfor %}
+                
+                html += '</div></div>';
+            });
+        } else {
+            html = '<p class="text-muted">Сначала выберите семестр и нажмите "Предварительный просмотр"</p>';
+        }
+        
+        document.getElementById('discipline-rooms').innerHTML = html;
+    } else {
+        section.style.display = 'none';
+        button.innerHTML = '<i class="bi bi-plus"></i> Настроить предпочтения по дисциплинам';
+    }
+}
+
+function saveRoomPreferences() {
+    const preferences = [];
+    
+    // Общие предпочтения
+    document.querySelectorAll('#general-preferences input:checked').forEach(checkbox => {
+        preferences.push({
+            room_id: parseInt(checkbox.value),
+            discipline: null,
+            priority: 1,
+            reason: 'Общее предпочтение группы'
+        });
+    });
+    
+    // Предпочтения по дисциплинам
+    document.querySelectorAll('#discipline-rooms input:checked').forEach(checkbox => {
+        preferences.push({
+            room_id: parseInt(checkbox.value),
+            discipline: checkbox.dataset.discipline,
+            priority: 1,
+            reason: 'Предпочтение для дисциплины'
+        });
+    });
+    
+    if (preferences.length === 0) {
+        alert('Выберите хотя бы одну аудиторию для сохранения предпочтений');
+        return;
+    }
+    
+    fetch(`{{ url_for('schedule_wizard.save_room_preferences', group_id=group.id) }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({preferences: preferences})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Предпочтения сохранены!');
+        } else {
+            alert('Ошибка сохранения: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Ошибка сохранения предпочтений');
+    });
+}
+
+// Загружаем существующие предпочтения
+document.addEventListener('DOMContentLoaded', function() {
+    const preferences = {{ preferences_dict|tojson }};
+    
+    // Устанавливаем галочки для существующих предпочтений
+    for (const [key, value] of Object.entries(preferences)) {
+        const [discipline, room_id] = key.split('_').slice(-2);
+        let checkbox_id;
+        
+        if (discipline === 'general') {
+            checkbox_id = `room-general-${room_id}`;
+        } else {
+            checkbox_id = `room-${discipline}-${room_id}`;
+        }
+        
+        setTimeout(() => {
+            const checkbox = document.getElementById(checkbox_id);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "cmk/base_cmk.html" %}
+{% block title %}{{ 'Редактировать' if rupd else 'Создать' }} РУПД{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4"><i class="bi bi-journal-text"></i> {{ 'Редактировать' if rupd else 'Создать' }} РУПД</h4>
+
+<form method="POST" id="rupd-form">
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">РУП</label>
+                    <select name="rup_id" class="form-select" required>
+                        <option value="">Выберите...</option>
+                        {% for r in rups %}
+                        <option value="{{ r.id }}" {{ 'selected' if (rupd and rupd.rup_id == r.id) or (preselect_rup_id and preselect_rup_id == r.id) }}>{{ r.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Дисциплина</label>
+                    <input type="text" name="discipline" class="form-control" required value="{{ rupd.discipline if rupd else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Преподаватель</label>
+                    {% if cmk_user.teacher_id and not cmk_user.is_chair %}
+                    <input type="text" class="form-control" value="{{ cmk_user.teacher.full_name if cmk_user.teacher else '' }}" disabled>
+                    {% else %}
+                    <select name="teacher_id" class="form-select" required>
+                        <option value="">Выберите...</option>
+                        {% for t in teachers %}
+                        <option value="{{ t.id }}" {{ 'selected' if rupd and rupd.teacher_id == t.id }}>{{ t.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for sections -->
+    <div class="card mb-3">
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-goals">Цели и задачи</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-competencies">Компетенции</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-content">Содержание</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-literature">Литература</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-assessment">Оценка</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-extra">Доп. разделы</a></li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="tab-goals">
+                    <textarea name="goals" class="rich-editor">{{ rupd.goals|default('', true) }}</textarea>
+                </div>
+                <div class="tab-pane fade" id="tab-competencies">
+                    <textarea name="competencies" class="rich-editor">{{ rupd.competencies|default('', true) }}</textarea>
+                </div>
+                <div class="tab-pane fade" id="tab-content">
+                    <textarea name="content_plan" class="rich-editor">{{ rupd.content_plan|default('', true) }}</textarea>
+                </div>
+                <div class="tab-pane fade" id="tab-literature">
+                    <textarea name="literature" class="rich-editor">{{ rupd.literature|default('', true) }}</textarea>
+                </div>
+                <div class="tab-pane fade" id="tab-assessment">
+                    <textarea name="assessment" class="rich-editor">{{ rupd.assessment|default('', true) }}</textarea>
+                </div>
+                <div class="tab-pane fade" id="tab-extra">
+                    <textarea name="extra_content" class="rich-editor">{{ rupd.extra_content|default('', true) }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Сохранить</button>
+        <a href="{{ url_for('cmk.rupd_list') }}" class="btn btn-outline-secondary">Отмена</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editors = [];
+    document.querySelectorAll('.rich-editor').forEach(function(textarea) {
+        const div = document.createElement('div');
+        div.innerHTML = textarea.value;
+        div.style.minHeight = '250px';
+        textarea.style.display = 'none';
+        textarea.parentNode.insertBefore(div, textarea);
+
+        const quill = new Quill(div, {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link', 'blockquote'],
+                    [{ align: [] }],
+                    ['clean']
+                ]
+            }
+        });
+        editors.push({ quill, textarea });
+    });
+
+    document.getElementById('rupd-form').addEventListener('submit', function() {
+        editors.forEach(function(e) {
+            e.textarea.value = e.quill.root.innerHTML;
+        });
+    });
+});
+</script>
+{% endblock %}
