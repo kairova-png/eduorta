@@ -32,9 +32,10 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="row">
-            <div class="col-md-4"><strong>Специальность:</strong> {{ rup.specialty.code if rup.specialty else '—' }} - {{ rup.specialty.name_ru if rup.specialty else '' }}</div>
-            <div class="col-md-4"><strong>ЦМК:</strong> {{ rup.commission.name if rup.commission else '—' }}</div>
-            <div class="col-md-4"><strong>Учебный год:</strong> {{ rup.academic_year.name if rup.academic_year else '—' }}</div>
+            <div class="col-md-3"><strong>Группа:</strong> {{ rup.group.name if rup.group else '—' }}</div>
+            <div class="col-md-3"><strong>Специальность:</strong> {{ rup.specialty.code if rup.specialty else '—' }}</div>
+            <div class="col-md-3"><strong>ЦМК:</strong> {{ rup.commission.name if rup.commission else '—' }}</div>
+            <div class="col-md-3"><strong>Год поступления:</strong> {{ rup.enrollment_year or '—' }}</div>
         </div>
         {% if rup.approved_by %}
         <div class="mt-2 text-success"><i class="bi bi-check-circle"></i> Утверждён: {{ rup.approved_by.full_name }} ({{ rup.approved_at.strftime('%d.%m.%Y') if rup.approved_at else '' }})</div>
@@ -45,15 +46,23 @@
     </div>
 </div>
 
-<!-- Content -->
+<!-- Content tabs -->
 <div class="card mb-3">
-    <div class="card-header">Содержание</div>
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-plan">Учебный план</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-gup">ГУП</a></li>
+        </ul>
+    </div>
     <div class="card-body">
-        {% if rup.content %}
-        {{ rup.content|safe }}
-        {% else %}
-        <p class="text-muted">Содержание не заполнено</p>
-        {% endif %}
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-plan">
+                {{ rup.content|default('<p class="text-muted">Не заполнено</p>', true)|safe }}
+            </div>
+            <div class="tab-pane fade" id="tab-gup">
+                {{ rup.gup_content|default('<p class="text-muted">Нет данных ГУП</p>', true)|safe }}
+            </div>
+        </div>
     </div>
 </div>
 

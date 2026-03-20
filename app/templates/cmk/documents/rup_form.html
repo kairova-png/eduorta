@@ -1,9 +1,7 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}{{ 'Редактировать' if rup else 'Создать' }} РУП{% endblock %}
 {% block content %}
-<h4 class="mb-4">
-    <i class="bi bi-journal-bookmark"></i> {{ 'Редактировать' if rup else 'Создать' }} РУП
-</h4>
+<h4 class="mb-4"><i class="bi bi-journal-bookmark"></i> {{ 'Редактировать' if rup else 'Создать' }} РУП</h4>
 
 <form method="POST">
     <div class="card mb-3">
@@ -11,9 +9,21 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-12">
-                    <label class="form-label">Название</label>
-                    <input type="text" name="title" class="form-control" required
-                           value="{{ rup.title if rup else '' }}" placeholder="Рабочий учебный план по специальности...">
+                    <label class="form-label">Название (автоматически или вручную)</label>
+                    <input type="text" name="title" class="form-control" id="rup-title"
+                           value="{{ rup.title if rup else '' }}" placeholder="Оставьте пустым — заполнится автоматически">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Группа</label>
+                    <select name="group_id" id="group_id" class="form-select" required>
+                        <option value="">Выберите группу...</option>
+                        {% for g in groups %}
+                        <option value="{{ g.id }}" data-enrollment="{{ g.enrollment_year }}" data-specialty="{{ g.specialty.code if g.specialty else '' }}"
+                                {{ 'selected' if rup and rup.group_id == g.id }}>
+                            {{ g.name }} ({{ g.enrollment_year }} г.п., {{ g.course }} курс)
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">ЦМК</label>
@@ -21,15 +31,6 @@
                         <option value="">Выберите...</option>
                         {% for c in commissions %}
                         <option value="{{ c.id }}" {{ 'selected' if rup and rup.commission_id == c.id }}>{{ c.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Специальность</label>
-                    <select name="specialty_id" id="specialty_id" class="form-select" required>
-                        <option value="">Выберите...</option>
-                        {% for s in specialties %}
-                        <option value="{{ s.id }}" {{ 'selected' if rup and rup.specialty_id == s.id }}>{{ s.code }} - {{ s.name_ru }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -47,38 +48,42 @@
     </div>
 
     {% if not rup %}
-    <!-- Workload Preview (only for new RUP) -->
-    <div class="card mb-3" id="workload-preview" style="display:none;">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-table"></i> Данные из нагрузки (автоматически)</span>
-            <span class="badge bg-primary" id="workload-count">0</span>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info mb-3">
-                <i class="bi bi-info-circle"></i> При создании РУП данные нагрузки будут автоматически подтянуты из системы расписания.
-                Для каждой дисциплины/преподавателя будет создан черновик РУПД.
+    <!-- Preview -->
+    <div id="preview-section" style="display:none;">
+        <!-- Summary -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Сводка</div>
+            <div class="card-body">
+                <div class="row text-center" id="summary-row">
+                    <div class="col-4"><div class="h4 text-primary" id="sum-disciplines">0</div><small>Дисциплин</small></div>
+                    <div class="col-4"><div class="h4 text-success" id="sum-hours">0</div><small>Часов</small></div>
+                    <div class="col-4"><div class="h4 text-info" id="sum-gup-weeks">0</div><small>Недель ГУП</small></div>
+                </div>
             </div>
-            <div class="table-responsive">
+        </div>
+
+        <!-- Workload table -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-table"></i> Нагрузка группы</div>
+            <div class="card-body table-responsive" style="max-height:400px; overflow-y:auto;">
                 <table class="table table-sm table-hover" id="workload-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Сем.</th>
-                            <th>Дисциплина</th>
-                            <th>Преподаватель</th>
-                            <th>Группа</th>
-                            <th>Тип</th>
-                            <th>Часы</th>
-                            <th>Ч/нед</th>
-                        </tr>
+                    <thead class="table-light sticky-top">
+                        <tr><th>Сем.</th><th>Дисциплина</th><th>Преподаватель</th><th>Тип</th><th>Часы</th><th>Ч/нед</th></tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot>
-                        <tr class="table-light fw-bold">
-                            <td colspan="5">Итого</td>
-                            <td id="total-hours">0</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- GUP table -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-calendar3-range"></i> ГУП (График учебного процесса)</div>
+            <div class="card-body table-responsive" style="max-height:300px; overflow-y:auto;">
+                <table class="table table-sm" id="gup-table">
+                    <thead class="table-light sticky-top">
+                        <tr><th>Нед.</th><th>Даты</th><th>Код</th><th>Деятельность</th></tr>
+                    </thead>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -86,18 +91,19 @@
     {% endif %}
 
     {% if rup %}
-    <!-- Content editor for existing RUP -->
     <div class="card mb-3">
-        <div class="card-header">Содержание</div>
-        <div class="card-body">
-            <textarea name="content" id="editor-content" class="rich-editor">{{ rup.content|default('', true) }}</textarea>
-        </div>
+        <div class="card-header">Учебный план</div>
+        <div class="card-body"><textarea name="content" class="rich-editor">{{ rup.content|default('', true) }}</textarea></div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-header">ГУП</div>
+        <div class="card-body"><textarea name="gup_content" class="rich-editor">{{ rup.gup_content|default('', true) }}</textarea></div>
     </div>
     {% endif %}
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" id="submit-btn">
-            <i class="bi bi-check-lg"></i> {{ 'Сохранить' if rup else 'Создать РУП из нагрузки' }}
+            <i class="bi bi-check-lg"></i> {{ 'Сохранить' if rup else 'Создать РУП (нагрузка + ГУП)' }}
         </button>
         <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-secondary">Отмена</a>
     </div>
@@ -120,63 +126,65 @@ document.addEventListener('DOMContentLoaded', function() {
             theme: 'snow',
             modules: { toolbar: [[{header:[1,2,3,false]}],['bold','italic','underline'],[{list:'ordered'},{list:'bullet'}],['link','blockquote'],[{align:[]}],['clean']] }
         });
-        textarea.closest('form').addEventListener('submit', function() {
-            textarea.value = quill.root.innerHTML;
-        });
+        textarea.closest('form').addEventListener('submit', function() { textarea.value = quill.root.innerHTML; });
     });
 });
 </script>
 {% else %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const specialtySelect = document.getElementById('specialty_id');
+    const groupSelect = document.getElementById('group_id');
     const yearSelect = document.getElementById('academic_year_id');
-    const preview = document.getElementById('workload-preview');
-    const tbody = document.querySelector('#workload-table tbody');
-    const countBadge = document.getElementById('workload-count');
-    const totalHours = document.getElementById('total-hours');
+    const preview = document.getElementById('preview-section');
+    const wBody = document.querySelector('#workload-table tbody');
+    const gBody = document.querySelector('#gup-table tbody');
+    const types = {theory:'Теория', practice:'Практика', consultation:'Конс.', exam:'Экзамен'};
+    const colors = {'К':'#e7f3ff','П':'#fff3cd','ПП':'#e1f7fe','::':'#fff4e6','Э':'#f8d7da'};
 
-    function loadWorkload() {
-        const specId = specialtySelect.value;
-        const yearId = yearSelect.value;
-        if (!specId || !yearId) {
-            preview.style.display = 'none';
-            return;
-        }
+    function load() {
+        const gId = groupSelect.value, yId = yearSelect.value;
+        if (!gId || !yId) { preview.style.display = 'none'; return; }
 
-        fetch(`{{ url_for('cmk.api_workload_by_specialty') }}?specialty_id=${specId}&academic_year_id=${yearId}`)
+        fetch(`{{ url_for('cmk.api_workload_by_group') }}?group_id=${gId}&academic_year_id=${yId}`)
             .then(r => r.json())
             .then(data => {
-                tbody.innerHTML = '';
-                let total = 0;
-                const types = {theory:'Теория', practice:'Практика', consultation:'Конс.', exam:'Экзамен'};
+                // Summary
+                document.getElementById('sum-disciplines').textContent = data.total_disciplines;
+                document.getElementById('sum-hours').textContent = data.total_hours;
+                document.getElementById('sum-gup-weeks').textContent = data.gup_weeks;
 
-                data.forEach(w => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${w.semester}</td>
-                        <td>${w.discipline}</td>
-                        <td>${w.teacher}</td>
-                        <td>${w.group}</td>
-                        <td><span class="badge bg-${w.lesson_type === 'theory' ? 'primary' : 'success'}">${types[w.lesson_type] || w.lesson_type}</span></td>
-                        <td>${w.total_hours}</td>
-                        <td>${w.hours_per_week || '—'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                    total += w.total_hours;
+                // Workload
+                wBody.innerHTML = '';
+                data.workloads.forEach(w => {
+                    wBody.innerHTML += `<tr>
+                        <td>${w.semester}</td><td>${w.discipline}</td><td>${w.teacher}</td>
+                        <td><span class="badge bg-${w.lesson_type==='theory'?'primary':'success'}">${types[w.lesson_type]||w.lesson_type}</span></td>
+                        <td>${w.total_hours}</td><td>${w.hours_per_week||'—'}</td></tr>`;
                 });
 
-                countBadge.textContent = data.length + ' записей';
-                totalHours.textContent = total;
-                preview.style.display = data.length > 0 ? 'block' : 'none';
+                // GUP
+                gBody.innerHTML = '';
+                data.gup.forEach(g => {
+                    const bg = colors[g.code] || '#fff';
+                    gBody.innerHTML += `<tr style="background:${bg}">
+                        <td>${g.week}</td><td>${g.start_date} - ${g.end_date}</td>
+                        <td><strong>${g.code}</strong></td><td>${g.name}</td></tr>`;
+                });
+
+                preview.style.display = (data.workloads.length > 0 || data.gup.length > 0) ? 'block' : 'none';
+
+                // Auto-fill title
+                const opt = groupSelect.options[groupSelect.selectedIndex];
+                const titleInput = document.getElementById('rup-title');
+                if (!titleInput.value) {
+                    titleInput.value = `РУП ${opt.text}`;
+                }
             });
     }
 
-    specialtySelect.addEventListener('change', loadWorkload);
-    yearSelect.addEventListener('change', loadWorkload);
-
-    // Auto-load if values pre-selected
-    if (specialtySelect.value && yearSelect.value) loadWorkload();
+    groupSelect.addEventListener('change', load);
+    yearSelect.addEventListener('change', load);
+    if (groupSelect.value && yearSelect.value) load();
 });
 </script>
 {% endif %}

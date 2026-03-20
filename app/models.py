@@ -819,15 +819,18 @@ class CMKMember(db.Model):
 
 
 class RUP(db.Model):
-    """РУП - Рабочий учебный план"""
+    """РУП - Рабочий учебный план (на группу, привязан к году поступления)"""
     __tablename__ = 'rup_documents'
 
     id = db.Column(db.Integer, primary_key=True)
     commission_id = db.Column(db.Integer, db.ForeignKey('cmk_commissions.id'), nullable=False)
-    specialty_id = db.Column(db.Integer, db.ForeignKey('specialties.id'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
+    specialty_id = db.Column(db.Integer, db.ForeignKey('specialties.id'))
     academic_year_id = db.Column(db.Integer, db.ForeignKey('academic_years.id'), nullable=False)
+    enrollment_year = db.Column(db.Integer)  # Год поступления группы
     title = db.Column(db.String(300), nullable=False)
-    content = db.Column(db.Text)
+    content = db.Column(db.Text)  # Учебный план (HTML)
+    gup_content = db.Column(db.Text)  # ГУП данные (HTML)
     status = db.Column(db.String(20), default='draft')
     version = db.Column(db.Integer, default=1)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -838,6 +841,7 @@ class RUP(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     commission = db.relationship('CMKCommission', backref='rup_documents')
+    group = db.relationship('Group', backref='rup_documents')
     specialty = db.relationship('Specialty', backref='rup_documents')
     academic_year = db.relationship('AcademicYear')
     created_by = db.relationship('User', foreign_keys=[created_by_id])

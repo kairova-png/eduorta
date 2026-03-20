@@ -13,26 +13,28 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Название</th>
+                    <th>Группа</th>
                     <th>Специальность</th>
-                    <th>ЦМК</th>
-                    <th>Год</th>
+                    <th>Год пост.</th>
+                    <th>Курс</th>
                     <th>Статус</th>
+                    <th>РУПД</th>
                     <th>Обновлён</th>
                 </tr>
             </thead>
             <tbody>
                 {% for rup in rups %}
                 <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.rup_view', id=rup.id) }}'">
-                    <td><strong>{{ rup.title }}</strong></td>
+                    <td><strong>{{ rup.group.name if rup.group else rup.title }}</strong></td>
                     <td>{{ rup.specialty.code if rup.specialty else '—' }}</td>
-                    <td>{{ rup.commission.name if rup.commission else '—' }}</td>
-                    <td>{{ rup.academic_year.name if rup.academic_year else '—' }}</td>
+                    <td>{{ rup.enrollment_year or '—' }}</td>
+                    <td>{{ rup.group.course if rup.group else '—' }}</td>
                     <td><span class="badge bg-{{ rup.status_color }}">{{ rup.status_name }}</span></td>
+                    <td><span class="badge bg-secondary">{{ rup.rupd_documents|length }}</span></td>
                     <td class="text-muted small">{{ rup.updated_at.strftime('%d.%m.%Y') if rup.updated_at else '' }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="text-center text-muted py-4">Нет документов</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4">Нет документов</td></tr>
                 {% endfor %}
             </tbody>
         </table>
