@@ -4,7 +4,7 @@ from datetime import datetime
 from app import db
 from app.models import (User, CMKCommission, CMKMember, RUP, RUPD, UMK, UMKD,
                          DocumentHistory, CMKMeeting, Teacher, Department,
-                         Specialty, AcademicYear)
+                         Specialty, AcademicYear, Workload, Group)
 
 bp = Blueprint('cmk', __name__, url_prefix='/cmk')
 
@@ -127,12 +127,17 @@ def dashboard():
     }
 
     # My documents (for teacher)
-    my_docs = []
+    my_rupd = []
+    my_umkd = []
+    my_workloads = []
     if user.teacher_id:
-        my_docs = RUPD.query.filter_by(teacher_id=user.teacher_id).all()
+        my_rupd = RUPD.query.filter_by(teacher_id=user.teacher_id).all()
+        my_umkd = UMKD.query.filter_by(teacher_id=user.teacher_id).all()
+        my_workloads = Workload.query.filter_by(teacher_id=user.teacher_id).all()
 
     return render_template('cmk/dashboard.html', commissions=commissions,
-                           stats=stats, my_docs=my_docs)
+                           stats=stats, my_rupd=my_rupd, my_umkd=my_umkd,
+                           my_workloads=my_workloads)
 
 
 # ==================== User Management ====================
@@ -320,19 +325,29 @@ def rup_list():
 def rup_create():
     user = get_current_user()
     if request.method == 'POST':
+        specialty_id = request.form.get('specialty_id', type=int)
+        academic_year_id = request.form.get('academic_year_id', type=int)
+
+        # Auto-generate content from Workload data
+        content = _generate_rup_content(specialty_id, academic_year_id)
+
         rup = RUP(
             commission_id=request.form.get('commission_id', type=int),
-            specialty_id=request.form.get('specialty_id', type=int),
-            academic_year_id=request.form.get('academic_year_id', type=int),
+            specialty_id=specialty_id,
+            academic_year_id=academic_year_id,
             title=request.form.get('title', '').strip(),
-            content=request.form.get('content', ''),
+            content=content,
             created_by_id=user.id
         )
         db.session.add(rup)
         db.session.commit()
+
+        # Auto-create RUPD for each discipline/teacher
+        _auto_create_rupd(rup, user)
+
         log_document_action('rup', rup.id, 'created', new_status='draft')
         db.session.commit()
-        flash('РУП создан', 'success')
+        flash('РУП создан с данными из нагрузки', 'success')
         return redirect(url_for('cmk.rup_view', id=rup.id))
 
     commissions = CMKCommission.query.all()
@@ -340,6 +355,151 @@ def rup_create():
     years = AcademicYear.query.order_by(AcademicYear.id.desc()).all()
     return render_template('cmk/documents/rup_form.html', rup=None,
                            commissions=commissions, specialties=specialties, years=years)
+
+
+@bp.route('/api/workload-by-specialty')
+@login_required
+def api_workload_by_specialty():
+    """API: get workloads for specialty and academic year (for preview)"""
+    specialty_id = request.args.get('specialty_id', type=int)
+    academic_year_id = request.args.get('academic_year_id', type=int)
+    if not specialty_id or not academic_year_id:
+        return jsonify([])
+
+    groups = Group.query.filter_by(specialty_id=specialty_id).all()
+    group_ids = [g.id for g in groups]
+
+    workloads = Workload.query.filter(
+        Workload.group_id.in_(group_ids),
+        Workload.academic_year_id == academic_year_id
+    ).order_by(Workload.semester, Workload.discipline).all()
+
+    result = []
+    for w in workloads:
+        result.append({
+            'id': w.id,
+            'discipline': w.discipline,
+            'teacher': w.teacher.full_name if w.teacher else '—',
+            'group': w.group.name if w.group else '—',
+            'semester': w.semester,
+            'total_hours': w.total_hours,
+            'hours_per_week': w.hours_per_week or 0,
+            'lesson_type': w.lesson_type,
+        })
+    return jsonify(result)
+
+
+def _generate_rup_content(specialty_id, academic_year_id):
+    """Generate RUP HTML content from Workload data"""
+    groups = Group.query.filter_by(specialty_id=specialty_id).all()
+    group_ids = [g.id for g in groups]
+
+    if not group_ids:
+        return '<p>Нет групп для данной специальности</p>'
+
+    workloads = Workload.query.filter(
+        Workload.group_id.in_(group_ids),
+        Workload.academic_year_id == academic_year_id
+    ).order_by(Workload.semester, Workload.discipline).all()
+
+    if not workloads:
+        return '<p>Нет данных нагрузки для данной специальности и учебного года</p>'
+
+    # Group by semester
+    semesters = {}
+    for w in workloads:
+        sem = w.semester
+        if sem not in semesters:
+            semesters[sem] = []
+        semesters[sem].append(w)
+
+    # Build HTML table
+    specialty = Specialty.query.get(specialty_id)
+    year = AcademicYear.query.get(academic_year_id)
+
+    html = f'<h2>Рабочий учебный план</h2>'
+    html += f'<p><strong>Специальность:</strong> {specialty.code} — {specialty.name_ru}</p>'
+    html += f'<p><strong>Учебный год:</strong> {year.name if year else ""}</p>'
+    html += f'<p><strong>Группы:</strong> {", ".join(g.name for g in groups)}</p>'
+    html += f'<p><strong>Всего дисциплин:</strong> {len(set(w.discipline for w in workloads))}</p>'
+    html += f'<p><strong>Общая нагрузка:</strong> {sum(w.total_hours for w in workloads)} часов</p>'
+    html += '<hr>'
+
+    for sem in sorted(semesters.keys()):
+        sem_workloads = semesters[sem]
+        html += f'<h3>Семестр {sem}</h3>'
+        html += '<table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse;">'
+        html += '<thead><tr style="background:#f0f0f0;">'
+        html += '<th>№</th><th>Дисциплина</th><th>Преподаватель</th><th>Группа</th>'
+        html += '<th>Тип</th><th>Всего часов</th><th>Часов/нед</th>'
+        html += '</tr></thead><tbody>'
+
+        total_hours = 0
+        for i, w in enumerate(sem_workloads, 1):
+            lesson_types = {'theory': 'Теория', 'practice': 'Практика',
+                           'consultation': 'Конс.', 'exam': 'Экзамен'}
+            html += f'<tr>'
+            html += f'<td>{i}</td>'
+            html += f'<td>{w.discipline}</td>'
+            html += f'<td>{w.teacher.full_name if w.teacher else "—"}</td>'
+            html += f'<td>{w.group.name if w.group else "—"}</td>'
+            html += f'<td>{lesson_types.get(w.lesson_type, w.lesson_type)}</td>'
+            html += f'<td>{w.total_hours}</td>'
+            html += f'<td>{w.hours_per_week or "—"}</td>'
+            html += f'</tr>'
+            total_hours += w.total_hours
+
+        html += f'<tr style="background:#f0f0f0; font-weight:bold;">'
+        html += f'<td colspan="5">Итого по семестру {sem}</td>'
+        html += f'<td>{total_hours}</td><td></td></tr>'
+        html += '</tbody></table><br>'
+
+    return html
+
+
+def _auto_create_rupd(rup, user):
+    """Auto-create RUPD documents for each unique discipline+teacher in workload"""
+    groups = Group.query.filter_by(specialty_id=rup.specialty_id).all()
+    group_ids = [g.id for g in groups]
+
+    workloads = Workload.query.filter(
+        Workload.group_id.in_(group_ids),
+        Workload.academic_year_id == rup.academic_year_id
+    ).all()
+
+    # Unique discipline+teacher combinations
+    seen = set()
+    for w in workloads:
+        key = (w.discipline, w.teacher_id)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        # Check if RUPD already exists
+        existing = RUPD.query.filter_by(
+            rup_id=rup.id, discipline=w.discipline, teacher_id=w.teacher_id
+        ).first()
+        if existing:
+            continue
+
+        # Collect all groups and hours for this discipline+teacher
+        related = [x for x in workloads if x.discipline == w.discipline and x.teacher_id == w.teacher_id]
+        groups_str = ', '.join(set(x.group.name for x in related if x.group))
+        total_h = sum(x.total_hours for x in related)
+        semesters_str = ', '.join(sorted(set(str(x.semester) for x in related)))
+
+        rupd = RUPD(
+            rup_id=rup.id,
+            discipline=w.discipline,
+            teacher_id=w.teacher_id,
+            goals=f'<p><strong>Дисциплина:</strong> {w.discipline}</p>'
+                  f'<p><strong>Преподаватель:</strong> {w.teacher.full_name if w.teacher else ""}</p>'
+                  f'<p><strong>Группы:</strong> {groups_str}</p>'
+                  f'<p><strong>Семестры:</strong> {semesters_str}</p>'
+                  f'<p><strong>Общее кол-во часов:</strong> {total_h}</p>',
+            created_by_id=user.id
+        )
+        db.session.add(rupd)
 
 
 @bp.route('/rup/<int:id>')

@@ -7,9 +7,10 @@
 
 <form method="POST">
     <div class="card mb-3">
+        <div class="card-header">Параметры</div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-12">
+                <div class="col-md-12">
                     <label class="form-label">Название</label>
                     <input type="text" name="title" class="form-control" required
                            value="{{ rup.title if rup else '' }}" placeholder="Рабочий учебный план по специальности...">
@@ -25,7 +26,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Специальность</label>
-                    <select name="specialty_id" class="form-select" required>
+                    <select name="specialty_id" id="specialty_id" class="form-select" required>
                         <option value="">Выберите...</option>
                         {% for s in specialties %}
                         <option value="{{ s.id }}" {{ 'selected' if rup and rup.specialty_id == s.id }}>{{ s.code }} - {{ s.name_ru }}</option>
@@ -34,7 +35,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Учебный год</label>
-                    <select name="academic_year_id" class="form-select" required>
+                    <select name="academic_year_id" id="academic_year_id" class="form-select" required>
                         <option value="">Выберите...</option>
                         {% for y in years %}
                         <option value="{{ y.id }}" {{ 'selected' if rup and rup.academic_year_id == y.id }}>{{ y.name }}</option>
@@ -45,21 +46,66 @@
         </div>
     </div>
 
+    {% if not rup %}
+    <!-- Workload Preview (only for new RUP) -->
+    <div class="card mb-3" id="workload-preview" style="display:none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-table"></i> Данные из нагрузки (автоматически)</span>
+            <span class="badge bg-primary" id="workload-count">0</span>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-3">
+                <i class="bi bi-info-circle"></i> При создании РУП данные нагрузки будут автоматически подтянуты из системы расписания.
+                Для каждой дисциплины/преподавателя будет создан черновик РУПД.
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover" id="workload-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Сем.</th>
+                            <th>Дисциплина</th>
+                            <th>Преподаватель</th>
+                            <th>Группа</th>
+                            <th>Тип</th>
+                            <th>Часы</th>
+                            <th>Ч/нед</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td colspan="5">Итого</td>
+                            <td id="total-hours">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rup %}
+    <!-- Content editor for existing RUP -->
     <div class="card mb-3">
         <div class="card-header">Содержание</div>
         <div class="card-body">
             <textarea name="content" id="editor-content" class="rich-editor">{{ rup.content|default('', true) }}</textarea>
         </div>
     </div>
+    {% endif %}
 
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Сохранить</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">
+            <i class="bi bi-check-lg"></i> {{ 'Сохранить' if rup else 'Создать РУП из нагрузки' }}
+        </button>
         <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-secondary">Отмена</a>
     </div>
 </form>
 {% endblock %}
 
 {% block extra_js %}
+{% if rup %}
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <script>
@@ -70,26 +116,68 @@ document.addEventListener('DOMContentLoaded', function() {
         div.style.minHeight = '300px';
         textarea.style.display = 'none';
         textarea.parentNode.insertBefore(div, textarea);
-
         const quill = new Quill(div, {
             theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ header: [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ list: 'ordered' }, { list: 'bullet' }],
-                    [{ indent: '-1' }, { indent: '+1' }],
-                    ['link', 'blockquote', 'code-block'],
-                    [{ align: [] }],
-                    ['clean']
-                ]
-            }
+            modules: { toolbar: [[{header:[1,2,3,false]}],['bold','italic','underline'],[{list:'ordered'},{list:'bullet'}],['link','blockquote'],[{align:[]}],['clean']] }
         });
-
         textarea.closest('form').addEventListener('submit', function() {
             textarea.value = quill.root.innerHTML;
         });
     });
 });
 </script>
+{% else %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const specialtySelect = document.getElementById('specialty_id');
+    const yearSelect = document.getElementById('academic_year_id');
+    const preview = document.getElementById('workload-preview');
+    const tbody = document.querySelector('#workload-table tbody');
+    const countBadge = document.getElementById('workload-count');
+    const totalHours = document.getElementById('total-hours');
+
+    function loadWorkload() {
+        const specId = specialtySelect.value;
+        const yearId = yearSelect.value;
+        if (!specId || !yearId) {
+            preview.style.display = 'none';
+            return;
+        }
+
+        fetch(`{{ url_for('cmk.api_workload_by_specialty') }}?specialty_id=${specId}&academic_year_id=${yearId}`)
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                let total = 0;
+                const types = {theory:'Теория', practice:'Практика', consultation:'Конс.', exam:'Экзамен'};
+
+                data.forEach(w => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${w.semester}</td>
+                        <td>${w.discipline}</td>
+                        <td>${w.teacher}</td>
+                        <td>${w.group}</td>
+                        <td><span class="badge bg-${w.lesson_type === 'theory' ? 'primary' : 'success'}">${types[w.lesson_type] || w.lesson_type}</span></td>
+                        <td>${w.total_hours}</td>
+                        <td>${w.hours_per_week || '—'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                    total += w.total_hours;
+                });
+
+                countBadge.textContent = data.length + ' записей';
+                totalHours.textContent = total;
+                preview.style.display = data.length > 0 ? 'block' : 'none';
+            });
+    }
+
+    specialtySelect.addEventListener('change', loadWorkload);
+    yearSelect.addEventListener('change', loadWorkload);
+
+    // Auto-load if values pre-selected
+    if (specialtySelect.value && yearSelect.value) loadWorkload();
+});
+</script>
+{% endif %}
 {% endblock %}
