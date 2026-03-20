@@ -1,100 +1,165 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}РУП: {{ rup.title }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h4><i class="bi bi-journal-bookmark"></i> {{ rup.title }}</h4>
-        <span class="badge bg-{{ rup.status_color }} status-badge">{{ rup.status_name }}</span>
-    </div>
-    <div class="d-flex gap-2">
-        {% if rup.status != 'approved' or cmk_user.is_admin %}
-        <a href="{{ url_for('cmk.rup_edit', id=rup.id) }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-pencil"></i> Редактировать
-        </a>
-        {% endif %}
-        {% if rup.status == 'draft' or rup.status == 'revision' %}
-        <form method="POST" action="{{ url_for('cmk.rup_submit', id=rup.id) }}">
-            <button class="btn btn-warning btn-sm"><i class="bi bi-send"></i> На рассмотрение</button>
-        </form>
-        {% endif %}
-        {% if rup.status == 'under_review' and cmk_user.is_chair %}
-        <form method="POST" action="{{ url_for('cmk.rup_approve', id=rup.id) }}">
-            <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Утвердить</button>
-        </form>
-        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
-            <i class="bi bi-x-lg"></i> На доработку
-        </button>
-        {% endif %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.rup_list') }}">РУП</a></li>
+            <li class="breadcrumb-item active">{{ rup.group.name if rup.group else rup.title }}</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1 class="page-title">
+                <i class="bi bi-journal-bookmark"></i> {{ rup.title }}
+            </h1>
+            <span class="badge badge-{{ 'draft' if rup.status == 'draft' else 'review' if rup.status == 'under_review' else 'revision' if rup.status == 'revision' else 'approved' }} mt-1">
+                {{ rup.status_name }}
+            </span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if rup.status != 'approved' or cmk_user.is_admin %}
+            <a href="{{ url_for('cmk.rup_edit', id=rup.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil"></i> Редактировать
+            </a>
+            {% endif %}
+            {% if rup.status == 'draft' or rup.status == 'revision' %}
+            <form method="POST" action="{{ url_for('cmk.rup_submit', id=rup.id) }}">
+                <button class="btn btn-warning btn-sm"><i class="bi bi-send"></i> На рассмотрение</button>
+            </form>
+            {% endif %}
+            {% if rup.status == 'under_review' and cmk_user.is_chair %}
+            <form method="POST" action="{{ url_for('cmk.rup_approve', id=rup.id) }}">
+                <button class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Утвердить</button>
+            </form>
+            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                <i class="bi bi-x-lg"></i> На доработку
+            </button>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<!-- Info -->
-<div class="card mb-3">
+<!-- Info Card -->
+<div class="card mb-3 fade-in">
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-3"><strong>Группа:</strong> {{ rup.group.name if rup.group else '—' }}</div>
-            <div class="col-md-3"><strong>Специальность:</strong> {{ rup.specialty.code if rup.specialty else '—' }}</div>
-            <div class="col-md-3"><strong>ЦМК:</strong> {{ rup.commission.name if rup.commission else '—' }}</div>
-            <div class="col-md-3"><strong>Год поступления:</strong> {{ rup.enrollment_year or '—' }}</div>
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3">
+                <div class="text-muted small mb-1">Группа</div>
+                <div class="fw-semibold">{{ rup.group.name if rup.group else '—' }}</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="text-muted small mb-1">Специальность</div>
+                <div class="fw-semibold">{{ rup.specialty.code if rup.specialty else '—' }} {{ rup.specialty.name_ru if rup.specialty else '' }}</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="text-muted small mb-1">ЦМК</div>
+                <div class="fw-semibold">{{ rup.commission.name if rup.commission else '—' }}</div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="text-muted small mb-1">Год поступления</div>
+                <div class="fw-semibold">{{ rup.enrollment_year or '—' }}</div>
+            </div>
         </div>
         {% if rup.approved_by %}
-        <div class="mt-2 text-success"><i class="bi bi-check-circle"></i> Утверждён: {{ rup.approved_by.full_name }} ({{ rup.approved_at.strftime('%d.%m.%Y') if rup.approved_at else '' }})</div>
+        <div class="mt-3 d-flex align-items-center gap-2 text-success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Утверждён: <strong>{{ rup.approved_by.full_name }}</strong> ({{ rup.approved_at.strftime('%d.%m.%Y') if rup.approved_at else '' }})</span>
+        </div>
         {% endif %}
         {% if rup.review_comment %}
-        <div class="alert alert-warning mt-2 mb-0"><strong>Комментарий:</strong> {{ rup.review_comment }}</div>
+        <div class="alert alert-warning mt-3 mb-0 d-flex align-items-start gap-2" style="border-radius:10px;">
+            <i class="bi bi-chat-left-text mt-1"></i>
+            <div><strong>Комментарий:</strong> {{ rup.review_comment }}</div>
+        </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Content tabs -->
-<div class="card mb-3">
+<!-- Content Tabs -->
+<div class="card mb-3 fade-in">
     <div class="card-header p-0">
         <ul class="nav nav-tabs card-header-tabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-plan">Учебный план</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-gup">ГУП</a></li>
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab-plan" style="border-radius:12px 0 0 0;">
+                    <i class="bi bi-table"></i> Учебный план
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-gup">
+                    <i class="bi bi-calendar3-range"></i> ГУП
+                </a>
+            </li>
         </ul>
     </div>
     <div class="card-body">
         <div class="tab-content">
             <div class="tab-pane fade show active" id="tab-plan">
-                {{ rup.content|default('<p class="text-muted">Не заполнено</p>', true)|safe }}
+                <div class="table-responsive">
+                    {{ rup.content|default('<div class="empty-state"><i class="bi bi-table d-block"></i><p>Не заполнено</p></div>', true)|safe }}
+                </div>
             </div>
             <div class="tab-pane fade" id="tab-gup">
-                {{ rup.gup_content|default('<p class="text-muted">Нет данных ГУП</p>', true)|safe }}
+                <div class="table-responsive">
+                    {{ rup.gup_content|default('<div class="empty-state"><i class="bi bi-calendar3-range d-block"></i><p>Нет данных ГУП</p></div>', true)|safe }}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Linked RUPD -->
-<div class="card mb-3">
+<div class="card mb-3 fade-in">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Связанные РУПД ({{ rup.rupd_documents|length }})</span>
-        <a href="{{ url_for('cmk.rupd_create', rup_id=rup.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i> Создать РУПД</a>
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-muted"></i>
+            Связанные РУПД
+            <span class="badge badge-draft">{{ rup.rupd_documents|length }}</span>
+        </span>
+        <a href="{{ url_for('cmk.rupd_create', rup_id=rup.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Создать РУПД</a>
     </div>
     <div class="list-group list-group-flush">
         {% for rupd in rup.rupd_documents %}
-        <a href="{{ url_for('cmk.rupd_view', id=rupd.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
-            <span>{{ rupd.discipline }} — {{ rupd.teacher.full_name if rupd.teacher else '' }}</span>
-            <span class="badge bg-{{ rupd.status_color }}">{{ rupd.status_name }}</span>
+        <a href="{{ url_for('cmk.rupd_view', id=rupd.id) }}" class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-medium">{{ rupd.discipline }}</span>
+                    <span class="text-muted small ms-2">{{ rupd.teacher.full_name if rupd.teacher else '' }}</span>
+                </div>
+                <span class="badge badge-{{ 'draft' if rupd.status == 'draft' else 'review' if rupd.status == 'under_review' else 'revision' if rupd.status == 'revision' else 'approved' }}">
+                    {{ rupd.status_name }}
+                </span>
+            </div>
         </a>
         {% else %}
-        <div class="list-group-item text-muted">Нет РУПД</div>
+        <div class="empty-state py-3">
+            <i class="bi bi-journal-text d-block" style="font-size:2rem;"></i>
+            <p>Нет РУПД</p>
+        </div>
         {% endfor %}
     </div>
 </div>
 
 <!-- History -->
-<div class="card">
-    <div class="card-header">История</div>
+<div class="card fade-in">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-muted"></i> История изменений
+    </div>
     <div class="list-group list-group-flush">
         {% for h in history %}
-        <div class="list-group-item small">
-            <strong>{{ h.action }}</strong>
-            {% if h.user %} — {{ h.user.full_name }}{% endif %}
-            <span class="text-muted float-end">{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-            {% if h.comment %}<br><span class="text-muted">{{ h.comment }}</span>{% endif %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="fw-medium">{{ h.action }}</span>
+                    {% if h.user %}<span class="text-muted"> — {{ h.user.full_name }}</span>{% endif %}
+                    {% if h.comment %}<br><span class="text-muted small"><i class="bi bi-chat-left-text"></i> {{ h.comment }}</span>{% endif %}
+                </div>
+                <span class="text-muted small text-nowrap">{{ h.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
         </div>
+        {% else %}
+        <div class="list-group-item text-muted small">Нет записей</div>
         {% endfor %}
     </div>
 </div>
@@ -102,18 +167,18 @@
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;">
             <form method="POST" action="{{ url_for('cmk.rup_reject', id=rup.id) }}">
-                <div class="modal-header">
-                    <h5 class="modal-title">Отправить на доработку</h5>
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Отправить на доработку</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label">Комментарий</label>
-                    <textarea name="comment" class="form-control" rows="3" required placeholder="Укажите причину..."></textarea>
+                    <label class="form-label fw-semibold">Комментарий</label>
+                    <textarea name="comment" class="form-control" rows="3" required placeholder="Укажите причину..." style="border-radius:10px;"></textarea>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button type="submit" class="btn btn-danger">Отправить на доработку</button>
                 </div>
             </form>

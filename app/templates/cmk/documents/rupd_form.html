@@ -3,17 +3,34 @@
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+    .ql-toolbar { border-radius: 10px 10px 0 0 !important; border-color: #e2e8f0 !important; }
+    .ql-container { border-radius: 0 0 10px 10px !important; border-color: #e2e8f0 !important; min-height: 250px; }
+    .ql-editor { font-family: 'Inter', sans-serif; font-size: 0.9rem; }
+</style>
 {% endblock %}
 
 {% block content %}
-<h4 class="mb-4"><i class="bi bi-journal-text"></i> {{ 'Редактировать' if rupd else 'Создать' }} РУПД</h4>
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.rupd_list') }}">РУПД</a></li>
+            <li class="breadcrumb-item active">{{ 'Редактировать' if rupd else 'Создать' }}</li>
+        </ol>
+    </nav>
+    <h1 class="page-title"><i class="bi bi-journal-text"></i> {{ 'Редактировать' if rupd else 'Создать' }} РУПД</h1>
+</div>
 
 <form method="POST" id="rupd-form">
-    <div class="card mb-3">
+    <div class="card mb-3 fade-in">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-muted"></i> Параметры
+        </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">РУП</label>
+                    <label class="form-label fw-semibold small">РУП</label>
                     <select name="rup_id" class="form-select" required>
                         <option value="">Выберите...</option>
                         {% for r in rups %}
@@ -22,11 +39,11 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Дисциплина</label>
-                    <input type="text" name="discipline" class="form-control" required value="{{ rupd.discipline if rupd else '' }}">
+                    <label class="form-label fw-semibold small">Дисциплина</label>
+                    <input type="text" name="discipline" class="form-control" required value="{{ rupd.discipline if rupd else '' }}" placeholder="Название дисциплины">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Преподаватель</label>
+                    <label class="form-label fw-semibold small">Преподаватель</label>
                     {% if cmk_user.teacher_id and not cmk_user.is_chair %}
                     <input type="text" class="form-control" value="{{ cmk_user.teacher.full_name if cmk_user.teacher else '' }}" disabled>
                     {% else %}
@@ -42,16 +59,16 @@
         </div>
     </div>
 
-    <!-- Tabs for sections -->
-    <div class="card mb-3">
+    <!-- Editor Tabs -->
+    <div class="card mb-3 fade-in">
         <div class="card-header p-0">
             <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-goals">Цели и задачи</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-competencies">Компетенции</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-content">Содержание</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-literature">Литература</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-assessment">Оценка</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-extra">Доп. разделы</a></li>
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-goals"><i class="bi bi-bullseye"></i> Цели</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-competencies"><i class="bi bi-award"></i> Компетенции</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-content"><i class="bi bi-list-ol"></i> Содержание</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-literature"><i class="bi bi-book"></i> Литература</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-assessment"><i class="bi bi-clipboard-check"></i> Оценка</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-extra"><i class="bi bi-plus-circle"></i> Доп.</a></li>
             </ul>
         </div>
         <div class="card-body">
@@ -114,9 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('rupd-form').addEventListener('submit', function() {
-        editors.forEach(function(e) {
-            e.textarea.value = e.quill.root.innerHTML;
-        });
+        editors.forEach(function(e) { e.textarea.value = e.quill.root.innerHTML; });
     });
 });
 </script>

@@ -2,77 +2,133 @@
 {% block title %}Дашборд{% endblock %}
 
 {% block content %}
-<h4 class="mb-4"><i class="bi bi-speedometer2"></i> Дашборд ЦМК</h4>
-
-<!-- Stats -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card text-center p-3">
-            <div class="display-6 text-primary">{{ stats.total_rup }}</div>
-            <div class="text-muted small">РУП</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center p-3">
-            <div class="display-6 text-info">{{ stats.total_rupd }}</div>
-            <div class="text-muted small">РУПД</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center p-3">
-            <div class="display-6 text-warning">{{ stats.pending_review }}</div>
-            <div class="text-muted small">На рассмотрении</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center p-3">
-            <div class="display-6 text-success">{{ stats.approved }}</div>
-            <div class="text-muted small">Утверждено</div>
+<!-- Page Header -->
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb"><li class="breadcrumb-item active">Дашборд</li></ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="page-title"><i class="bi bi-grid-1x2"></i> Дашборд</h1>
+        <div class="d-flex gap-2">
+            {% if cmk_user.is_chair %}
+            <a href="{{ url_for('cmk.rup_create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Новый РУП</a>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Document Chain -->
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-diagram-3"></i> Цепочка документов</div>
-    <div class="card-body">
-        <div class="doc-chain justify-content-center py-3">
-            <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-primary">
-                <i class="bi bi-journal-bookmark"></i> РУП <span class="badge bg-primary">{{ stats.total_rup }}</span>
-            </a>
-            <i class="bi bi-arrow-right arrow"></i>
-            <a href="{{ url_for('cmk.rupd_list') }}" class="btn btn-outline-info">
-                <i class="bi bi-journal-text"></i> РУПД <span class="badge bg-info">{{ stats.total_rupd }}</span>
-            </a>
-            <i class="bi bi-arrow-right arrow"></i>
-            <a href="{{ url_for('cmk.umk_list') }}" class="btn btn-outline-success">
-                <i class="bi bi-collection"></i> УМК <span class="badge bg-success">{{ stats.total_umk }}</span>
-            </a>
-            <i class="bi bi-arrow-right arrow"></i>
-            <a href="{{ url_for('cmk.umkd_list') }}" class="btn btn-outline-warning">
-                <i class="bi bi-file-earmark-richtext"></i> УМКД <span class="badge bg-warning text-dark">{{ stats.total_umkd }}</span>
-            </a>
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3 fade-in stagger-1">
+        <div class="stat-card" style="background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff;">
+            <div class="stat-icon" style="background: rgba(255,255,255,0.2);color:#fff;"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="stat-value">{{ stats.total_rup }}</div>
+            <div class="stat-label">Рабочие учебные планы</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 fade-in stagger-2">
+        <div class="stat-card" style="background: linear-gradient(135deg, #06b6d4, #22d3ee); color: #fff;">
+            <div class="stat-icon" style="background: rgba(255,255,255,0.2);color:#fff;"><i class="bi bi-journal-text"></i></div>
+            <div class="stat-value">{{ stats.total_rupd }}</div>
+            <div class="stat-label">Программы дисциплин</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 fade-in stagger-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff;">
+            <div class="stat-icon" style="background: rgba(255,255,255,0.2);color:#fff;"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value">{{ stats.pending_review }}</div>
+            <div class="stat-label">На рассмотрении</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 fade-in stagger-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #34d399); color: #fff;">
+            <div class="stat-icon" style="background: rgba(255,255,255,0.2);color:#fff;"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value">{{ stats.approved }}</div>
+            <div class="stat-label">Утверждено</div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Chain + Progress -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8 fade-in">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3 text-muted"></i> Цепочка документов
+            </div>
+            <div class="card-body">
+                <div class="doc-chain-flow">
+                    <a href="{{ url_for('cmk.rup_list') }}" class="doc-chain-item" style="background:rgba(99,102,241,0.08);">
+                        <div class="chain-count" style="color:#6366f1;">{{ stats.total_rup }}</div>
+                        <div class="chain-label" style="color:#6366f1;">РУП</div>
+                    </a>
+                    <div class="doc-chain-arrow"><i class="bi bi-chevron-right"></i></div>
+                    <a href="{{ url_for('cmk.rupd_list') }}" class="doc-chain-item" style="background:rgba(6,182,212,0.08);">
+                        <div class="chain-count" style="color:#06b6d4;">{{ stats.total_rupd }}</div>
+                        <div class="chain-label" style="color:#06b6d4;">РУПД</div>
+                    </a>
+                    <div class="doc-chain-arrow"><i class="bi bi-chevron-right"></i></div>
+                    <a href="{{ url_for('cmk.umk_list') }}" class="doc-chain-item" style="background:rgba(16,185,129,0.08);">
+                        <div class="chain-count" style="color:#10b981;">{{ stats.total_umk }}</div>
+                        <div class="chain-label" style="color:#10b981;">УМК</div>
+                    </a>
+                    <div class="doc-chain-arrow"><i class="bi bi-chevron-right"></i></div>
+                    <a href="{{ url_for('cmk.umkd_list') }}" class="doc-chain-item" style="background:rgba(245,158,11,0.08);">
+                        <div class="chain-count" style="color:#f59e0b;">{{ stats.total_umkd }}</div>
+                        <div class="chain-label" style="color:#f59e0b;">УМКД</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 fade-in">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-pie-chart text-muted"></i> Прогресс утверждения
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                {% set total_docs = stats.total_rup + stats.total_rupd + stats.total_umk + stats.total_umkd %}
+                {% set pct = ((stats.approved / total_docs * 100)|int) if total_docs > 0 else 0 %}
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="10"
+                                stroke-dasharray="{{ 314 * pct / 100 }} 314"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-ring-text">{{ pct }}%</div>
+                </div>
+                <div class="ms-3">
+                    <div class="fw-bold">{{ stats.approved }}</div>
+                    <div class="text-muted small">из {{ total_docs }} документов</div>
+                    <div class="text-muted small">утверждено</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row g-3">
-    <!-- My Workload (from schedule system) -->
+    <!-- My Workload -->
     {% if my_workloads %}
-    <div class="col-md-6">
+    <div class="col-lg-6 fade-in">
         <div class="card">
-            <div class="card-header"><i class="bi bi-list-check"></i> Моя нагрузка (из расписания)</div>
-            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-list-check text-muted"></i> Моя нагрузка
+                <span class="badge bg-primary ms-auto">{{ my_workloads|length }}</span>
+            </div>
+            <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
                 <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr><th>Дисциплина</th><th>Группа</th><th>Часы</th></tr>
+                    <thead class="table-light sticky-top">
+                        <tr><th>Дисциплина</th><th>Группа</th><th>Часы</th><th>Семестр</th></tr>
                     </thead>
                     <tbody>
                         {% for w in my_workloads %}
                         <tr>
-                            <td>{{ w.discipline }}</td>
-                            <td>{{ w.group.name if w.group else '—' }}</td>
+                            <td class="fw-medium">{{ w.discipline }}</td>
+                            <td><span class="badge badge-draft">{{ w.group.name if w.group else '—' }}</span></td>
                             <td>{{ w.total_hours }}</td>
+                            <td>{{ w.semester }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -83,23 +139,31 @@
     {% endif %}
 
     <!-- My RUPD -->
-    <div class="col-md-6">
+    <div class="col-lg-6 fade-in">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-journal-text"></i> Мои РУПД</span>
-                <a href="{{ url_for('cmk.rupd_create') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i></a>
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-journal-text text-muted"></i> Мои РУПД
+                </span>
+                <a href="{{ url_for('cmk.rupd_create') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i></a>
             </div>
-            <div class="list-group list-group-flush">
-                {% for doc in my_rupd %}
+            <div class="list-group list-group-flush" style="max-height: 320px; overflow-y: auto;">
+                {% for doc in my_rupd[:10] %}
                 <a href="{{ url_for('cmk.rupd_view', id=doc.id) }}" class="list-group-item list-group-item-action">
-                    <div class="d-flex justify-content-between">
-                        <span>{{ doc.discipline }}</span>
-                        <span class="badge bg-{{ doc.status_color }}">{{ doc.status_name }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-medium">{{ doc.discipline }}</div>
+                            <div class="text-muted small">{{ doc.rup.group.name if doc.rup and doc.rup.group else '' }}</div>
+                        </div>
+                        <span class="badge badge-{{ 'draft' if doc.status == 'draft' else 'review' if doc.status == 'under_review' else 'revision' if doc.status == 'revision' else 'approved' }}">
+                            {{ doc.status_name }}
+                        </span>
                     </div>
                 </a>
                 {% else %}
-                <div class="list-group-item text-muted">
-                    {% if cmk_user.teacher_id %}Нет РУПД{% else %}Привяжите преподавателя к аккаунту{% endif %}
+                <div class="empty-state py-4">
+                    <i class="bi bi-journal-text d-block"></i>
+                    <p>{% if cmk_user.teacher_id %}Нет РУПД{% else %}Привяжите преподавателя к аккаунту{% endif %}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -108,15 +172,20 @@
 
     <!-- My UMKD -->
     {% if my_umkd %}
-    <div class="col-md-6">
+    <div class="col-lg-6 fade-in">
         <div class="card">
-            <div class="card-header"><i class="bi bi-file-earmark-richtext"></i> Мои УМКД</div>
-            <div class="list-group list-group-flush">
-                {% for doc in my_umkd %}
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-richtext text-muted"></i> Мои УМКД
+                <span class="badge bg-warning text-dark ms-auto">{{ my_umkd|length }}</span>
+            </div>
+            <div class="list-group list-group-flush" style="max-height: 320px; overflow-y: auto;">
+                {% for doc in my_umkd[:10] %}
                 <a href="{{ url_for('cmk.umkd_view', id=doc.id) }}" class="list-group-item list-group-item-action">
-                    <div class="d-flex justify-content-between">
-                        <span>{{ doc.discipline }}</span>
-                        <span class="badge bg-{{ doc.status_color }}">{{ doc.status_name }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-medium">{{ doc.discipline }}</span>
+                        <span class="badge badge-{{ 'draft' if doc.status == 'draft' else 'review' if doc.status == 'under_review' else 'revision' if doc.status == 'revision' else 'approved' }}">
+                            {{ doc.status_name }}
+                        </span>
                     </div>
                 </a>
                 {% endfor %}
@@ -126,24 +195,34 @@
     {% endif %}
 
     <!-- Commissions -->
-    <div class="col-md-6">
+    <div class="col-lg-6 fade-in">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people"></i> Комиссии</span>
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-people text-muted"></i> Комиссии
+                </span>
                 {% if cmk_user.is_chair %}
-                <a href="{{ url_for('cmk.commissions_create') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus"></i></a>
+                <a href="{{ url_for('cmk.commissions_create') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></a>
                 {% endif %}
             </div>
             <div class="list-group list-group-flush">
                 {% for c in commissions %}
                 <a href="{{ url_for('cmk.commissions_view', id=c.id) }}" class="list-group-item list-group-item-action">
-                    <div class="fw-bold">{{ c.name }}</div>
-                    <small class="text-muted">
-                        {% if c.chair %}{{ c.chair.full_name }}{% endif %} | {{ c.members|length }} членов
-                    </small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">{{ c.name }}</div>
+                            <small class="text-muted">
+                                {% if c.chair %}<i class="bi bi-person"></i> {{ c.chair.full_name }}{% endif %}
+                            </small>
+                        </div>
+                        <span class="badge badge-draft">{{ c.members|length }} чел.</span>
+                    </div>
                 </a>
                 {% else %}
-                <div class="list-group-item text-muted">Нет комиссий</div>
+                <div class="empty-state py-4">
+                    <i class="bi bi-people d-block"></i>
+                    <p>Нет комиссий</p>
+                </div>
                 {% endfor %}
             </div>
         </div>

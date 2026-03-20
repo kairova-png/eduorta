@@ -1,32 +1,63 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}УМК{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="bi bi-collection"></i> Учебно-методические комплексы (УМК)</h4>
-    {% if cmk_user.is_chair %}
-    <a href="{{ url_for('cmk.umk_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать УМК</a>
-    {% endif %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item active">УМК</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="page-title"><i class="bi bi-collection"></i> Учебно-методические комплексы</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchUmk" class="form-control" placeholder="Поиск...">
+            </div>
+            {% if cmk_user.is_chair %}
+            <a href="{{ url_for('cmk.umk_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
+            {% endif %}
+        </div>
+    </div>
 </div>
-<div class="card">
+
+<div class="card fade-in">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr><th>Название</th><th>РУП</th><th>Статус</th><th>УМКД</th><th>Обновлён</th></tr>
+        <table class="table table-hover mb-0" id="umkTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>Название</th>
+                    <th>РУП</th>
+                    <th>Статус</th>
+                    <th>УМКД</th>
+                    <th>Обновлён</th>
+                </tr>
             </thead>
             <tbody>
                 {% for umk in umks %}
-                <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.umk_view', id=umk.id) }}'">
+                <tr onclick="location.href='{{ url_for('cmk.umk_view', id=umk.id) }}'">
+                    <td class="text-muted">{{ loop.index }}</td>
                     <td><strong>{{ umk.title }}</strong></td>
-                    <td>{{ umk.rup.title[:40] if umk.rup else '—' }}</td>
-                    <td><span class="badge bg-{{ umk.status_color }}">{{ umk.status_name }}</span></td>
-                    <td><span class="badge bg-secondary">{{ umk.umkd_documents|length }}</span></td>
+                    <td class="text-muted">{{ umk.rup.group.name if umk.rup and umk.rup.group else umk.rup.title[:30] if umk.rup else '—' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'draft' if umk.status == 'draft' else 'review' if umk.status == 'under_review' else 'revision' if umk.status == 'revision' else 'approved' }}">
+                            {{ umk.status_name }}
+                        </span>
+                    </td>
+                    <td><span class="badge badge-draft">{{ umk.umkd_documents|length }}</span></td>
                     <td class="text-muted small">{{ umk.updated_at.strftime('%d.%m.%Y') if umk.updated_at else '' }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Нет документов</td></tr>
+                <tr><td colspan="6"><div class="empty-state"><i class="bi bi-collection d-block"></i><p>Нет документов</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>document.addEventListener('DOMContentLoaded', function() { setupTableSearch('searchUmk', 'umkTable'); });</script>
 {% endblock %}

@@ -1,29 +1,47 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}Заседания{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="bi bi-calendar-event"></i> Заседания ЦМК</h4>
-    {% if cmk_user.is_chair %}
-    <a href="{{ url_for('cmk.meetings_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
-    {% endif %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item active">Заседания</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="page-title"><i class="bi bi-calendar-event"></i> Заседания ЦМК</h1>
+        {% if cmk_user.is_chair %}
+        <a href="{{ url_for('cmk.meetings_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
+        {% endif %}
+    </div>
 </div>
-<div class="card">
+
+<div class="card fade-in">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr><th>#</th><th>Дата</th><th>Тема</th><th>ЦМК</th><th>Статус</th></tr>
+            <thead>
+                <tr><th style="width:50px;">#</th><th>Дата</th><th>Тема</th><th>ЦМК</th><th>Статус</th></tr>
             </thead>
             <tbody>
                 {% for m in meetings %}
-                <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.meetings_view', id=m.id) }}'">
-                    <td>{{ m.meeting_number }}</td>
+                <tr onclick="location.href='{{ url_for('cmk.meetings_view', id=m.id) }}'">
+                    <td class="fw-bold">{{ m.meeting_number }}</td>
                     <td>{{ m.meeting_date.strftime('%d.%m.%Y') }}</td>
-                    <td><strong>{{ m.title }}</strong></td>
-                    <td>{{ m.commission.name if m.commission else '—' }}</td>
-                    <td><span class="badge bg-{{ 'success' if m.status == 'finalized' else 'secondary' }}">{{ 'Финализирован' if m.status == 'finalized' else 'Черновик' }}</span></td>
+                    <td class="fw-medium">{{ m.title }}</td>
+                    <td class="text-muted">{{ m.commission.name if m.commission else '—' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'approved' if m.status == 'finalized' else 'draft' }}">
+                            {{ 'Финализирован' if m.status == 'finalized' else 'Черновик' }}
+                        </span>
+                    </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Нет заседаний</td></tr>
+                <tr><td colspan="5">
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-event d-block"></i>
+                        <p>Нет заседаний</p>
+                    </div>
+                </td></tr>
                 {% endfor %}
             </tbody>
         </table>

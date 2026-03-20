@@ -1,20 +1,43 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}{{ 'Редактировать' if rup else 'Создать' }} РУП{% endblock %}
+
+{% block extra_css %}
+{% if rup %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+    .ql-toolbar { border-radius: 10px 10px 0 0 !important; border-color: #e2e8f0 !important; }
+    .ql-container { border-radius: 0 0 10px 10px !important; border-color: #e2e8f0 !important; min-height: 300px; }
+    .ql-editor { font-family: 'Inter', sans-serif; font-size: 0.9rem; }
+</style>
+{% endif %}
+{% endblock %}
+
 {% block content %}
-<h4 class="mb-4"><i class="bi bi-journal-bookmark"></i> {{ 'Редактировать' if rup else 'Создать' }} РУП</h4>
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.rup_list') }}">РУП</a></li>
+            <li class="breadcrumb-item active">{{ 'Редактировать' if rup else 'Создать' }}</li>
+        </ol>
+    </nav>
+    <h1 class="page-title"><i class="bi bi-journal-bookmark"></i> {{ 'Редактировать' if rup else 'Создать' }} РУП</h1>
+</div>
 
 <form method="POST">
-    <div class="card mb-3">
-        <div class="card-header">Параметры</div>
+    <div class="card mb-3 fade-in">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-muted"></i> Параметры
+        </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-12">
-                    <label class="form-label">Название (автоматически или вручную)</label>
+                    <label class="form-label fw-semibold small">Название</label>
                     <input type="text" name="title" class="form-control" id="rup-title"
                            value="{{ rup.title if rup else '' }}" placeholder="Оставьте пустым — заполнится автоматически">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Группа</label>
+                    <label class="form-label fw-semibold small">Группа</label>
                     <select name="group_id" id="group_id" class="form-select" required>
                         <option value="">Выберите группу...</option>
                         {% for g in groups %}
@@ -26,7 +49,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">ЦМК</label>
+                    <label class="form-label fw-semibold small">ЦМК</label>
                     <select name="commission_id" class="form-select" required>
                         <option value="">Выберите...</option>
                         {% for c in commissions %}
@@ -35,7 +58,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Учебный год</label>
+                    <label class="form-label fw-semibold small">Учебный год</label>
                     <select name="academic_year_id" id="academic_year_id" class="form-select" required>
                         <option value="">Выберите...</option>
                         {% for y in years %}
@@ -50,24 +73,41 @@
     {% if not rup %}
     <!-- Preview -->
     <div id="preview-section" style="display:none;">
-        <!-- Summary -->
-        <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-info-circle"></i> Сводка</div>
+        <div class="card mb-3 fade-in">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle text-muted"></i> Сводка
+            </div>
             <div class="card-body">
-                <div class="row text-center" id="summary-row">
-                    <div class="col-4"><div class="h4 text-primary" id="sum-disciplines">0</div><small>Дисциплин</small></div>
-                    <div class="col-4"><div class="h4 text-success" id="sum-hours">0</div><small>Часов</small></div>
-                    <div class="col-4"><div class="h4 text-info" id="sum-gup-weeks">0</div><small>Недель ГУП</small></div>
+                <div class="row text-center g-3" id="summary-row">
+                    <div class="col-4">
+                        <div class="stat-card" style="background:rgba(99,102,241,0.08);padding:1rem;">
+                            <div class="h3 fw-bold" style="color:#6366f1;" id="sum-disciplines">0</div>
+                            <div class="small text-muted">Дисциплин</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card" style="background:rgba(16,185,129,0.08);padding:1rem;">
+                            <div class="h3 fw-bold" style="color:#10b981;" id="sum-hours">0</div>
+                            <div class="small text-muted">Часов</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card" style="background:rgba(6,182,212,0.08);padding:1rem;">
+                            <div class="h3 fw-bold" style="color:#06b6d4;" id="sum-gup-weeks">0</div>
+                            <div class="small text-muted">Недель ГУП</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Workload table -->
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-table"></i> Нагрузка группы</div>
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-table text-muted"></i> Нагрузка группы
+            </div>
             <div class="card-body table-responsive" style="max-height:400px; overflow-y:auto;">
                 <table class="table table-sm table-hover" id="workload-table">
-                    <thead class="table-light sticky-top">
+                    <thead class="sticky-top" style="background:#fff;">
                         <tr><th>Сем.</th><th>Дисциплина</th><th>Преподаватель</th><th>Тип</th><th>Часы</th><th>Ч/нед</th></tr>
                     </thead>
                     <tbody></tbody>
@@ -75,12 +115,13 @@
             </div>
         </div>
 
-        <!-- GUP table -->
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-calendar3-range"></i> ГУП (График учебного процесса)</div>
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-calendar3-range text-muted"></i> ГУП
+            </div>
             <div class="card-body table-responsive" style="max-height:300px; overflow-y:auto;">
                 <table class="table table-sm" id="gup-table">
-                    <thead class="table-light sticky-top">
+                    <thead class="sticky-top" style="background:#fff;">
                         <tr><th>Нед.</th><th>Даты</th><th>Код</th><th>Деятельность</th></tr>
                     </thead>
                     <tbody></tbody>
@@ -91,19 +132,23 @@
     {% endif %}
 
     {% if rup %}
-    <div class="card mb-3">
-        <div class="card-header">Учебный план</div>
+    <div class="card mb-3 fade-in">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-table text-muted"></i> Учебный план
+        </div>
         <div class="card-body"><textarea name="content" class="rich-editor">{{ rup.content|default('', true) }}</textarea></div>
     </div>
-    <div class="card mb-3">
-        <div class="card-header">ГУП</div>
+    <div class="card mb-3 fade-in">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-calendar3-range text-muted"></i> ГУП
+        </div>
         <div class="card-body"><textarea name="gup_content" class="rich-editor">{{ rup.gup_content|default('', true) }}</textarea></div>
     </div>
     {% endif %}
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" id="submit-btn">
-            <i class="bi bi-check-lg"></i> {{ 'Сохранить' if rup else 'Создать РУП (нагрузка + ГУП)' }}
+            <i class="bi bi-check-lg"></i> {{ 'Сохранить' if rup else 'Создать РУП' }}
         </button>
         <a href="{{ url_for('cmk.rup_list') }}" class="btn btn-outline-secondary">Отмена</a>
     </div>
@@ -113,7 +158,6 @@
 {% block extra_js %}
 {% if rup %}
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.rich-editor').forEach(function(textarea) {
@@ -148,24 +192,21 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`{{ url_for('cmk.api_workload_by_group') }}?group_id=${gId}&academic_year_id=${yId}`)
             .then(r => r.json())
             .then(data => {
-                // Summary
                 document.getElementById('sum-disciplines').textContent = data.total_disciplines;
                 document.getElementById('sum-hours').textContent = data.total_hours;
                 document.getElementById('sum-gup-weeks').textContent = data.gup_weeks;
 
-                // Workload
                 wBody.innerHTML = '';
                 data.workloads.forEach(w => {
                     wBody.innerHTML += `<tr>
-                        <td>${w.semester}</td><td>${w.discipline}</td><td>${w.teacher}</td>
-                        <td><span class="badge bg-${w.lesson_type==='theory'?'primary':'success'}">${types[w.lesson_type]||w.lesson_type}</span></td>
+                        <td>${w.semester}</td><td class="fw-medium">${w.discipline}</td><td>${w.teacher}</td>
+                        <td><span class="badge badge-${w.lesson_type==='theory'?'draft':'approved'}">${types[w.lesson_type]||w.lesson_type}</span></td>
                         <td>${w.total_hours}</td><td>${w.hours_per_week||'—'}</td></tr>`;
                 });
 
-                // GUP
                 gBody.innerHTML = '';
                 data.gup.forEach(g => {
-                    const bg = colors[g.code] || '#fff';
+                    const bg = colors[g.code] || 'transparent';
                     gBody.innerHTML += `<tr style="background:${bg}">
                         <td>${g.week}</td><td>${g.start_date} - ${g.end_date}</td>
                         <td><strong>${g.code}</strong></td><td>${g.name}</td></tr>`;
@@ -173,12 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 preview.style.display = (data.workloads.length > 0 || data.gup.length > 0) ? 'block' : 'none';
 
-                // Auto-fill title
                 const opt = groupSelect.options[groupSelect.selectedIndex];
                 const titleInput = document.getElementById('rup-title');
-                if (!titleInput.value) {
-                    titleInput.value = `РУП ${opt.text}`;
-                }
+                if (!titleInput.value) { titleInput.value = `РУП ${opt.text}`; }
             });
     }
 

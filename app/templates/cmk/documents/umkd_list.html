@@ -1,30 +1,82 @@
 {% extends "cmk/base_cmk.html" %}
 {% block title %}УМКД{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="bi bi-file-earmark-richtext"></i> УМКД</h4>
-    <a href="{{ url_for('cmk.umkd_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать УМКД</a>
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('cmk.dashboard') }}">Дашборд</a></li>
+            <li class="breadcrumb-item active">УМКД</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="page-title"><i class="bi bi-file-earmark-richtext"></i> УМКД</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchUmkd" class="form-control" placeholder="Поиск...">
+            </div>
+            <a href="{{ url_for('cmk.umkd_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Создать</a>
+        </div>
+    </div>
 </div>
-<div class="card">
+
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <button class="btn btn-sm btn-outline-secondary active filter-btn" data-filter="all">Все <span class="badge bg-secondary">{{ umkds|length }}</span></button>
+    <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="draft">Черновик</button>
+    <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="under_review">На рассмотрении</button>
+    <button class="btn btn-sm btn-outline-success filter-btn" data-filter="approved">Утверждено</button>
+</div>
+
+<div class="card fade-in">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr><th>Дисциплина</th><th>Преподаватель</th><th>УМК</th><th>Статус</th><th>Обновлён</th></tr>
+        <table class="table table-hover mb-0" id="umkdTable">
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>Дисциплина</th>
+                    <th>Преподаватель</th>
+                    <th>УМК</th>
+                    <th>Статус</th>
+                    <th>Обновлён</th>
+                </tr>
             </thead>
             <tbody>
                 {% for umkd in umkds %}
-                <tr style="cursor:pointer" onclick="location.href='{{ url_for('cmk.umkd_view', id=umkd.id) }}'">
+                <tr onclick="location.href='{{ url_for('cmk.umkd_view', id=umkd.id) }}'" data-status="{{ umkd.status }}">
+                    <td class="text-muted">{{ loop.index }}</td>
                     <td><strong>{{ umkd.discipline }}</strong></td>
                     <td>{{ umkd.teacher.full_name if umkd.teacher else '—' }}</td>
-                    <td>{{ umkd.umk.title[:40] if umkd.umk else '—' }}</td>
-                    <td><span class="badge bg-{{ umkd.status_color }}">{{ umkd.status_name }}</span></td>
+                    <td class="text-muted">{{ umkd.umk.title[:30] if umkd.umk else '—' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'draft' if umkd.status == 'draft' else 'review' if umkd.status == 'under_review' else 'revision' if umkd.status == 'revision' else 'approved' }}">
+                            {{ umkd.status_name }}
+                        </span>
+                    </td>
                     <td class="text-muted small">{{ umkd.updated_at.strftime('%d.%m.%Y') if umkd.updated_at else '' }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Нет документов</td></tr>
+                <tr><td colspan="6"><div class="empty-state"><i class="bi bi-file-earmark-richtext d-block"></i><p>Нет документов</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupTableSearch('searchUmkd', 'umkdTable');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.dataset.filter;
+            document.querySelectorAll('#umkdTable tbody tr').forEach(row => {
+                row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
